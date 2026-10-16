@@ -10,6 +10,9 @@ export default defineConfig({
   envDir: projectRoot,
   cacheDir: "../node_modules/.vite",
   plugins: [react()],
+  css: {
+    postcss: fileURLToPath(new URL("./postcss.config.js", import.meta.url)),
+  },
   server: {
     port: 5173,
     proxy: {

@@ -3,10 +3,11 @@ node_modules/
 .pnp
 .pnp.js
 
-# Build outputs
+# Build outputs & archives
 dist/
 build/
 *.tsbuildinfo
+*.zip
 
 # Environment variables & secrets (NEVER commit real .env files)
 .env

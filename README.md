@@ -4,9 +4,17 @@ E-commerce storefront and future inventory management platform for **Jocta Enter
 
 ## Project Structure
 
-- `shared/` (`@jocta/shared`) — Shared TypeScript types and Zod validation schemas (catalog filters, KES money validation, API response types).
-- `backend/` (`@jocta/backend`) — Express 5 + TypeScript REST API, Drizzle ORM schema, and transactional SQL migration runner.
-- `frontend/` (`@jocta/frontend`) — React 18 + TypeScript + Vite + Tailwind CSS v3 with Bright Neomorphism design tokens.
+- `shared/` (`@jocta/shared`) — Shared TypeScript types and Zod validation schemas (catalog filters, sorting, printer model queries, KES money validation, API response types).
+- `backend/` (`@jocta/backend`) — Express 5 + TypeScript REST API, Drizzle ORM schema, transactional SQL migration runner, and idempotent development seed script.
+- `frontend/` (`@jocta/frontend`) — React 18 + TypeScript + Vite + Tailwind CSS v3 with Bright Neomorphism design tokens, Homepage, Shop Catalogue, Product Detail Page, and Printer Compatibility Finder.
+
+## Brand Logo Asset Location
+
+Place the official Jocta Enterprises circular red logo image at:
+```
+frontend/public/logo.png
+```
+`JoctaLogo.tsx` automatically renders `/logo.png` when present and falls back to a solid-red circular emblem (`#E9252A`) until the file is added.
 
 ## Prerequisites
 
@@ -37,9 +45,14 @@ E-commerce storefront and future inventory management platform for **Jocta Enter
    npm run db:migrate
    ```
 
-5. **Verify database connectivity and applied migrations:**
+5. **Optional — Seed or remove demonstration catalogue data:**
+   All demonstration records are explicitly prefixed with `[DEMO]` / `demo-` / `DEMO-` and use `ON CONFLICT DO NOTHING` so real client data is never overwritten.
    ```bash
-   npm run db:verify
+   # Insert demonstration categories, brands, printer models, and products
+   npm run db:seed
+
+   # Safely remove ONLY demonstration records (slug LIKE 'demo-%' / sku LIKE 'DEMO-%')
+   npm run db:seed:clean
    ```
 
 ## Available Scripts
@@ -53,4 +66,6 @@ E-commerce storefront and future inventory management platform for **Jocta Enter
 | `npm test` | Run automated unit and API tests via Vitest |
 | `npm run db:migrate` | Apply pending SQL migrations in `backend/src/db/migrations/` |
 | `npm run db:verify` | Verify PostgreSQL connection and list applied migrations |
+| `npm run db:seed` | Insert idempotent `[DEMO]` catalogue records for local development |
+| `npm run db:seed:clean` | Remove all `[DEMO]` catalogue records safely |
 | `npm run db:generate` | Generate Drizzle SQL migrations from `backend/src/db/schema.ts` |
