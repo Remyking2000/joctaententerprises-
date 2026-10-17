@@ -1,47 +1,45 @@
-import { useState } from "react";
+import { useLayoutEffect, useState } from "react";
 import {
   Link,
   NavLink,
   Outlet,
   useLocation,
-  useNavigate,
 } from "react-router-dom";
-import { Menu, Moon, ShoppingBag, Sun, X } from "lucide-react";
+import {
+  ChevronDown,
+  Menu,
+  Moon,
+  ShoppingBag,
+  Sun,
+  X,
+  Sparkles,
+} from "lucide-react";
 import { JoctaLogo } from "./JoctaLogo";
 import { CartDrawer } from "./CartDrawer";
+import { CategoriesDropdown, CATEGORY_ITEMS } from "./CategoriesDropdown";
 import { useCart } from "../context/CartContext";
 import { useTheme } from "../context/ThemeContext";
 
-const NAV_LINKS = [
-  { to: "/", label: "Home", end: true },
-  { to: "/#categories", label: "Categories", end: false, isHash: true },
-  { to: "/shop", label: "Shop Catalogue", end: false },
-  { to: "/compatibility", label: "Compatibility Finder", end: false },
-];
-
 export function Layout() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [mobileCategoriesOpen, setMobileCategoriesOpen] = useState(false);
   const location = useLocation();
-  const navigate = useNavigate();
   const { totalCount, openCart } = useCart();
   const { theme, isDark, toggleTheme } = useTheme();
 
-  const handleNavClick = (to: string, isHash?: boolean) => {
-    setMobileMenuOpen(false);
-    if (isHash) {
-      if (location.pathname === "/") {
-        const el = document.getElementById("categories");
-        if (el) {
-          el.scrollIntoView({ behavior: "smooth" });
-        }
-      } else {
-        navigate("/");
-        setTimeout(() => {
-          const el = document.getElementById("categories");
-          if (el) el.scrollIntoView({ behavior: "smooth" });
-        }, 100);
-      }
+  // Always load every opened page from the very top
+  useLayoutEffect(() => {
+    if ("scrollRestoration" in window.history) {
+      window.history.scrollRestoration = "manual";
     }
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" as ScrollBehavior });
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+  }, [location.pathname, location.search]);
+
+  const handleMobileNav = () => {
+    setMobileMenuOpen(false);
+    setMobileCategoriesOpen(false);
   };
 
   return (
@@ -56,7 +54,7 @@ export function Layout() {
             {/* Brand Logo (Left) */}
             <Link
               to="/"
-              onClick={() => setMobileMenuOpen(false)}
+              onClick={handleMobileNav}
               className="shrink-0 transition-transform hover:scale-[1.01]"
               aria-label="Jocta Enterprises Home"
             >
@@ -68,40 +66,51 @@ export function Layout() {
               aria-label="Main Navigation"
               className="hidden md:flex items-center gap-1.5 lg:gap-2"
             >
-              {NAV_LINKS.map((link) => {
-                if (link.isHash) {
-                  return (
-                    <a
-                      key={link.to}
-                      href="#categories"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        handleNavClick(link.to, true);
-                      }}
-                      className="neo-nav-link rounded-xl px-4 py-2 text-sm font-semibold cursor-pointer"
-                    >
-                      {link.label}
-                    </a>
-                  );
+              {/* Home */}
+              <NavLink
+                to="/"
+                end
+                className={({ isActive }) =>
+                  `rounded-xl px-4 py-2 text-sm font-semibold transition-all ${
+                    isActive && location.pathname === "/"
+                      ? "bg-brand-red text-white shadow-[0_4px_12px_rgba(220,38,38,0.35)]"
+                      : "neo-nav-link"
+                  }`
                 }
+              >
+                Home
+              </NavLink>
 
-                return (
-                  <NavLink
-                    key={link.to}
-                    to={link.to}
-                    end={link.end}
-                    className={({ isActive }) =>
-                      `rounded-xl px-4 py-2 text-sm font-semibold transition-all ${
-                        isActive
-                          ? "bg-brand-red text-white shadow-[0_4px_12px_rgba(220,38,38,0.35)]"
-                          : "neo-nav-link"
-                      }`
-                    }
-                  >
-                    {link.label}
-                  </NavLink>
-                );
-              })}
+              {/* Lively Categories Dropdown */}
+              <CategoriesDropdown />
+
+              {/* Shop Catalogue */}
+              <NavLink
+                to="/shop"
+                className={({ isActive }) =>
+                  `rounded-xl px-4 py-2 text-sm font-semibold transition-all ${
+                    isActive
+                      ? "bg-brand-red text-white shadow-[0_4px_12px_rgba(220,38,38,0.35)]"
+                      : "neo-nav-link"
+                  }`
+                }
+              >
+                Shop Catalogue
+              </NavLink>
+
+              {/* Compatibility Finder */}
+              <NavLink
+                to="/compatibility"
+                className={({ isActive }) =>
+                  `rounded-xl px-4 py-2 text-sm font-semibold transition-all ${
+                    isActive
+                      ? "bg-brand-red text-white shadow-[0_4px_12px_rgba(220,38,38,0.35)]"
+                      : "neo-nav-link"
+                  }`
+                }
+              >
+                Compatibility Finder
+              </NavLink>
             </nav>
 
             {/* Right: Theme Toggle Switch, Neomorphic Selection Counter Button & Mobile Menu Toggle */}
@@ -170,43 +179,117 @@ export function Layout() {
 
         {/* Mobile menu dropdown */}
         {mobileMenuOpen && (
-          <div className="border-t border-surface-border bg-surface-white px-4 py-4 md:hidden">
+          <div className="border-t border-surface-border bg-surface-white px-4 py-4 md:hidden max-h-[calc(100vh-5rem)] overflow-y-auto">
             <nav className="flex flex-col gap-2">
-              {NAV_LINKS.map((link) => {
-                if (link.isHash) {
-                  return (
-                    <a
-                      key={link.to}
-                      href="#categories"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        handleNavClick(link.to, true);
-                      }}
-                      className="neo-button-secondary justify-start rounded-xl px-4 py-2.5 text-sm font-semibold"
-                    >
-                      {link.label}
-                    </a>
-                  );
+              <NavLink
+                to="/"
+                end
+                onClick={handleMobileNav}
+                className={({ isActive }) =>
+                  `rounded-xl px-4 py-2.5 text-sm font-semibold transition-all ${
+                    isActive && location.pathname === "/"
+                      ? "bg-brand-red text-white shadow-[0_4px_12px_rgba(220,38,38,0.35)]"
+                      : "neo-button-secondary justify-start"
+                  }`
                 }
+              >
+                Home
+              </NavLink>
 
-                return (
-                  <NavLink
-                    key={link.to}
-                    to={link.to}
-                    end={link.end}
-                    onClick={() => setMobileMenuOpen(false)}
-                    className={({ isActive }) =>
-                      `rounded-xl px-4 py-2.5 text-sm font-semibold transition-all ${
-                        isActive
-                          ? "bg-brand-red text-white shadow-[0_4px_12px_rgba(220,38,38,0.35)]"
-                          : "neo-button-secondary justify-start"
-                      }`
-                    }
-                  >
-                    {link.label}
-                  </NavLink>
-                );
-              })}
+              {/* Lively Categories Accordion on Mobile */}
+              <div className="rounded-2xl border border-surface-border overflow-hidden bg-surface-white">
+                <button
+                  type="button"
+                  onClick={() => setMobileCategoriesOpen((prev) => !prev)}
+                  className="w-full flex items-center justify-between px-4 py-2.5 text-sm font-bold text-ink-charcoal hover:text-brand-red transition-colors"
+                >
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="h-4 w-4 text-brand-red" />
+                    <span>Categories</span>
+                    <span className="neo-pill-inset text-[10px] px-1.5 py-0.5 rounded font-extrabold">
+                      5 Lines
+                    </span>
+                  </div>
+                  <ChevronDown
+                    className={`h-4 w-4 text-ink-muted transition-transform duration-200 ${
+                      mobileCategoriesOpen ? "rotate-180 text-brand-red" : ""
+                    }`}
+                  />
+                </button>
+
+                {mobileCategoriesOpen && (
+                  <div className="border-t border-surface-border px-2 py-2 space-y-1 bg-surface-raised/40">
+                    {CATEGORY_ITEMS.map((item) => {
+                      const Icon = item.icon;
+                      return (
+                        <Link
+                          key={item.id}
+                          to={item.href}
+                          onClick={handleMobileNav}
+                          className="flex items-center justify-between rounded-xl p-2.5 hover:bg-surface-white transition-colors"
+                        >
+                          <div className="flex items-center gap-2.5">
+                            <div className="h-8 w-8 rounded-lg neo-surface-inset flex items-center justify-center">
+                              <Icon className={`h-4 w-4 ${item.iconColor}`} />
+                            </div>
+                            <div>
+                              <p className="text-xs font-bold text-ink-charcoal">
+                                {item.name}
+                              </p>
+                              <p className="text-[10px] text-ink-secondary">
+                                {item.countLabel}
+                              </p>
+                            </div>
+                          </div>
+                          <span className="text-xs text-brand-red font-bold">
+                            →
+                          </span>
+                        </Link>
+                      );
+                    })}
+
+                    <div className="pt-2 border-t border-surface-border">
+                      <Link
+                        to="/shop"
+                        onClick={handleMobileNav}
+                        className="block text-center text-xs font-bold text-brand-red py-1 hover:underline"
+                      >
+                        Explore All in Catalogue →
+                      </Link>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Shop Catalogue */}
+              <NavLink
+                to="/shop"
+                onClick={handleMobileNav}
+                className={({ isActive }) =>
+                  `rounded-xl px-4 py-2.5 text-sm font-semibold transition-all ${
+                    isActive
+                      ? "bg-brand-red text-white shadow-[0_4px_12px_rgba(220,38,38,0.35)]"
+                      : "neo-button-secondary justify-start"
+                  }`
+                }
+              >
+                Shop Catalogue
+              </NavLink>
+
+              {/* Compatibility Finder */}
+              <NavLink
+                to="/compatibility"
+                onClick={handleMobileNav}
+                className={({ isActive }) =>
+                  `rounded-xl px-4 py-2.5 text-sm font-semibold transition-all ${
+                    isActive
+                      ? "bg-brand-red text-white shadow-[0_4px_12px_rgba(220,38,38,0.35)]"
+                      : "neo-button-secondary justify-start"
+                  }`
+                }
+              >
+                Compatibility Finder
+              </NavLink>
             </nav>
 
             {/* Mobile Theme Switcher */}

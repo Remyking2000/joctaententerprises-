@@ -14,6 +14,7 @@ import {
 import type { CategorySummary, ProductSummary } from "@jocta/shared";
 import { catalogApi } from "../lib/api";
 import { ProductCard } from "../components/ProductCard";
+import { PartnerLogosCarousel } from "../components/PartnerLogosCarousel";
 import { useTheme } from "../context/ThemeContext";
 
 interface CategoryShowcase {
@@ -551,6 +552,9 @@ export function HomePage() {
           </div>
         )}
       </section>
+
+      {/* 5. Partnered Companies & Brands Logo Slideshow */}
+      <PartnerLogosCarousel />
     </main>
   );
 }
