@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 560" fill="none">
+  <!-- Warm studio backdrop -->
+  <rect width="800" height="560" rx="24" fill="#F3EFE6"/>
+  <rect x="32" y="32" width="736" height="496" rx="18" fill="#FAF8F3" stroke="#E4DEC9" stroke-width="2"/>
+
+  <!-- Subtle studio surface platform -->
+  <rect x="76" y="420" width="648" height="24" rx="12" fill="#E6E0D2"/>
+
+  <!-- Office Laser Printer (Center-Right) -->
+  <g transform="translate(350, 120)">
+    <!-- Paper output tray / top -->
+    <rect x="64" y="0" width="220" height="52" rx="8" fill="#FFFFFF" stroke="#2B2E33" stroke-width="4"/>
+    <line x1="92" y1="18" x2="220" y2="18" stroke="#D0CBC0" stroke-width="4" stroke-linecap="round"/>
+    <line x1="92" y1="32" x2="190" y2="32" stroke="#D0CBC0" stroke-width="4" stroke-linecap="round"/>
+
+    <!-- Main printer chassis -->
+    <rect x="16" y="44" width="316" height="196" rx="16" fill="#FFFFFF" stroke="#1E2024" stroke-width="4"/>
+    <!-- Front recessed bay -->
+    <rect x="44" y="76" width="260" height="84" rx="10" fill="#F3EFE6" stroke="#1E2024" stroke-width="3"/>
+    <!-- Printer control panel -->
+    <rect x="236" y="88" width="52" height="32" rx="6" fill="#1E2024"/>
+    <circle cx="252" cy="128" r="5" fill="#E9252A"/>
+    <circle cx="270" cy="128" r="5" fill="#8C919A"/>
+    <!-- Brand stripe -->
+    <rect x="64" y="96" width="96" height="10" rx="5" fill="#E9252A"/>
+    <rect x="64" y="116" width="136" height="8" rx="4" fill="#C7C1B4"/>
+
+    <!-- Lower paper cassette tray -->
+    <rect x="36" y="240" width="276" height="60" rx="10" fill="#FAF8F3" stroke="#1E2024" stroke-width="4"/>
+    <rect x="134" y="260" width="80" height="18" rx="5" fill="#E6E0D2" stroke="#1E2024" stroke-width="3"/>
+  </g>
+
+  <!-- Laser Toner Cartridge Box & Cartridge (Front-Left) -->
+  <g transform="translate(88, 228)">
+    <!-- Toner Packaging Box -->
+    <rect x="0" y="0" width="244" height="110" rx="12" fill="#FFFFFF" stroke="#1E2024" stroke-width="4"/>
+    <rect x="0" y="0" width="56" height="110" rx="12" fill="#E9252A"/>
+    <rect x="44" y="0" width="12" height="110" fill="#E9252A"/>
+    <text x="28" y="62" text-anchor="middle" fill="#FFFFFF" font-family="system-ui, sans-serif" font-weight="800" font-size="16" transform="rotate(-90 28 62)">TONER</text>
+    <rect x="76" y="24" width="110" height="12" rx="4" fill="#1E2024"/>
+    <rect x="76" y="46" width="140" height="8" rx="4" fill="#8C919A"/>
+    <rect x="76" y="64" width="84" height="22" rx="6" fill="#F3EFE6" stroke="#D5CFC2" stroke-width="2"/>
+    <text x="118" y="79" text-anchor="middle" fill="#1E2024" font-family="monospace" font-weight="700" font-size="12">LASER</text>
+
+    <!-- Actual Toner Cartridge Cylinder in front -->
+    <g transform="translate(24, 124)">
+      <rect x="0" y="10" width="268" height="58" rx="12" fill="#23262B" stroke="#1E2024" stroke-width="4"/>
+      <rect x="20" y="0" width="56" height="14" rx="4" fill="#E9252A"/>
+      <rect x="24" y="26" width="164" height="26" rx="6" fill="#32363E"/>
+      <circle cx="234" cy="39" r="14" fill="#F3EFE6" stroke="#1E2024" stroke-width="3"/>
+      <circle cx="234" cy="39" r="5" fill="#E9252A"/>
+    </g>
+  </g>
+
+  <!-- CMYK Ink Bottles Set (Bottom-Right) -->
+  <g transform="translate(568, 300)">
+    <!-- Bottle 1 (Black) -->
+    <rect x="10" y="0" width="20" height="18" rx="3" fill="#1E2024"/>
+    <rect x="4" y="18" width="32" height="20" rx="4" fill="#32363E"/>
+    <rect x="0" y="36" width="40" height="84" rx="8" fill="#FFFFFF" stroke="#1E2024" stroke-width="3.5"/>
+    <rect x="6" y="54" width="28" height="50" rx="4" fill="#1E2024"/>
+
+    <!-- Bottle 2 (Red/Magenta) -->
+    <g transform="translate(50, 8)">
+      <rect x="10" y="0" width="20" height="18" rx="3" fill="#E9252A"/>
+      <rect x="4" y="18" width="32" height="18" rx="4" fill="#E9252A"/>
+      <rect x="0" y="34" width="40" height="78" rx="8" fill="#FFFFFF" stroke="#1E2024" stroke-width="3.5"/>
+      <rect x="6" y="50" width="28" height="46" rx="4" fill="#E9252A"/>
+    </g>
+
+    <!-- Bottle 3 (Cyan) -->
+    <g transform="translate(100, 8)">
+      <rect x="10" y="0" width="20" height="18" rx="3" fill="#0284C7"/>
+      <rect x="4" y="18" width="32" height="18" rx="4" fill="#0284C7"/>
+      <rect x="0" y="34" width="40" height="78" rx="8" fill="#FFFFFF" stroke="#1E2024" stroke-width="3.5"/>
+      <rect x="6" y="50" width="28" height="46" rx="4" fill="#0284C7"/>
+    </g>
+  </g>
+</svg>

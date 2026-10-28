@@ -1,6 +1,5 @@
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { CartProvider } from "./context/CartContext";
-import { ThemeProvider } from "./context/ThemeContext";
 import { Layout } from "./components/Layout";
 import { HomePage } from "./pages/HomePage";
 import { ShopPage } from "./pages/ShopPage";
@@ -10,9 +9,8 @@ import { NotFoundPage } from "./pages/NotFoundPage";
 
 export function App() {
   return (
-    <ThemeProvider>
-      <CartProvider>
-        <BrowserRouter>
+    <CartProvider>
+      <BrowserRouter>
         <Routes>
           <Route element={<Layout />}>
             <Route index element={<HomePage />} />
@@ -27,7 +25,6 @@ export function App() {
         </Routes>
       </BrowserRouter>
     </CartProvider>
-    </ThemeProvider>
   );
 }
 

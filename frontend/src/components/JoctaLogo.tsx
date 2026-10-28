@@ -6,34 +6,33 @@ interface JoctaLogoProps {
 }
 
 /**
- * Renders the Jocta Enterprises brand logo.
- * Loads `/jocta-logo.png` with a clean neomorphic container and fallback.
+ * Renders the Jocta Enterprises brand logo using `/jocta-logo.png` with a clean neomorphic container and fallback.
  */
 export function JoctaLogo({ size = "md", showText = true }: JoctaLogoProps) {
   const [imgFailed, setImgFailed] = useState(false);
 
   const sizeClasses = {
     sm: "h-9 w-9 text-xs",
-    md: "h-11 w-11 text-sm",
-    lg: "h-14 w-14 text-base",
+    md: "h-10 w-10 text-sm",
+    lg: "h-12 w-12 text-base",
   }[size];
 
   return (
-    <div className="inline-flex items-center gap-3">
+    <div className="inline-flex items-center gap-2.5">
       <div
-        className={`${sizeClasses} shrink-0 rounded-2xl bg-surface-raised shadow-neo-sm p-1 flex items-center justify-center overflow-hidden border border-surface-border transition-colors`}
+        className={`${sizeClasses} shrink-0 rounded-neo-sm bg-surface-white shadow-neo-sm p-1 flex items-center justify-center overflow-hidden border border-surface-border`}
       >
         {!imgFailed ? (
           <img
             src="/jocta-logo.png"
-            alt="Jocta Enterprises"
+            alt="Jocta Enterprises logo"
             onError={() => setImgFailed(true)}
-            className="h-full w-full object-contain rounded-xl"
+            className="h-full w-full object-contain"
           />
         ) : (
           <span
             aria-hidden="true"
-            className="h-full w-full inline-flex items-center justify-center rounded-xl bg-brand-red text-white font-extrabold tracking-tight"
+            className="h-full w-full inline-flex items-center justify-center rounded-neo-sm bg-brand-red text-white font-extrabold tracking-tight"
           >
             JE
           </span>
@@ -42,16 +41,16 @@ export function JoctaLogo({ size = "md", showText = true }: JoctaLogoProps) {
 
       {showText && (
         <div className="flex flex-col leading-tight select-none">
-          <div className="flex items-center gap-1.5">
-            <span className="text-base sm:text-lg font-black tracking-tight text-ink-charcoal transition-colors">
+          <div className="flex items-center gap-1">
+            <span className="text-sm sm:text-base font-extrabold tracking-tight text-ink-charcoal">
               JOCTA
             </span>
-            <span className="text-base sm:text-lg font-black tracking-tight text-brand-red">
+            <span className="text-sm sm:text-base font-extrabold tracking-tight text-brand-red">
               ENTERPRISES
             </span>
           </div>
-          <span className="text-[11px] font-semibold text-ink-muted tracking-tight transition-colors">
-            Toners • Printer Parts • Consumables
+          <span className="text-[11px] font-medium text-ink-muted">
+            Printer Supplies &amp; Parts
           </span>
         </div>
       )}

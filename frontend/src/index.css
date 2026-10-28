@@ -2,77 +2,40 @@
 @tailwind components;
 @tailwind utilities;
 
-:root,
-html.light,
-[data-theme="light"] {
-  /* Jocta brand red */
-  --color-brand-red: #DC2626;
-  --color-brand-red-hover: #B91C1C;
-  --color-brand-red-tint: #FEE2E2;
+:root {
+  /* Jocta brand red (toned down, refined crimson) */
+  --color-brand-red: #C42B30;
+  --color-brand-red-hover: #A62226;
+  --color-brand-red-tint: #F8EAEB;
 
-  /* Soft warm off-white canvas */
-  --color-canvas-ivory: #F0EEE6;
-  --color-canvas-warm: #E4E0D5;
-  --color-canvas-subtle: #EAE7DF;
+  /* Warm ivory canvas backgrounds */
+  --color-canvas-ivory: #F6F3EC;
+  --color-canvas-warm: #EDE8DD;
+  --color-canvas-subtle: #EFEBE1;
 
-  /* Floating surfaces in light mode */
-  --color-surface-white: #FAF9F5;
-  --color-surface-raised: #F3F0E8;
-  --color-surface-border: #DCD6CA;
-  --color-surface-highlight: rgba(255, 255, 255, 0.8);
-  --color-navbar-bg: rgba(240, 238, 230, 0.92);
+  /* White floating surfaces */
+  --color-surface-white: #FFFFFF;
+  --color-surface-raised: #FAF8F3;
+  --color-surface-border: #E2DDD2;
+  --color-navbar-bg: #FFFFFF;
 
   /* Charcoal typography */
-  --color-ink-charcoal: #18191B;
-  --color-ink-secondary: #494F57;
-  --color-ink-muted: #6F7682;
+  --color-ink-charcoal: #1E2024;
+  --color-ink-secondary: #4B5058;
+  --color-ink-muted: #6E747E;
 
-  /* Neomorphic geometry & soft dual-tone shadows */
-  --radius-neo-card: 1.25rem;
-  --radius-neo-button: 0.875rem;
+  /* Consistent rounded corner system */
+  --radius-neo-card: 1rem;
+  --radius-neo-button: 0.75rem;
 
-  --shadow-neo-card: 6px 6px 16px #d1cbd5, -6px -6px 16px #ffffff;
-  --shadow-neo-button: 4px 4px 10px #d1cbd5, -4px -4px 10px #ffffff;
-  --shadow-neo-soft: 5px 5px 12px #d1cbd5, -5px -5px 12px #ffffff;
-  --shadow-neo-inset: inset 3px 3px 7px #d1cbd5, inset -3px -3px 7px #ffffff;
-  --shadow-neo-inset-sm: inset 2px 2px 5px #d1cbd5, inset -2px -2px 5px #ffffff;
-  --shadow-neo-hero: 8px 8px 20px #d1cbd5, -8px -8px 20px #ffffff;
-  --shadow-neo-hover: 8px 8px 22px #c5bfc9, -7px -7px 20px #ffffff;
-}
-
-html.dark,
-body.dark,
-[data-theme="dark"] {
-  /* Jocta brand red in dark mode */
-  --color-brand-red: #EF4444;
-  --color-brand-red-hover: #DC2626;
-  --color-brand-red-tint: rgba(239, 68, 68, 0.16);
-
-  /* Deep obsidian/charcoal canvas */
-  --color-canvas-ivory: #0E1217;
-  --color-canvas-warm: #090C10;
-  --color-canvas-subtle: #0A0D11;
-
-  /* Floating dark surfaces */
-  --color-surface-white: #161B22;
-  --color-surface-raised: #1E242E;
-  --color-surface-border: #28303C;
-  --color-surface-highlight: rgba(255, 255, 255, 0.07);
-  --color-navbar-bg: rgba(14, 18, 23, 0.92);
-
-  /* High-contrast typography */
-  --color-ink-charcoal: #F3F4F6;
-  --color-ink-secondary: #9CA3AF;
-  --color-ink-muted: #6B7280;
-
-  /* Dark neomorphic shadows with specular upper-left highlight */
-  --shadow-neo-card: 6px 6px 16px #06080b, -4px -4px 12px #1b222c;
-  --shadow-neo-button: 3px 3px 8px #06080b, -3px -3px 8px #1e2531;
-  --shadow-neo-soft: 4px 4px 12px #06080b, -3px -3px 10px #1c222c;
-  --shadow-neo-inset: inset 3px 3px 6px #06080b, inset -2px -2px 5px #1c232f;
-  --shadow-neo-inset-sm: inset 2px 2px 4px #06080b, inset -1px -1px 3px #1c232f;
-  --shadow-neo-hero: 8px 8px 22px #05070a, -5px -5px 16px #1b222c;
-  --shadow-neo-hover: 8px 8px 22px #040507, -5px -5px 18px #222a36;
+  /* Restrained, subtle solid-color neomorphic shadows */
+  --shadow-neo-card: 4px 4px 10px #E5E0D5, -4px -4px 10px #FFFFFF;
+  --shadow-neo-button: 3px 3px 7px #E5E0D5, -3px -3px 7px #FFFFFF;
+  --shadow-neo-soft: 3px 3px 8px #E5E0D5, -3px -3px 8px #FFFFFF;
+  --shadow-neo-inset: inset 2px 2px 5px #DFD9CC, inset -2px -2px 5px #FFFFFF;
+  --shadow-neo-inset-sm: inset 1px 1px 3px #DFD9CC, inset -1px -1px 3px #FFFFFF;
+  --shadow-neo-hover: 6px 6px 14px #DCD6C8, -4px -4px 10px #FFFFFF;
+  --shadow-navbar: 0 2px 6px #EAE5DA;
 }
 
 @layer base {
@@ -110,11 +73,13 @@ body.dark,
   .neo-navbar {
     background-color: var(--color-navbar-bg);
     border-bottom: 1px solid var(--color-surface-border);
+    box-shadow: var(--shadow-navbar);
     transition: background-color 200ms ease, border-color 200ms ease;
   }
 
   .neo-nav-link {
-    color: var(--color-ink-secondary);
+    color: var(--color-ink-charcoal);
+    border-radius: var(--radius-neo-button);
     transition: color 150ms ease, background-color 150ms ease;
   }
 
@@ -124,13 +89,13 @@ body.dark,
   }
 
   .neo-footer {
-    background-color: var(--color-canvas-subtle);
+    background-color: var(--color-surface-white);
     border-top: 1px solid var(--color-surface-border);
     color: var(--color-ink-secondary);
     transition: background-color 200ms ease, border-color 200ms ease, color 200ms ease;
   }
 
-  /* Soft Neomorphic Base Card */
+  /* Soft Neomorphic Cards */
   .neo-soft {
     background-color: var(--color-surface-white);
     border-radius: var(--radius-neo-card);
@@ -152,24 +117,24 @@ body.dark,
     border-radius: var(--radius-neo-card);
     box-shadow: var(--shadow-neo-card);
     border: 1px solid var(--color-surface-border);
-    transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease, background-color 200ms ease;
+    transition: transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease, background-color 200ms ease;
   }
 
   .neo-card-interactive:hover {
-    transform: translateY(-3px);
+    transform: translateY(-2px);
     box-shadow: var(--shadow-neo-hover);
+    border-color: var(--color-brand-red);
   }
 
-  /* Hero Search & Showcase Containers */
   .neo-hero-card {
     background-color: var(--color-surface-white);
-    border-radius: 1.5rem;
-    box-shadow: var(--shadow-neo-hero);
+    border-radius: var(--radius-neo-card);
+    box-shadow: var(--shadow-neo-card);
     border: 1px solid var(--color-surface-border);
     transition: background-color 200ms ease, box-shadow 200ms ease, border-color 200ms ease;
   }
 
-  /* Sunken / Inset container */
+  /* Sunken / Inset surfaces */
   .neo-inset {
     background-color: var(--color-canvas-warm);
     box-shadow: var(--shadow-neo-inset);
@@ -188,31 +153,10 @@ body.dark,
   .neo-pill-inset {
     background-color: var(--color-canvas-warm);
     color: var(--color-ink-secondary);
+    border-radius: var(--radius-neo-button);
     box-shadow: var(--shadow-neo-inset-sm);
     border: 1px solid var(--color-surface-border);
     transition: background-color 200ms ease, color 200ms ease, box-shadow 200ms ease;
-  }
-
-  /* Segmented Tab Bar */
-  .neo-tab-track {
-    background-color: var(--color-canvas-warm);
-    box-shadow: var(--shadow-neo-inset-sm);
-    border: 1px solid var(--color-surface-border);
-  }
-
-  .neo-tab-active {
-    background-color: var(--color-surface-raised);
-    color: var(--color-ink-charcoal);
-    box-shadow: var(--shadow-neo-button);
-    border: 1px solid var(--color-surface-border);
-  }
-
-  .neo-tab-inactive {
-    color: var(--color-ink-secondary);
-  }
-
-  .neo-tab-inactive:hover {
-    color: var(--color-ink-charcoal);
   }
 
   /* Buttons */
@@ -224,20 +168,22 @@ body.dark,
     background-color: var(--color-brand-red);
     color: #FFFFFF;
     border-radius: var(--radius-neo-button);
-    box-shadow: 0 4px 14px 0 rgba(220, 38, 38, 0.42), inset 1px 1px 2px rgba(255, 255, 255, 0.35);
+    box-shadow: var(--shadow-neo-button);
+    border: 1px solid var(--color-brand-red);
     font-weight: 600;
     transition: background-color 150ms ease, box-shadow 150ms ease, transform 120ms ease;
   }
 
   .neo-button-primary:hover:not(:disabled) {
     background-color: var(--color-brand-red-hover);
-    box-shadow: 0 6px 18px 0 rgba(220, 38, 38, 0.55), inset 1px 1px 2px rgba(255, 255, 255, 0.35);
+    border-color: var(--color-brand-red-hover);
     transform: translateY(-1px);
+    box-shadow: var(--shadow-neo-hover);
   }
 
   .neo-button-primary:active:not(:disabled) {
     transform: translateY(1px);
-    box-shadow: inset 2px 2px 5px rgba(0, 0, 0, 0.3);
+    box-shadow: inset 2px 2px 4px rgba(0, 0, 0, 0.3);
   }
 
   .neo-button-primary:disabled {
@@ -262,8 +208,8 @@ body.dark,
 
   .neo-button-secondary:hover:not(:disabled) {
     color: var(--color-brand-red);
+    border-color: var(--color-brand-red);
     box-shadow: var(--shadow-neo-hover);
-    transform: translateY(-1px);
   }
 
   .neo-button-secondary:active:not(:disabled) {
@@ -284,7 +230,7 @@ body.dark,
     border: 1px solid var(--color-surface-border);
     border-radius: var(--radius-neo-button);
     box-shadow: var(--shadow-neo-inset);
-    padding: 0.75rem 1rem;
+    padding: 0.625rem 0.875rem;
     font-size: 0.875rem;
     line-height: 1.25rem;
     transition: border-color 150ms ease, box-shadow 150ms ease, background-color 150ms ease, color 150ms ease;
@@ -297,10 +243,9 @@ body.dark,
   .neo-input:focus {
     border-color: var(--color-brand-red);
     outline: none;
-    box-shadow: var(--shadow-neo-inset), 0 0 0 2px rgba(220, 38, 38, 0.25);
+    box-shadow: var(--shadow-neo-inset), 0 0 0 2px var(--color-brand-red-tint);
   }
 
-  /* Form dropdown options */
   select.neo-input {
     background-color: var(--color-surface-white);
     color: var(--color-ink-charcoal);

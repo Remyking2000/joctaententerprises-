@@ -14,8 +14,11 @@ import {
 import type { ProductDetail, ProductVariantSummary } from "@jocta/shared";
 import { ApiClientError, catalogApi } from "../lib/api";
 import {
+  DUMMY_HARDWARE_IMAGES,
   formatKes,
   getStockStatus,
+  isDemoRecord,
+  LOCAL_PRODUCT_PLACEHOLDERS,
   PRODUCT_AUTHENTICITY_LABELS,
   PRODUCT_CONDITION_LABELS,
   PRODUCT_TYPE_LABELS,
@@ -192,10 +195,8 @@ export function ProductPage() {
       [product.thumbnailUrl, ...(product.images ?? [])].filter(Boolean),
     ),
   );
-  const isDemo =
-    product.slug.startsWith("demo-") ||
-    product.sku.startsWith("DEMO-") ||
-    product.name.includes("[DEMO]");
+  const isDemo = isDemoRecord(product);
+  const fallbackImage = LOCAL_PRODUCT_PLACEHOLDERS[product.productType];
 
   function handleAddToSelection() {
     if (!product || !stockStatus.available) return;
@@ -216,7 +217,7 @@ export function ProductPage() {
   }
 
   return (
-    <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 space-y-10">
+    <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 space-y-8">
       {/* Breadcrumb */}
       <nav
         aria-label="Breadcrumb"
@@ -244,33 +245,40 @@ export function ProductPage() {
         <span className="text-ink-charcoal font-semibold">{product.name}</span>
       </nav>
 
+      {/* Demo Data Warning Banner */}
+      {isDemo && (
+        <div
+          role="note"
+          className="neo-surface-inset border-brand-red bg-brand-red-tint px-4 py-3 text-xs text-ink-charcoal"
+        >
+          <strong>Demonstration Record ([DEMO]):</strong> This item, its KSh
+          price, SKU, stock quantity, and compatibility mappings come from the
+          development seed script and are not verified Jocta Enterprises
+          catalogue data.
+        </div>
+      )}
+
       {/* Main Product Card */}
       <section className="neo-card p-6 sm:p-8 lg:p-10">
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
-          {/* Left: Product Image / Technical Fallback */}
+          {/* Left: Product Image / Dummy Photo & Local SVG Fallback */}
           <div className="lg:col-span-5 space-y-4">
-            <div className="neo-surface-inset aspect-[4/3] w-full flex items-center justify-center overflow-hidden p-6">
-              {selectedImage && !imgError ? (
+            <div className="neo-surface-inset relative aspect-[4/3] w-full flex items-center justify-center overflow-hidden">
+              {!imgError ? (
                 <img
-                  src={selectedImage}
+                  src={
+                    selectedImage || DUMMY_HARDWARE_IMAGES[product.productType]
+                  }
                   alt={product.name}
                   onError={() => setImgError(true)}
-                  className="h-full w-full object-contain"
+                  className="h-full w-full object-cover"
                 />
               ) : (
-                <div className="text-center space-y-3 p-4">
-                  <div className="mx-auto inline-flex h-16 w-16 items-center justify-center rounded-neo-pill bg-surface-white text-brand-red shadow-neo-sm border border-surface-border">
-                    <Package className="h-8 w-8" aria-hidden="true" />
-                  </div>
-                  <p className="text-sm font-bold text-ink-charcoal">
-                    {PRODUCT_TYPE_LABELS[product.productType]}
-                  </p>
-                  {activeOemPart && (
-                    <p className="inline-block rounded-neo-sm bg-surface-white border border-surface-border px-3 py-1 font-mono text-xs font-bold text-ink-charcoal">
-                      OEM / Code: {activeOemPart}
-                    </p>
-                  )}
-                </div>
+                <img
+                  src={fallbackImage}
+                  alt={`${product.name} placeholder illustration`}
+                  className="h-full w-full object-contain p-4"
+                />
               )}
             </div>
 
@@ -656,26 +664,76 @@ export function ProductPage() {
           <div className="flex items-center justify-between gap-4">
             <h2
               id="related-products-heading"
-              className="text-xl sm:text-2xl font-extrabold text-ink-charcoal"
+              className="text-lg sm:text-2xl font-extrabold text-ink-charcoal"
             >
               Related Products in {product.category?.name ?? "Catalogue"}
             </h2>
             <Link
               to="/shop"
-              className="neo-button-secondary px-4 py-2 text-xs"
+              className="neo-button-secondary px-3 sm:px-4 py-2 text-xs shrink-0"
             >
               <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />
               Back to Catalogue
             </Link>
           </div>
 
-          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-4">
             {product.relatedProducts.map((rel) => (
               <ProductCard key={rel.id} product={rel} />
             ))}
           </div>
         </section>
       )}
+
+      {/* Concept 1 Mobile Sticky Bottom Action Bar (above the bottom tab bar) */}
+      <div className="md:hidden fixed bottom-[54px] inset-x-0 z-30 border-t border-surface-border bg-surface-white px-4 py-2.5 shadow-neo">
+        <div className="mx-auto flex max-w-7xl items-center gap-2.5">
+          <div className="inline-flex items-center gap-1.5 rounded-neo-sm border border-surface-border bg-canvas-ivory px-1.5 py-1">
+            <button
+              type="button"
+              onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+              disabled={!stockStatus.available || quantity <= 1}
+              aria-label="Decrease quantity"
+              className="neo-button-secondary h-7 w-7 p-0"
+            >
+              <Minus className="h-3 w-3" />
+            </button>
+            <span className="min-w-[1.5rem] text-center text-xs font-bold text-ink-charcoal">
+              {quantity}
+            </span>
+            <button
+              type="button"
+              onClick={() =>
+                setQuantity((q) =>
+                  activeStockQty > 0 ? Math.min(activeStockQty, q + 1) : q + 1,
+                )
+              }
+              disabled={
+                !stockStatus.available ||
+                (activeStockQty > 0 && quantity >= activeStockQty)
+              }
+              aria-label="Increase quantity"
+              className="neo-button-secondary h-7 w-7 p-0"
+            >
+              <Plus className="h-3 w-3" />
+            </button>
+          </div>
+
+          <button
+            type="button"
+            disabled={!stockStatus.available}
+            onClick={handleAddToSelection}
+            className="neo-button-primary flex-1 py-2.5 px-4 text-xs"
+          >
+            <ShoppingBag className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+            <span className="truncate">
+              {stockStatus.available
+                ? `Add to Selection — ${formatKes((Number(activePriceKes) || 0) * quantity)}`
+                : "Out of Stock"}
+            </span>
+          </button>
+        </div>
+      </div>
     </main>
   );
 }

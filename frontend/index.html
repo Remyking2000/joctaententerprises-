@@ -1,34 +1,21 @@
 <!doctype html>
-<html lang="en" class="dark" data-theme="dark">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
     <link rel="icon" type="image/png" sizes="64x64" href="/favicon.png" />
     <link rel="apple-touch-icon" href="/jocta-logo.png" />
-    <title>Jocta Enterprises — Printer Toners, Parts &amp; Consumables</title>
+    <title>Jocta Enterprises — Printer Toners, Ink &amp; Spare Parts</title>
     <script>
       (function () {
         try {
-          var saved = localStorage.getItem("jocta_theme");
+          localStorage.removeItem("jocta_theme");
           var root = document.documentElement;
-          if (saved === "light") {
-            root.classList.remove("dark");
-            root.classList.add("light");
-            root.setAttribute("data-theme", "light");
-            root.style.colorScheme = "light";
-          } else {
-            // Default is dark mode
-            root.classList.remove("light");
-            root.classList.add("dark");
-            root.setAttribute("data-theme", "dark");
-            root.style.colorScheme = "dark";
-          }
-        } catch (e) {
-          document.documentElement.classList.add("dark");
-          document.documentElement.setAttribute("data-theme", "dark");
-          document.documentElement.style.colorScheme = "dark";
-        }
+          root.classList.remove("dark", "light");
+          root.removeAttribute("data-theme");
+          root.style.colorScheme = "light";
+        } catch (e) {}
       })();
     </script>
   </head>

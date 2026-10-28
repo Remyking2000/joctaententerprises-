@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 450" fill="none">
+  <rect width="600" height="450" fill="#F3EFE6"/>
+  <rect x="28" y="28" width="544" height="394" rx="18" fill="#FFFFFF" stroke="#E4DEC9" stroke-width="2"/>
+  <!-- Fuser Assembly / Maintenance Unit -->
+  <g transform="translate(96, 100)">
+    <rect x="0" y="20" width="408" height="110" rx="16" fill="#23262B" stroke="#1E2024" stroke-width="4"/>
+    <!-- Pressure roller sleeve -->
+    <rect x="44" y="48" width="320" height="54" rx="10" fill="#E9252A" stroke="#1E2024" stroke-width="3"/>
+    <!-- End gears & bearings -->
+    <circle cx="26" cy="75" r="14" fill="#FAF8F3" stroke="#1E2024" stroke-width="3"/>
+    <circle cx="382" cy="75" r="14" fill="#FAF8F3" stroke="#1E2024" stroke-width="3"/>
+  </g>
+  <!-- Pickup Rollers & Drive Gear Set -->
+  <g transform="translate(130, 250)">
+    <!-- Drive Gear -->
+    <circle cx="64" cy="54" r="46" fill="#FAF8F3" stroke="#1E2024" stroke-width="4"/>
+    <circle cx="64" cy="54" r="20" fill="#E6E0D2" stroke="#1E2024" stroke-width="3"/>
+    <!-- Pickup Roller -->
+    <g transform="translate(154, 16)">
+      <rect x="0" y="22" width="180" height="32" rx="8" fill="#8C919A" stroke="#1E2024" stroke-width="3"/>
+      <rect x="52" y="6" width="76" height="64" rx="12" fill="#E9252A" stroke="#1E2024" stroke-width="4"/>
+      <line x1="72" y1="10" x2="72" y2="66" stroke="#1E2024" stroke-width="3"/>
+      <line x1="108" y1="10" x2="108" y2="66" stroke="#1E2024" stroke-width="3"/>
+    </g>
+  </g>
+</svg>

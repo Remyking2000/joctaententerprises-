@@ -1,31 +1,42 @@
-import { useLayoutEffect, useState } from "react";
+import {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type FormEvent,
+} from "react";
 import {
   Link,
   NavLink,
   Outlet,
   useLocation,
+  useNavigate,
 } from "react-router-dom";
 import {
   ChevronDown,
+  Home,
+  LayoutGrid,
   Menu,
-  Moon,
+  Printer,
+  Search,
   ShoppingBag,
-  Sun,
   X,
-  Sparkles,
 } from "lucide-react";
 import { JoctaLogo } from "./JoctaLogo";
 import { CartDrawer } from "./CartDrawer";
 import { CategoriesDropdown, CATEGORY_ITEMS } from "./CategoriesDropdown";
 import { useCart } from "../context/CartContext";
-import { useTheme } from "../context/ThemeContext";
 
 export function Layout() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mobileCategoriesOpen, setMobileCategoriesOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [headerSearch, setHeaderSearch] = useState("");
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
   const location = useLocation();
+  const navigate = useNavigate();
   const { totalCount, openCart } = useCart();
-  const { theme, isDark, toggleTheme } = useTheme();
 
   // Always load every opened page from the very top
   useLayoutEffect(() => {
@@ -37,43 +48,73 @@ export function Layout() {
     document.body.scrollTop = 0;
   }, [location.pathname, location.search]);
 
+  // Focus search input when the search bar is opened
+  useEffect(() => {
+    if (searchOpen) {
+      setTimeout(() => {
+        searchInputRef.current?.focus();
+      }, 50);
+    }
+  }, [searchOpen]);
+
+  // Close search bar or mobile menu on Escape
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") {
+        setSearchOpen(false);
+        setMobileMenuOpen(false);
+      }
+    }
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
   const handleMobileNav = () => {
     setMobileMenuOpen(false);
     setMobileCategoriesOpen(false);
+    setSearchOpen(false);
   };
 
+  function handleHeaderSearchSubmit(e: FormEvent) {
+    e.preventDefault();
+    const q = headerSearch.trim();
+    setSearchOpen(false);
+    setMobileMenuOpen(false);
+    if (q) {
+      navigate(`/shop?search=${encodeURIComponent(q)}`);
+    } else {
+      navigate("/shop");
+    }
+  }
+
   return (
-    <div
-      data-theme={theme}
-      className="neo-app-shell flex min-h-screen flex-col selection:bg-brand-red selection:text-white"
-    >
-      {/* Single-Tier Sticky Navbar */}
-      <header className="neo-navbar sticky top-0 z-40 backdrop-blur shadow-sm">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="flex h-20 items-center justify-between gap-4">
-            {/* Brand Logo (Left) */}
+    <div className="neo-app-shell flex min-h-screen flex-col pb-16 md:pb-0 selection:bg-brand-red selection:text-white">
+      {/* Sticky Header */}
+      <header className="neo-navbar sticky top-0 z-40">
+        <div className="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8">
+          <div className="flex h-16 sm:h-20 items-center justify-between gap-2 sm:gap-4">
+            {/* Brand Logo */}
             <Link
               to="/"
               onClick={handleMobileNav}
-              className="shrink-0 transition-transform hover:scale-[1.01]"
+              className="shrink-0"
               aria-label="Jocta Enterprises Home"
             >
-              <JoctaLogo size="md" />
+              <JoctaLogo size="sm" />
             </Link>
 
-            {/* Navigation Links (Center) */}
+            {/* Primary Navigation Links (Desktop) */}
             <nav
               aria-label="Main Navigation"
-              className="hidden md:flex items-center gap-1.5 lg:gap-2"
+              className="hidden md:flex items-center gap-1 lg:gap-2"
             >
-              {/* Home */}
               <NavLink
                 to="/"
                 end
                 className={({ isActive }) =>
-                  `rounded-xl px-4 py-2 text-sm font-semibold transition-all ${
+                  `rounded-neo-sm px-3.5 py-2 text-sm font-semibold transition-colors ${
                     isActive && location.pathname === "/"
-                      ? "bg-brand-red text-white shadow-[0_4px_12px_rgba(220,38,38,0.35)]"
+                      ? "bg-brand-red text-white"
                       : "neo-nav-link"
                   }`
                 }
@@ -81,91 +122,85 @@ export function Layout() {
                 Home
               </NavLink>
 
-              {/* Lively Categories Dropdown */}
-              <CategoriesDropdown />
-
-              {/* Shop Catalogue */}
               <NavLink
                 to="/shop"
                 className={({ isActive }) =>
-                  `rounded-xl px-4 py-2 text-sm font-semibold transition-all ${
+                  `rounded-neo-sm px-3.5 py-2 text-sm font-semibold transition-colors ${
                     isActive
-                      ? "bg-brand-red text-white shadow-[0_4px_12px_rgba(220,38,38,0.35)]"
+                      ? "bg-brand-red text-white"
                       : "neo-nav-link"
                   }`
                 }
               >
-                Shop Catalogue
+                Shop
               </NavLink>
 
-              {/* Compatibility Finder */}
+              <CategoriesDropdown />
+
               <NavLink
                 to="/compatibility"
                 className={({ isActive }) =>
-                  `rounded-xl px-4 py-2 text-sm font-semibold transition-all ${
+                  `rounded-neo-sm px-3.5 py-2 text-sm font-semibold transition-colors ${
                     isActive
-                      ? "bg-brand-red text-white shadow-[0_4px_12px_rgba(220,38,38,0.35)]"
+                      ? "bg-brand-red text-white"
                       : "neo-nav-link"
                   }`
                 }
               >
-                Compatibility Finder
+                Find Toner
               </NavLink>
             </nav>
 
-            {/* Right: Theme Toggle Switch, Neomorphic Selection Counter Button & Mobile Menu Toggle */}
-            <div className="flex items-center gap-2.5 sm:gap-3">
-              {/* Dark / Light Mode Switcher */}
+            {/* Right Controls: Search Toggle Icon, Cart & Hamburger Menu */}
+            <div className="flex items-center gap-1.5 sm:gap-2.5">
+              {/* Search Toggle Button (Opens search bar only when clicked) */}
               <button
                 type="button"
-                onClick={toggleTheme}
-                aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
-                title={isDark ? "Switch to light mode" : "Switch to dark mode"}
-                className="neo-button-secondary h-10 sm:h-11 px-3 sm:px-3.5 text-xs sm:text-sm font-bold cursor-pointer"
+                onClick={() => {
+                  setSearchOpen((prev) => !prev);
+                  setMobileMenuOpen(false);
+                }}
+                aria-label={searchOpen ? "Close search bar" : "Open search bar"}
+                aria-expanded={searchOpen}
+                title="Search products"
+                className={`neo-button-secondary h-10 w-10 p-0 cursor-pointer ${
+                  searchOpen ? "border-brand-red text-brand-red" : ""
+                }`}
               >
-                {isDark ? (
-                  <>
-                    <Sun
-                      className="h-4 w-4 sm:h-5 sm:w-5 text-amber-400 transition-transform hover:rotate-45"
-                      aria-hidden="true"
-                    />
-                    <span className="hidden md:inline font-bold">Light</span>
-                  </>
+                {searchOpen ? (
+                  <X className="h-4 w-4" aria-hidden="true" />
                 ) : (
-                  <>
-                    <Moon
-                      className="h-4 w-4 sm:h-5 sm:w-5 text-ink-secondary transition-transform hover:-rotate-12"
-                      aria-hidden="true"
-                    />
-                    <span className="hidden md:inline font-bold">Dark</span>
-                  </>
+                  <Search className="h-4 w-4" aria-hidden="true" />
                 )}
               </button>
 
-              {/* Selection Counter */}
+              {/* Cart Button */}
               <button
                 type="button"
                 onClick={openCart}
-                aria-label={`Open selection list (${totalCount} items)`}
-                className="neo-button-secondary group relative px-3.5 sm:px-4 py-2 sm:py-2.5 text-sm font-semibold cursor-pointer"
+                aria-label={`Cart (${totalCount} items)`}
+                className="neo-button-secondary h-10 px-2.5 sm:px-3.5 text-xs sm:text-sm font-semibold cursor-pointer"
               >
                 <ShoppingBag
-                  className="h-4 w-4 text-brand-red transition-transform group-hover:scale-110"
+                  className="h-4 w-4 text-brand-red"
                   aria-hidden="true"
                 />
-                <span className="hidden sm:inline font-bold">Selection</span>
-                <span className="inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-brand-red px-1.5 text-xs font-bold text-white shadow-sm">
+                <span className="hidden sm:inline">Cart</span>
+                <span className="inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded-neo-pill bg-brand-red px-1.5 text-xs font-bold text-white">
                   {totalCount}
                 </span>
               </button>
 
-              {/* Mobile menu button */}
+              {/* Hamburger Menu Button */}
               <button
                 type="button"
-                onClick={() => setMobileMenuOpen((prev) => !prev)}
+                onClick={() => {
+                  setMobileMenuOpen((prev) => !prev);
+                  setSearchOpen(false);
+                }}
                 aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
                 aria-expanded={mobileMenuOpen}
-                className="neo-button-secondary md:hidden h-10 w-10 p-0"
+                className="neo-button-secondary md:hidden h-10 w-10 p-0 cursor-pointer"
               >
                 {mobileMenuOpen ? (
                   <X className="h-5 w-5" />
@@ -177,18 +212,54 @@ export function Layout() {
           </div>
         </div>
 
-        {/* Mobile menu dropdown */}
+        {/* Collapsible Search Bar (Only opens when search icon is clicked) */}
+        {searchOpen && (
+          <div className="border-t border-surface-border bg-surface-white px-4 py-3">
+            <div className="mx-auto max-w-3xl">
+              <form
+                onSubmit={handleHeaderSearchSubmit}
+                role="search"
+                aria-label="Search catalogue"
+                className="flex items-center gap-2"
+              >
+                <div className="relative flex-1">
+                  <input
+                    ref={searchInputRef}
+                    type="search"
+                    value={headerSearch}
+                    onChange={(e) => setHeaderSearch(e.target.value)}
+                    placeholder="Search toner code, SKU, or printer model (e.g. CF259A, M404dn)..."
+                    aria-label="Search toner code, SKU, or printer model"
+                    className="neo-input pl-9 pr-3 py-2.5 text-xs sm:text-sm"
+                  />
+                  <Search
+                    className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-ink-muted"
+                    aria-hidden="true"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  className="neo-button-primary px-4 sm:px-5 py-2.5 text-xs sm:text-sm font-bold shrink-0 cursor-pointer"
+                >
+                  Search
+                </button>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* Hamburger Menu Drawer (Mobile) */}
         {mobileMenuOpen && (
-          <div className="border-t border-surface-border bg-surface-white px-4 py-4 md:hidden max-h-[calc(100vh-5rem)] overflow-y-auto">
-            <nav className="flex flex-col gap-2">
+          <div className="border-t border-surface-border bg-surface-white px-4 py-4 md:hidden space-y-3 max-h-[calc(100vh-4rem)] overflow-y-auto">
+            <nav aria-label="Mobile Navigation" className="flex flex-col gap-2">
               <NavLink
                 to="/"
                 end
                 onClick={handleMobileNav}
                 className={({ isActive }) =>
-                  `rounded-xl px-4 py-2.5 text-sm font-semibold transition-all ${
+                  `rounded-neo-sm px-4 py-2.5 text-sm font-semibold ${
                     isActive && location.pathname === "/"
-                      ? "bg-brand-red text-white shadow-[0_4px_12px_rgba(220,38,38,0.35)]"
+                      ? "bg-brand-red text-white"
                       : "neo-button-secondary justify-start"
                   }`
                 }
@@ -196,79 +267,13 @@ export function Layout() {
                 Home
               </NavLink>
 
-              {/* Lively Categories Accordion on Mobile */}
-              <div className="rounded-2xl border border-surface-border overflow-hidden bg-surface-white">
-                <button
-                  type="button"
-                  onClick={() => setMobileCategoriesOpen((prev) => !prev)}
-                  className="w-full flex items-center justify-between px-4 py-2.5 text-sm font-bold text-ink-charcoal hover:text-brand-red transition-colors"
-                >
-                  <div className="flex items-center gap-2">
-                    <Sparkles className="h-4 w-4 text-brand-red" />
-                    <span>Categories</span>
-                    <span className="neo-pill-inset text-[10px] px-1.5 py-0.5 rounded font-extrabold">
-                      5 Lines
-                    </span>
-                  </div>
-                  <ChevronDown
-                    className={`h-4 w-4 text-ink-muted transition-transform duration-200 ${
-                      mobileCategoriesOpen ? "rotate-180 text-brand-red" : ""
-                    }`}
-                  />
-                </button>
-
-                {mobileCategoriesOpen && (
-                  <div className="border-t border-surface-border px-2 py-2 space-y-1 bg-surface-raised/40">
-                    {CATEGORY_ITEMS.map((item) => {
-                      const Icon = item.icon;
-                      return (
-                        <Link
-                          key={item.id}
-                          to={item.href}
-                          onClick={handleMobileNav}
-                          className="flex items-center justify-between rounded-xl p-2.5 hover:bg-surface-white transition-colors"
-                        >
-                          <div className="flex items-center gap-2.5">
-                            <div className="h-8 w-8 rounded-lg neo-surface-inset flex items-center justify-center">
-                              <Icon className={`h-4 w-4 ${item.iconColor}`} />
-                            </div>
-                            <div>
-                              <p className="text-xs font-bold text-ink-charcoal">
-                                {item.name}
-                              </p>
-                              <p className="text-[10px] text-ink-secondary">
-                                {item.countLabel}
-                              </p>
-                            </div>
-                          </div>
-                          <span className="text-xs text-brand-red font-bold">
-                            →
-                          </span>
-                        </Link>
-                      );
-                    })}
-
-                    <div className="pt-2 border-t border-surface-border">
-                      <Link
-                        to="/shop"
-                        onClick={handleMobileNav}
-                        className="block text-center text-xs font-bold text-brand-red py-1 hover:underline"
-                      >
-                        Explore All in Catalogue →
-                      </Link>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Shop Catalogue */}
               <NavLink
                 to="/shop"
                 onClick={handleMobileNav}
                 className={({ isActive }) =>
-                  `rounded-xl px-4 py-2.5 text-sm font-semibold transition-all ${
+                  `rounded-neo-sm px-4 py-2.5 text-sm font-semibold ${
                     isActive
-                      ? "bg-brand-red text-white shadow-[0_4px_12px_rgba(220,38,38,0.35)]"
+                      ? "bg-brand-red text-white"
                       : "neo-button-secondary justify-start"
                   }`
                 }
@@ -276,45 +281,56 @@ export function Layout() {
                 Shop Catalogue
               </NavLink>
 
-              {/* Compatibility Finder */}
+              {/* Categories Accordion */}
+              <div className="rounded-neo-sm border border-surface-border bg-surface-raised overflow-hidden">
+                <button
+                  type="button"
+                  onClick={() => setMobileCategoriesOpen((prev) => !prev)}
+                  aria-expanded={mobileCategoriesOpen}
+                  className="w-full flex items-center justify-between px-4 py-2.5 text-sm font-semibold text-ink-charcoal hover:text-brand-red cursor-pointer"
+                >
+                  <span>Categories</span>
+                  <ChevronDown
+                    className={`h-4 w-4 text-ink-muted transition-transform ${
+                      mobileCategoriesOpen ? "rotate-180 text-brand-red" : ""
+                    }`}
+                  />
+                </button>
+
+                {mobileCategoriesOpen && (
+                  <div className="border-t border-surface-border bg-canvas-ivory p-2 space-y-1">
+                    {CATEGORY_ITEMS.map((item) => {
+                      const Icon = item.icon;
+                      return (
+                        <Link
+                          key={item.id}
+                          to={item.href}
+                          onClick={handleMobileNav}
+                          className="flex items-center gap-2.5 rounded-neo-sm px-3 py-2 text-xs font-semibold text-ink-charcoal hover:bg-surface-white hover:text-brand-red"
+                        >
+                          <Icon className="h-4 w-4 text-brand-red shrink-0" />
+                          <span>{item.name}</span>
+                        </Link>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
               <NavLink
                 to="/compatibility"
                 onClick={handleMobileNav}
                 className={({ isActive }) =>
-                  `rounded-xl px-4 py-2.5 text-sm font-semibold transition-all ${
+                  `rounded-neo-sm px-4 py-2.5 text-sm font-semibold ${
                     isActive
-                      ? "bg-brand-red text-white shadow-[0_4px_12px_rgba(220,38,38,0.35)]"
+                      ? "bg-brand-red text-white"
                       : "neo-button-secondary justify-start"
                   }`
                 }
               >
-                Compatibility Finder
+                Find Toner by Printer
               </NavLink>
             </nav>
-
-            {/* Mobile Theme Switcher */}
-            <div className="pt-3 mt-3 border-t border-surface-border flex items-center justify-between">
-              <span className="text-xs font-bold uppercase tracking-wider text-ink-secondary">
-                Appearance
-              </span>
-              <button
-                type="button"
-                onClick={toggleTheme}
-                className="neo-button-secondary px-3.5 py-2 text-xs font-bold cursor-pointer"
-              >
-                {isDark ? (
-                  <>
-                    <Sun className="h-4 w-4 text-amber-400" />
-                    <span>Switch to Light</span>
-                  </>
-                ) : (
-                  <>
-                    <Moon className="h-4 w-4 text-ink-secondary" />
-                    <span>Switch to Dark</span>
-                  </>
-                )}
-              </button>
-            </div>
           </div>
         )}
       </header>
@@ -327,83 +343,151 @@ export function Layout() {
       {/* Cart Drawer */}
       <CartDrawer />
 
-      {/* Footer */}
-      <footer className="neo-footer mt-20 py-12">
+      {/* Clean, Compact Footer */}
+      <footer className="neo-footer mt-16 py-10">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 gap-8 md:grid-cols-4">
-            <div className="md:col-span-2 space-y-4">
+          <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="sm:col-span-2 space-y-3">
               <JoctaLogo size="sm" />
-              <p className="max-w-md text-sm text-ink-secondary leading-relaxed">
-                Jocta Enterprises is Kenya’s trusted specialist for laser printer
-                toners, drum imaging units, replacement spare parts, ink
-                consumables, and office printers. Verified compatibility and
-                tested reliability.
+              <p className="max-w-sm text-xs text-ink-secondary leading-relaxed">
+                Printer toner cartridges, ink supplies, replacement parts, and
+                office printers.
               </p>
             </div>
 
             <div>
-              <h3 className="text-xs font-bold uppercase tracking-wider text-ink-charcoal">
-                Quick Links
-              </h3>
-              <ul className="mt-3 space-y-2 text-sm text-ink-secondary">
+              <h2 className="text-xs font-bold uppercase tracking-wider text-ink-charcoal">
+                Navigation
+              </h2>
+              <ul className="mt-2.5 space-y-2 text-xs text-ink-secondary">
                 <li>
-                  <Link
-                    to="/shop"
-                    className="hover:text-brand-red transition-colors"
-                  >
-                    Full Product Catalogue
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    to="/compatibility"
-                    className="hover:text-brand-red transition-colors"
-                  >
-                    Printer Compatibility Finder
+                  <Link to="/shop" className="hover:text-brand-red">
+                    Shop All Products
                   </Link>
                 </li>
                 <li>
                   <Link
                     to="/shop?productType=toner"
-                    className="hover:text-brand-red transition-colors"
+                    className="hover:text-brand-red"
                   >
-                    Laser Toners
+                    Toners
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    to="/shop?productType=ink"
+                    className="hover:text-brand-red"
+                  >
+                    Ink Supplies
                   </Link>
                 </li>
                 <li>
                   <Link
                     to="/shop?productType=printer_part"
-                    className="hover:text-brand-red transition-colors"
+                    className="hover:text-brand-red"
                   >
-                    Printer Spare Parts
+                    Printer Parts
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/compatibility" className="hover:text-brand-red">
+                    Find Toner by Printer
                   </Link>
                 </li>
               </ul>
             </div>
 
             <div>
-              <h3 className="text-xs font-bold uppercase tracking-wider text-ink-charcoal">
-                Customer Support
-              </h3>
-              <div className="neo-surface-inset mt-3 p-4 text-xs text-ink-secondary leading-relaxed">
-                <p className="font-bold text-ink-charcoal">Nairobi, Kenya</p>
-                <p className="mt-1">
-                  Orders dispatched countrywide across all Kenyan counties. Fast
-                  verification for fleet maintenance and office supplies.
-                </p>
-              </div>
+              <h2 className="text-xs font-bold uppercase tracking-wider text-ink-charcoal">
+                Location
+              </h2>
+              <p className="mt-2.5 text-xs text-ink-secondary leading-relaxed">
+                Jocta Enterprises
+                <br />
+                Nairobi, Kenya
+              </p>
             </div>
           </div>
 
-          <div className="mt-10 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-surface-border pt-6 text-xs text-ink-muted">
+          <div className="mt-8 flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-surface-border pt-6 text-xs text-ink-muted">
             <p>
               &copy; {new Date().getFullYear()} Jocta Enterprises. All rights
               reserved.
             </p>
-            <p>All prices in Kenyan Shillings (KES).</p>
+            <p>Prices displayed in Kenyan Shillings (KSh).</p>
           </div>
         </div>
       </footer>
+
+      {/* Concept 1 Mobile Sticky Bottom Navigation Bar */}
+      <nav
+        aria-label="Mobile bottom navigation"
+        className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-surface-white border-t border-surface-border shadow-neo px-2 py-1.5"
+      >
+        <div className="grid grid-cols-4 gap-1">
+          <NavLink
+            to="/"
+            end
+            onClick={handleMobileNav}
+            className={({ isActive }) =>
+              `flex flex-col items-center justify-center py-1 rounded-neo-sm text-[11px] font-bold transition-colors ${
+                isActive && location.pathname === "/"
+                  ? "text-brand-red"
+                  : "text-ink-secondary hover:text-ink-charcoal"
+              }`
+            }
+          >
+            <Home className="h-4 w-4 mb-0.5" aria-hidden="true" />
+            <span>Home</span>
+          </NavLink>
+
+          <NavLink
+            to="/shop"
+            onClick={handleMobileNav}
+            className={({ isActive }) =>
+              `flex flex-col items-center justify-center py-1 rounded-neo-sm text-[11px] font-bold transition-colors ${
+                isActive
+                  ? "text-brand-red"
+                  : "text-ink-secondary hover:text-ink-charcoal"
+              }`
+            }
+          >
+            <LayoutGrid className="h-4 w-4 mb-0.5" aria-hidden="true" />
+            <span>Categories</span>
+          </NavLink>
+
+          <NavLink
+            to="/compatibility"
+            onClick={handleMobileNav}
+            className={({ isActive }) =>
+              `flex flex-col items-center justify-center py-1 rounded-neo-sm text-[11px] font-bold transition-colors ${
+                isActive
+                  ? "text-brand-red"
+                  : "text-ink-secondary hover:text-ink-charcoal"
+              }`
+            }
+          >
+            <Printer className="h-4 w-4 mb-0.5" aria-hidden="true" />
+            <span>Find Toner</span>
+          </NavLink>
+
+          <button
+            type="button"
+            onClick={openCart}
+            className="relative flex flex-col items-center justify-center py-1 rounded-neo-sm text-[11px] font-bold text-ink-secondary hover:text-ink-charcoal cursor-pointer"
+          >
+            <div className="relative">
+              <ShoppingBag className="h-4 w-4 mb-0.5" aria-hidden="true" />
+              {totalCount > 0 && (
+                <span className="absolute -top-1.5 -right-2.5 inline-flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-brand-red px-1 text-[9px] font-extrabold text-white">
+                  {totalCount}
+                </span>
+              )}
+            </div>
+            <span>Cart</span>
+          </button>
+        </div>
+      </nav>
     </div>
   );
 }

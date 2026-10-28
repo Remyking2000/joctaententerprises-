@@ -302,8 +302,8 @@ export function CompatibilityFinderPage() {
                         onClick={() => updateParam("model", pm.slug)}
                         className={`w-full text-left rounded-neo-sm border p-3.5 transition-all flex items-center justify-between gap-3 ${
                           isSelected
-                            ? "bg-red-600 text-white border-red-600 shadow-md"
-                            : "bg-surface-white text-ink-charcoal border-surface-border hover:border-red-500/50"
+                            ? "bg-brand-red text-white border-brand-red shadow-neo-sm"
+                            : "bg-surface-white text-ink-charcoal border-surface-border hover:border-brand-red"
                         }`}
                       >
                         <div>
@@ -322,7 +322,7 @@ export function CompatibilityFinderPage() {
                         <span
                           className={`rounded-neo-pill px-2.5 py-0.5 text-xs font-bold shrink-0 ${
                             isSelected
-                              ? "bg-white text-red-600 shadow-sm"
+                              ? "bg-white text-brand-red"
                               : "bg-canvas-ivory text-ink-charcoal border border-surface-border"
                           }`}
                         >
@@ -467,7 +467,7 @@ export function CompatibilityFinderPage() {
                   )}
                 </div>
               ) : (
-                <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                <div className="grid grid-cols-2 gap-3 sm:gap-5">
                   {compatResult.items.map((product) => (
                     <ProductCard key={product.id} product={product} />
                   ))}

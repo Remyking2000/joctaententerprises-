@@ -63,6 +63,7 @@ export function ShopPage() {
   );
 
   const [searchInput, setSearchInput] = useState(activeSearch);
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [categories, setCategories] = useState<CategorySummary[]>([]);
   const [brands, setBrands] = useState<BrandSummary[]>([]);
   const [products, setProducts] = useState<ProductSummary[]>([]);
@@ -159,19 +160,86 @@ export function ShopPage() {
       activeSearch,
   );
 
+  const quickPills: {
+    label: string;
+    isActive: boolean;
+    onClick: () => void;
+  }[] = [
+    {
+      label: "All",
+      isActive: !activeType && !activeAuthenticity && !activeCategory,
+      onClick: () => {
+        const next = new URLSearchParams(searchParams);
+        next.delete("productType");
+        next.delete("authenticity");
+        next.delete("category");
+        next.delete("page");
+        setSearchParams(next);
+      },
+    },
+    {
+      label: "Toners",
+      isActive: activeType === "toner",
+      onClick: () =>
+        updateFilter("productType", activeType === "toner" ? "" : "toner"),
+    },
+    {
+      label: "Ink",
+      isActive: activeType === "ink",
+      onClick: () =>
+        updateFilter("productType", activeType === "ink" ? "" : "ink"),
+    },
+    {
+      label: "Spare Parts",
+      isActive: activeType === "printer_part",
+      onClick: () =>
+        updateFilter(
+          "productType",
+          activeType === "printer_part" ? "" : "printer_part",
+        ),
+    },
+    {
+      label: "Drum Units",
+      isActive: activeType === "drum",
+      onClick: () =>
+        updateFilter(
+          "productType",
+          activeType === "drum" ? "" : "drum",
+        ),
+    },
+    {
+      label: "Printers",
+      isActive: activeType === "printer",
+      onClick: () =>
+        updateFilter(
+          "productType",
+          activeType === "printer" ? "" : "printer",
+        ),
+    },
+    {
+      label: "Original OEM",
+      isActive: activeAuthenticity === "original",
+      onClick: () =>
+        updateFilter(
+          "authenticity",
+          activeAuthenticity === "original" ? "" : "original",
+        ),
+    },
+  ];
+
   return (
-    <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 space-y-8">
+    <main className="mx-auto max-w-7xl px-4 py-6 sm:py-8 sm:px-6 lg:px-8 space-y-5 sm:space-y-8">
       {/* Page Header */}
-      <section className="neo-card p-6 sm:p-8">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+      <section className="neo-card p-5 sm:p-8">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 sm:gap-6">
           <div>
             <p className="text-xs font-bold uppercase tracking-wider text-brand-red">
               Jocta Enterprises Catalogue
             </p>
-            <h1 className="mt-1 text-2xl sm:text-3xl font-extrabold text-ink-charcoal">
+            <h1 className="mt-1 text-xl sm:text-3xl font-extrabold text-ink-charcoal">
               Printer Toners, Parts &amp; Consumables
             </h1>
-            <p className="mt-1 text-sm text-ink-secondary">
+            <p className="mt-1 text-xs sm:text-sm text-ink-secondary">
               Filter by category, manufacturer, product type, or Original OEM vs
               Compatible options.
             </p>
@@ -181,14 +249,14 @@ export function ShopPage() {
             onSubmit={handleSearchSubmit}
             role="search"
             aria-label="Filter catalogue by keyword"
-            className="flex flex-col sm:flex-row gap-2.5 w-full lg:w-auto lg:min-w-[380px]"
+            className="flex flex-row gap-2 w-full lg:w-auto lg:min-w-[380px]"
           >
             <div className="relative flex-1">
               <input
                 type="search"
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
-                placeholder="Search name, SKU, OEM part # (e.g. CF259A)..."
+                placeholder="Search name, SKU, OEM part #..."
                 aria-label="Search by product name, SKU, or OEM part number"
                 className="neo-input pr-9"
               />
@@ -199,7 +267,7 @@ export function ShopPage() {
             </div>
             <button
               type="submit"
-              className="neo-button-primary px-5 py-2.5 text-xs shrink-0"
+              className="neo-button-primary px-4 sm:px-5 py-2.5 text-xs shrink-0"
             >
               Filter
             </button>
@@ -207,11 +275,41 @@ export function ShopPage() {
         </div>
       </section>
 
-      <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
+      {/* Concept 1 Horizontal Scrollable Quick-Filter Chips */}
+      <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
+        {quickPills.map((pill) => (
+          <button
+            key={pill.label}
+            type="button"
+            onClick={pill.onClick}
+            className={`shrink-0 rounded-neo-pill px-3.5 py-1.5 text-xs font-bold transition-all ${
+              pill.isActive
+                ? "bg-brand-red text-white shadow-neo-sm border border-brand-red-hover"
+                : "bg-surface-white text-ink-charcoal border border-surface-border shadow-neo-sm hover:border-brand-red"
+            }`}
+          >
+            {pill.label}
+          </button>
+        ))}
+
+        <button
+          type="button"
+          onClick={() => setMobileFiltersOpen((prev) => !prev)}
+          aria-expanded={mobileFiltersOpen}
+          className="lg:hidden ml-auto shrink-0 inline-flex items-center gap-1.5 rounded-neo-pill bg-surface-white border border-surface-border px-3.5 py-1.5 text-xs font-bold text-ink-charcoal shadow-neo-sm"
+        >
+          <Filter className="h-3.5 w-3.5 text-brand-red" aria-hidden="true" />
+          <span>{mobileFiltersOpen ? "Hide Filters" : "More Filters"}</span>
+        </button>
+      </div>
+
+      <div className="grid grid-cols-1 gap-6 lg:gap-8 lg:grid-cols-12">
         {/* Sidebar Filters */}
         <aside
           aria-label="Catalogue filters"
-          className="lg:col-span-3 space-y-5"
+          className={`lg:col-span-3 space-y-5 ${
+            mobileFiltersOpen ? "block" : "hidden lg:block"
+          }`}
         >
           <div className="neo-card p-5 space-y-5">
             <div className="flex items-center justify-between border-b border-surface-border pb-3">
@@ -437,10 +535,10 @@ export function ShopPage() {
           {loading ? (
             <div
               aria-live="polite"
-              className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3"
+              className="grid grid-cols-2 gap-3 sm:gap-5 xl:grid-cols-3"
             >
               {[1, 2, 3, 4, 5, 6].map((n) => (
-                <div key={n} className="neo-card p-5 space-y-4">
+                <div key={n} className="neo-card p-3 sm:p-5 space-y-3 sm:space-y-4">
                   <div className="aspect-[4/3] w-full rounded-neo-sm bg-canvas-warm" />
                   <div className="h-4 w-3/4 rounded bg-canvas-warm" />
                   <div className="h-3 w-1/2 rounded bg-canvas-warm" />
@@ -498,7 +596,7 @@ export function ShopPage() {
             </div>
           ) : (
             <>
-              <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
+              <div className="grid grid-cols-2 gap-3 sm:gap-5 xl:grid-cols-3">
                 {products.map((product) => (
                   <ProductCard key={product.id} product={product} />
                 ))}
