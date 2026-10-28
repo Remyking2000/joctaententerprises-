@@ -68,13 +68,21 @@ const FOUR_CORE_CATEGORIES: CategoryShowcase[] = [
   },
 ];
 
-const HERO_DUMMY_IMAGE =
-  "https://images.unsplash.com/photo-1612815154858-60aa4c59eaa6?auto=format&fit=crop&w=1000&q=85";
+const HERO_VIDEO_SRC = "/gemini_generated_video_03d92542.mp4";
+const HERO_FALLBACK_IMAGE =
+  "https://images.unsplash.com/photo-1612815154858-60aa4c59eaa6?auto=format&fit=crop&w=1200&q=85";
+
+const HERO_TICKER_ITEMS = [
+  "GENUINE OEM & COMPATIBLE TONERS",
+  "VERIFIED PRINTER COMPATIBILITY",
+  "SAME-DAY NAIROBI DISPATCH",
+  "COUNTRYWIDE FAST DELIVERY",
+];
 
 export function HomePage() {
   const navigate = useNavigate();
   const [printerQuery, setPrinterQuery] = useState("");
-  const [heroImgFailed, setHeroImgFailed] = useState(false);
+  const [heroLogoFailed, setHeroLogoFailed] = useState(false);
   const [failedCatIds, setFailedCatIds] = useState<Record<string, boolean>>({});
   const [featuredProducts, setFeaturedProducts] = useState<ProductSummary[]>([]);
   const [loading, setLoading] = useState(true);
@@ -127,57 +135,141 @@ export function HomePage() {
   const hasDemoItems = featuredProducts.some(isDemoRecord);
 
   return (
-    <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-10 lg:px-8 space-y-12">
-      {/* 1. Image-Led Hero Section */}
+    <main className="w-full">
+      {/* 1. Full-Screen Borderless Background-Video Hero Section */}
       <section
         aria-labelledby="hero-heading"
-        className="neo-hero-card p-6 sm:p-8 lg:p-10"
+        className="relative -mt-16 sm:-mt-20 min-h-screen w-full flex flex-col justify-between overflow-hidden"
       >
-        <div className="grid grid-cols-1 gap-8 lg:grid-cols-12 lg:items-center">
-          {/* Left: Concise Headline, Supporting Sentence & Single Primary CTA */}
-          <div className="lg:col-span-5 space-y-5">
-            <h1
-              id="hero-heading"
-              className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-ink-charcoal leading-tight"
-            >
-              Printer Toners, Ink &amp; Spare Parts
-            </h1>
+        {/* Video Viewport Area */}
+        <div className="relative flex-1 flex flex-col justify-between pt-24 pb-8 sm:pt-28 sm:pb-12 lg:pt-32 lg:pb-14">
+          {/* Background Video */}
+          <video
+            src={HERO_VIDEO_SRC}
+            poster={HERO_FALLBACK_IMAGE}
+            autoPlay
+            loop
+            muted
+            playsInline
+            aria-hidden="true"
+            className="absolute inset-0 h-full w-full object-cover"
+          />
 
-            <p className="text-sm sm:text-base text-ink-secondary leading-relaxed">
-              Browse original and compatible cartridges, replacement printer
-              components, and office printers for your workplace.
-            </p>
+          {/* Contrast Overlay */}
+          <div
+            aria-hidden="true"
+            className="absolute inset-0 bg-ink-charcoal/50"
+          />
 
-            <div className="pt-1">
-              <Link
-                to="/shop"
-                className="neo-button-primary w-full sm:w-auto px-6 py-3 text-sm font-bold"
-              >
-                <span>Shop Products</span>
-                <ArrowRight className="h-4 w-4" aria-hidden="true" />
-              </Link>
+          <div className="relative z-10 mx-auto w-full max-w-7xl flex-1 flex flex-col justify-between px-4 sm:px-6 lg:px-8">
+            {/* Top-Left: Oversized Iconic Brand Lockup */}
+            <div className="flex items-start">
+              <div className="inline-flex items-stretch gap-3 sm:gap-4 select-none">
+                <div className="flex flex-col justify-between text-right font-black uppercase tracking-tighter text-white leading-[0.88]">
+                  <span className="text-3xl sm:text-5xl lg:text-6xl">THE</span>
+                  <span className="text-3xl sm:text-5xl lg:text-6xl">
+                    JOCTA
+                  </span>
+                  <span className="text-2xl sm:text-4xl lg:text-5xl flex items-center justify-end gap-1.5">
+                    <span className="text-xs sm:text-base font-bold text-brand-red">
+                      ®
+                    </span>
+                    <span>PRINT</span>
+                  </span>
+                </div>
+
+                {/* Bold Brand Mark Emblem */}
+                <div className="w-16 sm:w-24 lg:w-28 rounded-r-full bg-white/95 p-2 sm:p-3 flex items-center justify-center">
+                  {!heroLogoFailed ? (
+                    <img
+                      src="/jocta-logo.png"
+                      alt="Jocta Enterprises emblem"
+                      onError={() => setHeroLogoFailed(true)}
+                      className="h-full w-full object-contain"
+                    />
+                  ) : (
+                    <span className="text-xl sm:text-3xl font-black text-brand-red">
+                      JE
+                    </span>
+                  )}
+                </div>
+              </div>
             </div>
-          </div>
 
-          {/* Right: Prominent Product Imagery */}
-          <div className="lg:col-span-7">
-            <div className="neo-surface-inset overflow-hidden">
-              <img
-                src={
-                  !heroImgFailed
-                    ? HERO_DUMMY_IMAGE
-                    : "/images/hero-printer-supplies.svg"
-                }
-                alt="Printer setup with laser toner cartridge and ink supplies"
-                width={800}
-                height={560}
-                onError={() => setHeroImgFailed(true)}
-                className="w-full h-56 sm:h-80 lg:h-96 object-cover"
-              />
+            {/* Bottom-Right: Bold Headline & Dual Explore Cards */}
+            <div className="mt-10 sm:mt-14 lg:mt-0 lg:self-end w-full max-w-md lg:max-w-lg space-y-5 sm:space-y-6">
+              <h1
+                id="hero-heading"
+                className="text-3xl sm:text-5xl lg:text-[56px] font-black uppercase tracking-tight text-white leading-[1.03]"
+              >
+                POWER YOUR
+                <br />
+                PRINTING.
+              </h1>
+
+              {/* Stacked Dark Explore Action Boxes */}
+              <div className="space-y-3">
+                <Link
+                  to="/shop"
+                  className="group flex items-center justify-between rounded-neo-sm bg-black/85 hover:bg-black text-white border border-white/15 hover:border-brand-red transition-all duration-200 overflow-hidden"
+                >
+                  <div className="px-5 py-3.5 sm:px-6 sm:py-4">
+                    <span className="block text-[10px] sm:text-[11px] font-bold uppercase tracking-widest text-white/60">
+                      EXPLORE
+                    </span>
+                    <span className="mt-0.5 block text-sm sm:text-lg font-bold text-white group-hover:text-brand-red transition-colors">
+                      Shop Toners, Ink &amp; Spare Parts
+                    </span>
+                  </div>
+                  <div className="self-stretch flex items-center justify-center border-l border-white/10 px-5 sm:px-6 text-white group-hover:text-brand-red">
+                    <ArrowRight
+                      className="h-5 w-5 transition-transform duration-200 group-hover:translate-x-1"
+                      aria-hidden="true"
+                    />
+                  </div>
+                </Link>
+
+                <Link
+                  to="/compatibility"
+                  className="group flex items-center justify-between rounded-neo-sm bg-black/85 hover:bg-black text-white border border-white/15 hover:border-brand-red transition-all duration-200 overflow-hidden"
+                >
+                  <div className="px-5 py-3.5 sm:px-6 sm:py-4">
+                    <span className="block text-[10px] sm:text-[11px] font-bold uppercase tracking-widest text-white/60">
+                      EXPLORE
+                    </span>
+                    <span className="mt-0.5 block text-sm sm:text-lg font-bold text-white group-hover:text-brand-red transition-colors">
+                      Find Toner by Printer Model
+                    </span>
+                  </div>
+                  <div className="self-stretch flex items-center justify-center border-l border-white/10 px-5 sm:px-6 text-white group-hover:text-brand-red">
+                    <ArrowRight
+                      className="h-5 w-5 transition-transform duration-200 group-hover:translate-x-1"
+                      aria-hidden="true"
+                    />
+                  </div>
+                </Link>
+              </div>
             </div>
           </div>
         </div>
+
+        {/* Bottom White Feature Ribbon (Full-Width Matching Reference Strip) */}
+        <div className="relative z-10 w-full border-y border-surface-border bg-surface-white px-4 py-3 sm:px-6">
+          <div className="mx-auto max-w-7xl flex flex-wrap items-center justify-between gap-x-6 gap-y-2 text-[10px] sm:text-xs font-bold uppercase tracking-wider text-ink-charcoal">
+            {HERO_TICKER_ITEMS.map((item) => (
+              <div key={item} className="inline-flex items-center gap-1.5">
+                <ArrowRight
+                  className="h-3.5 w-3.5 text-brand-red shrink-0"
+                  aria-hidden="true"
+                />
+                <span>{item}</span>
+              </div>
+            ))}
+          </div>
+        </div>
       </section>
+
+      <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8 space-y-12">
 
       {/* 2. Four Prominent Image-Led Category Cards (2x2 on mobile, 4 cols on desktop) */}
       <section
@@ -396,6 +488,7 @@ export function HomePage() {
 
       {/* 5. Partnered Companies & Brands Logo Slideshow */}
       <PartnerLogosCarousel />
+      </div>
     </main>
   );
 }

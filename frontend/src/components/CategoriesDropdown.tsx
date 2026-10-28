@@ -48,7 +48,11 @@ export const CATEGORY_ITEMS: CategoryItem[] = [
   },
 ];
 
-export function CategoriesDropdown() {
+export function CategoriesDropdown({
+  inverted = false,
+}: {
+  inverted?: boolean;
+}) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -113,14 +117,24 @@ export function CategoriesDropdown() {
         aria-label="Browse product categories"
         className={`inline-flex items-center gap-1.5 rounded-neo-sm px-3.5 py-2 text-sm font-semibold transition-colors cursor-pointer ${
           isOpen
-            ? "bg-canvas-ivory text-brand-red"
-            : "neo-nav-link"
+            ? inverted
+              ? "bg-white/15 text-white"
+              : "bg-canvas-ivory text-brand-red"
+            : inverted
+              ? "text-white hover:bg-white/15 hover:text-white"
+              : "neo-nav-link"
         }`}
       >
         <span>Categories</span>
         <ChevronDown
           className={`h-4 w-4 transition-transform duration-150 ${
-            isOpen ? "rotate-180 text-brand-red" : "text-ink-muted"
+            isOpen
+              ? inverted
+                ? "rotate-180 text-white"
+                : "rotate-180 text-brand-red"
+              : inverted
+                ? "text-white/80"
+                : "text-ink-muted"
           }`}
           aria-hidden="true"
         />

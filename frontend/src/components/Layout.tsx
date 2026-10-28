@@ -32,11 +32,26 @@ export function Layout() {
   const [mobileCategoriesOpen, setMobileCategoriesOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [headerSearch, setHeaderSearch] = useState("");
+  const [isScrolled, setIsScrolled] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   const location = useLocation();
   const navigate = useNavigate();
   const { totalCount, openCart } = useCart();
+
+  const isHomePage = location.pathname === "/";
+  const isHeroOverlay =
+    isHomePage && !isScrolled && !searchOpen && !mobileMenuOpen;
+
+  // Track scroll position so navbar is transparent over the hero video at the top of Home
+  useEffect(() => {
+    function handleScroll() {
+      setIsScrolled(window.scrollY > 30);
+    }
+    handleScroll();
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [location.pathname]);
 
   // Always load every opened page from the very top
   useLayoutEffect(() => {
@@ -89,8 +104,14 @@ export function Layout() {
 
   return (
     <div className="neo-app-shell flex min-h-screen flex-col pb-16 md:pb-0 selection:bg-brand-red selection:text-white">
-      {/* Sticky Header */}
-      <header className="neo-navbar sticky top-0 z-40">
+      {/* Sticky Header (Transparent over full-screen hero video on Home, solid neo-navbar elsewhere) */}
+      <header
+        className={`sticky top-0 z-40 transition-colors duration-200 ${
+          isHeroOverlay
+            ? "bg-transparent border-b border-transparent shadow-none"
+            : "neo-navbar"
+        }`}
+      >
         <div className="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8">
           <div className="flex h-16 sm:h-20 items-center justify-between gap-2 sm:gap-4">
             {/* Brand Logo */}
@@ -100,7 +121,7 @@ export function Layout() {
               className="shrink-0"
               aria-label="Jocta Enterprises Home"
             >
-              <JoctaLogo size="sm" />
+              <JoctaLogo size="sm" inverted={isHeroOverlay} />
             </Link>
 
             {/* Primary Navigation Links (Desktop) */}
@@ -115,7 +136,9 @@ export function Layout() {
                   `rounded-neo-sm px-3.5 py-2 text-sm font-semibold transition-colors ${
                     isActive && location.pathname === "/"
                       ? "bg-brand-red text-white"
-                      : "neo-nav-link"
+                      : isHeroOverlay
+                        ? "text-white hover:bg-white/15"
+                        : "neo-nav-link"
                   }`
                 }
               >
@@ -128,14 +151,16 @@ export function Layout() {
                   `rounded-neo-sm px-3.5 py-2 text-sm font-semibold transition-colors ${
                     isActive
                       ? "bg-brand-red text-white"
-                      : "neo-nav-link"
+                      : isHeroOverlay
+                        ? "text-white hover:bg-white/15"
+                        : "neo-nav-link"
                   }`
                 }
               >
                 Shop
               </NavLink>
 
-              <CategoriesDropdown />
+              <CategoriesDropdown inverted={isHeroOverlay} />
 
               <NavLink
                 to="/compatibility"
@@ -143,7 +168,9 @@ export function Layout() {
                   `rounded-neo-sm px-3.5 py-2 text-sm font-semibold transition-colors ${
                     isActive
                       ? "bg-brand-red text-white"
-                      : "neo-nav-link"
+                      : isHeroOverlay
+                        ? "text-white hover:bg-white/15"
+                        : "neo-nav-link"
                   }`
                 }
               >
@@ -163,8 +190,12 @@ export function Layout() {
                 aria-label={searchOpen ? "Close search bar" : "Open search bar"}
                 aria-expanded={searchOpen}
                 title="Search products"
-                className={`neo-button-secondary h-10 w-10 p-0 cursor-pointer ${
-                  searchOpen ? "border-brand-red text-brand-red" : ""
+                className={`h-10 w-10 p-0 cursor-pointer rounded-neo-sm inline-flex items-center justify-center transition-colors ${
+                  isHeroOverlay
+                    ? "bg-black/35 text-white border border-white/25 hover:bg-black/55"
+                    : `neo-button-secondary ${
+                        searchOpen ? "border-brand-red text-brand-red" : ""
+                      }`
                 }`}
               >
                 {searchOpen ? (
@@ -179,10 +210,16 @@ export function Layout() {
                 type="button"
                 onClick={openCart}
                 aria-label={`Cart (${totalCount} items)`}
-                className="neo-button-secondary h-10 px-2.5 sm:px-3.5 text-xs sm:text-sm font-semibold cursor-pointer"
+                className={`h-10 px-2.5 sm:px-3.5 text-xs sm:text-sm font-semibold cursor-pointer rounded-neo-sm inline-flex items-center justify-center gap-2 transition-colors ${
+                  isHeroOverlay
+                    ? "bg-black/35 text-white border border-white/25 hover:bg-black/55"
+                    : "neo-button-secondary"
+                }`}
               >
                 <ShoppingBag
-                  className="h-4 w-4 text-brand-red"
+                  className={`h-4 w-4 ${
+                    isHeroOverlay ? "text-white" : "text-brand-red"
+                  }`}
                   aria-hidden="true"
                 />
                 <span className="hidden sm:inline">Cart</span>
@@ -200,7 +237,11 @@ export function Layout() {
                 }}
                 aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
                 aria-expanded={mobileMenuOpen}
-                className="neo-button-secondary md:hidden h-10 w-10 p-0 cursor-pointer"
+                className={`md:hidden h-10 w-10 p-0 cursor-pointer rounded-neo-sm inline-flex items-center justify-center transition-colors ${
+                  isHeroOverlay
+                    ? "bg-black/35 text-white border border-white/25 hover:bg-black/55"
+                    : "neo-button-secondary"
+                }`}
               >
                 {mobileMenuOpen ? (
                   <X className="h-5 w-5" />

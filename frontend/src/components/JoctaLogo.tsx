@@ -3,12 +3,17 @@ import { useState } from "react";
 interface JoctaLogoProps {
   size?: "sm" | "md" | "lg";
   showText?: boolean;
+  inverted?: boolean;
 }
 
 /**
  * Renders the Jocta Enterprises brand logo using `/jocta-logo.png` with a clean neomorphic container and fallback.
  */
-export function JoctaLogo({ size = "md", showText = true }: JoctaLogoProps) {
+export function JoctaLogo({
+  size = "md",
+  showText = true,
+  inverted = false,
+}: JoctaLogoProps) {
   const [imgFailed, setImgFailed] = useState(false);
 
   const sizeClasses = {
@@ -20,7 +25,11 @@ export function JoctaLogo({ size = "md", showText = true }: JoctaLogoProps) {
   return (
     <div className="inline-flex items-center gap-2.5">
       <div
-        className={`${sizeClasses} shrink-0 rounded-neo-sm bg-surface-white shadow-neo-sm p-1 flex items-center justify-center overflow-hidden border border-surface-border`}
+        className={`${sizeClasses} shrink-0 rounded-neo-sm bg-surface-white p-1 flex items-center justify-center overflow-hidden ${
+          inverted
+            ? "border border-white/25"
+            : "shadow-neo-sm border border-surface-border"
+        }`}
       >
         {!imgFailed ? (
           <img
@@ -42,14 +51,22 @@ export function JoctaLogo({ size = "md", showText = true }: JoctaLogoProps) {
       {showText && (
         <div className="flex flex-col leading-tight select-none">
           <div className="flex items-center gap-1">
-            <span className="text-sm sm:text-base font-extrabold tracking-tight text-ink-charcoal">
+            <span
+              className={`text-sm sm:text-base font-extrabold tracking-tight ${
+                inverted ? "text-white" : "text-ink-charcoal"
+              }`}
+            >
               JOCTA
             </span>
             <span className="text-sm sm:text-base font-extrabold tracking-tight text-brand-red">
               ENTERPRISES
             </span>
           </div>
-          <span className="text-[11px] font-medium text-ink-muted">
+          <span
+            className={`text-[11px] font-medium ${
+              inverted ? "text-white/75" : "text-ink-muted"
+            }`}
+          >
             Printer Supplies &amp; Parts
           </span>
         </div>
