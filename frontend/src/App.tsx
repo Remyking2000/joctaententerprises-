@@ -5,6 +5,7 @@ import { HomePage } from "./pages/HomePage";
 import { ShopPage } from "./pages/ShopPage";
 import { ProductPage } from "./pages/ProductPage";
 import { CompatibilityFinderPage } from "./pages/CompatibilityFinderPage";
+import { PrivacyPolicyPage } from "./pages/PrivacyPolicyPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
 import { AdminLayout } from "./admin/AdminLayout";
 import { AdminDashboardPage } from "./admin/AdminDashboardPage";
@@ -40,6 +41,8 @@ export function App() {
               path="compatibility"
               element={<CompatibilityFinderPage />}
             />
+            <Route path="privacy" element={<PrivacyPolicyPage />} />
+            <Route path="privacy-policy" element={<PrivacyPolicyPage />} />
             <Route path="*" element={<NotFoundPage />} />
           </Route>
         </Routes>

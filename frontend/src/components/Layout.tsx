@@ -18,6 +18,7 @@ import {
   Package,
   Search,
   ShieldAlert,
+  ShieldCheck,
   ShoppingBag,
   X,
 } from "lucide-react";
@@ -489,21 +490,38 @@ export function Layout() {
 
             <div>
               <h2 className="text-xs font-bold uppercase tracking-wider text-ink-charcoal">
-                Location
+                Location &amp; Legal
               </h2>
               <p className="mt-2.5 text-xs text-ink-secondary leading-relaxed">
                 Jocta Enterprises
                 <br />
                 Nairobi, Kenya
               </p>
+              <div className="mt-3">
+                <Link
+                  to="/privacy"
+                  className="text-xs text-ink-secondary hover:text-brand-red transition-colors inline-flex items-center gap-1.5 font-medium"
+                >
+                  <ShieldCheck className="h-3.5 w-3.5 text-brand-red shrink-0" />
+                  <span>Privacy Policy</span>
+                </Link>
+              </div>
             </div>
           </div>
 
           <div className="mt-8 flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-surface-border pt-6 text-xs text-ink-muted">
-            <p>
-              &copy; {new Date().getFullYear()} Jocta Enterprises. All rights
-              reserved.
-            </p>
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+              <p>
+                &copy; {new Date().getFullYear()} Jocta Enterprises. All rights
+                reserved.
+              </p>
+              <Link
+                to="/privacy"
+                className="text-ink-secondary hover:text-brand-red transition-colors underline sm:no-underline font-medium"
+              >
+                Privacy Policy
+              </Link>
+            </div>
             <div className="flex items-center gap-4">
               <p>Prices displayed in Kenyan Shillings (KSh).</p>
               <Link
