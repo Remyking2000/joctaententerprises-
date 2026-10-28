@@ -35,7 +35,7 @@
   --shadow-neo-inset: inset 2px 2px 5px #DFD9CC, inset -2px -2px 5px #FFFFFF;
   --shadow-neo-inset-sm: inset 1px 1px 3px #DFD9CC, inset -1px -1px 3px #FFFFFF;
   --shadow-neo-hover: 6px 6px 14px #DCD6C8, -4px -4px 10px #FFFFFF;
-  --shadow-navbar: 0 2px 6px #EAE5DA;
+  --shadow-navbar: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 @layer base {
@@ -74,7 +74,16 @@
     background-color: var(--color-navbar-bg);
     border-bottom: 1px solid var(--color-surface-border);
     box-shadow: var(--shadow-navbar);
-    transition: background-color 200ms ease, border-color 200ms ease;
+    transition: background-color 200ms ease, border-color 200ms ease, box-shadow 200ms ease;
+  }
+
+  .neo-navbar .neo-button-secondary {
+    box-shadow: none;
+    background-color: var(--color-surface-white);
+  }
+
+  .neo-navbar .neo-button-secondary:hover:not(:disabled) {
+    box-shadow: none;
   }
 
   .neo-nav-link {

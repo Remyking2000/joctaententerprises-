@@ -211,10 +211,10 @@ export function Layout() {
                 aria-label={searchOpen ? "Close search bar" : "Open search bar"}
                 aria-expanded={searchOpen}
                 title="Search products"
-                className={`h-10 w-10 p-0 cursor-pointer rounded-neo-sm inline-flex items-center justify-center transition-colors ${
+                className={`h-10 w-10 p-0 cursor-pointer rounded-neo-sm inline-flex items-center justify-center transition-colors border ${
                   isHeroOverlay
-                    ? "bg-black/35 text-white border border-white/25 hover:bg-black/55"
-                    : `neo-button-secondary ${
+                    ? "bg-black/35 text-white border-white/25 hover:bg-black/55"
+                    : `border-surface-border bg-surface-white text-ink-secondary hover:text-brand-red hover:border-brand-red ${
                         searchOpen ? "border-brand-red text-brand-red" : ""
                       }`
                 }`}
@@ -231,10 +231,10 @@ export function Layout() {
                 type="button"
                 onClick={openCart}
                 aria-label={`Cart (${totalCount} items)`}
-                className={`h-10 px-2.5 sm:px-3.5 text-xs sm:text-sm font-semibold cursor-pointer rounded-neo-sm inline-flex items-center justify-center gap-2 transition-colors ${
+                className={`h-10 px-2.5 sm:px-3.5 text-xs sm:text-sm font-semibold cursor-pointer rounded-neo-sm inline-flex items-center justify-center gap-2 transition-colors border ${
                   isHeroOverlay
-                    ? "bg-black/35 text-white border border-white/25 hover:bg-black/55"
-                    : "neo-button-secondary"
+                    ? "bg-black/35 text-white border-white/25 hover:bg-black/55"
+                    : "border-surface-border bg-surface-white text-ink-charcoal hover:border-brand-red hover:text-brand-red"
                 }`}
               >
                 <ShoppingBag
@@ -258,10 +258,10 @@ export function Layout() {
                 }}
                 aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
                 aria-expanded={mobileMenuOpen}
-                className={`md:hidden h-10 w-10 p-0 cursor-pointer rounded-neo-sm inline-flex items-center justify-center transition-colors ${
+                className={`md:hidden h-10 w-10 p-0 cursor-pointer rounded-neo-sm inline-flex items-center justify-center transition-colors border ${
                   isHeroOverlay
-                    ? "bg-black/35 text-white border border-white/25 hover:bg-black/55"
-                    : "neo-button-secondary"
+                    ? "bg-black/35 text-white border-white/25 hover:bg-black/55"
+                    : "border-surface-border bg-surface-white text-ink-secondary hover:border-brand-red hover:text-brand-red"
                 }`}
               >
                 {mobileMenuOpen ? (
