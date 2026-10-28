@@ -69,8 +69,6 @@ const FOUR_CORE_CATEGORIES: CategoryShowcase[] = [
 ];
 
 const HERO_VIDEO_SRC = "/gemini_generated_video_03d92542.mp4";
-const HERO_FALLBACK_IMAGE =
-  "https://images.unsplash.com/photo-1612815154858-60aa4c59eaa6?auto=format&fit=crop&w=1200&q=85";
 // Slower playback rate (~0.65x) for an elegant, calm cinematic ambient hero background
 const HERO_PLAYBACK_RATE = 0.65;
 
@@ -149,19 +147,19 @@ export function HomePage() {
       {/* 1. Full-Screen Borderless Background-Video Hero Section */}
       <section
         aria-labelledby="hero-heading"
-        className="relative min-h-screen w-full flex flex-col justify-between overflow-hidden"
+        className="relative min-h-screen w-full flex flex-col justify-between overflow-hidden bg-ink-charcoal"
       >
         {/* Video Viewport Area */}
-        <div className="relative flex-1 flex flex-col justify-between pt-24 pb-8 sm:pt-28 sm:pb-12 lg:pt-32 lg:pb-14">
+        <div className="relative flex-1 flex flex-col justify-between pt-24 pb-8 sm:pt-28 sm:pb-12 lg:pt-32 lg:pb-14 bg-ink-charcoal">
           {/* Background Video */}
           <video
             ref={videoRef}
             src={HERO_VIDEO_SRC}
-            poster={HERO_FALLBACK_IMAGE}
             autoPlay
             loop
             muted
             playsInline
+            preload="auto"
             aria-hidden="true"
             onLoadedMetadata={(e) => {
               e.currentTarget.playbackRate = HERO_PLAYBACK_RATE;
