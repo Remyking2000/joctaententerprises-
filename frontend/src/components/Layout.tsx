@@ -14,10 +14,7 @@ import {
 } from "react-router-dom";
 import {
   ChevronDown,
-  Home,
-  LayoutGrid,
   Menu,
-  Printer,
   Search,
   ShoppingBag,
   X,
@@ -103,7 +100,7 @@ export function Layout() {
   }
 
   return (
-    <div className="neo-app-shell flex min-h-screen flex-col pb-16 md:pb-0 selection:bg-brand-red selection:text-white">
+    <div className="neo-app-shell flex min-h-screen flex-col selection:bg-brand-red selection:text-white">
       {/* Header (Transparent overlay on full-screen hero at the top of Home, solid neo-navbar elsewhere) */}
       <header
         className={`z-40 transition-colors duration-200 ${
@@ -461,76 +458,6 @@ export function Layout() {
           </div>
         </div>
       </footer>
-
-      {/* Concept 1 Mobile Sticky Bottom Navigation Bar */}
-      <nav
-        aria-label="Mobile bottom navigation"
-        className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-surface-white border-t border-surface-border shadow-neo px-2 py-1.5"
-      >
-        <div className="grid grid-cols-4 gap-1">
-          <NavLink
-            to="/"
-            end
-            onClick={handleMobileNav}
-            className={({ isActive }) =>
-              `flex flex-col items-center justify-center py-1 rounded-neo-sm text-[11px] font-bold transition-colors ${
-                isActive && location.pathname === "/"
-                  ? "text-brand-red"
-                  : "text-ink-secondary hover:text-ink-charcoal"
-              }`
-            }
-          >
-            <Home className="h-4 w-4 mb-0.5" aria-hidden="true" />
-            <span>Home</span>
-          </NavLink>
-
-          <NavLink
-            to="/shop"
-            onClick={handleMobileNav}
-            className={({ isActive }) =>
-              `flex flex-col items-center justify-center py-1 rounded-neo-sm text-[11px] font-bold transition-colors ${
-                isActive
-                  ? "text-brand-red"
-                  : "text-ink-secondary hover:text-ink-charcoal"
-              }`
-            }
-          >
-            <LayoutGrid className="h-4 w-4 mb-0.5" aria-hidden="true" />
-            <span>Categories</span>
-          </NavLink>
-
-          <NavLink
-            to="/compatibility"
-            onClick={handleMobileNav}
-            className={({ isActive }) =>
-              `flex flex-col items-center justify-center py-1 rounded-neo-sm text-[11px] font-bold transition-colors ${
-                isActive
-                  ? "text-brand-red"
-                  : "text-ink-secondary hover:text-ink-charcoal"
-              }`
-            }
-          >
-            <Printer className="h-4 w-4 mb-0.5" aria-hidden="true" />
-            <span>Find Toner</span>
-          </NavLink>
-
-          <button
-            type="button"
-            onClick={openCart}
-            className="relative flex flex-col items-center justify-center py-1 rounded-neo-sm text-[11px] font-bold text-ink-secondary hover:text-ink-charcoal cursor-pointer"
-          >
-            <div className="relative">
-              <ShoppingBag className="h-4 w-4 mb-0.5" aria-hidden="true" />
-              {totalCount > 0 && (
-                <span className="absolute -top-1.5 -right-2.5 inline-flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-brand-red px-1 text-[9px] font-extrabold text-white">
-                  {totalCount}
-                </span>
-              )}
-            </div>
-            <span>Cart</span>
-          </button>
-        </div>
-      </nav>
     </div>
   );
 }

@@ -685,8 +685,8 @@ export function ProductPage() {
         </section>
       )}
 
-      {/* Concept 1 Mobile Sticky Bottom Action Bar (above the bottom tab bar) */}
-      <div className="md:hidden fixed bottom-[54px] inset-x-0 z-30 border-t border-surface-border bg-surface-white px-4 py-2.5 shadow-neo">
+      {/* Mobile Sticky Bottom Action Bar */}
+      <div className="md:hidden fixed bottom-0 inset-x-0 z-30 border-t border-surface-border bg-surface-white px-4 py-2.5 shadow-neo">
         <div className="mx-auto flex max-w-7xl items-center gap-2.5">
           <div className="inline-flex items-center gap-1.5 rounded-neo-sm border border-surface-border bg-canvas-ivory px-1.5 py-1">
             <button
