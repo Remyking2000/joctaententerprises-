@@ -1,3 +1,5 @@
+import fs from "node:fs";
+import path from "node:path";
 import { and, asc, desc, eq, ilike, inArray, ne, or, sql } from "drizzle-orm";
 import type {
   BrandSummary,
@@ -50,12 +52,57 @@ export function setCatalogDatasetForTesting(dataset: CatalogDataset | null) {
   testDatasetOverride = dataset;
 }
 
+const DEMO_STATE_FILE = path.resolve(process.cwd(), "backend/.demo-state.json");
+
+export function getDemoStateFilePath(): string {
+  return DEMO_STATE_FILE;
+}
+
+export function saveDevDemoDataset(dataset: CatalogDataset): void {
+  try {
+    cachedDevDemoDataset = dataset;
+    fs.writeFileSync(DEMO_STATE_FILE, JSON.stringify(dataset, null, 2), "utf8");
+  } catch (err) {
+    console.error("[demo-state] Failed to persist demo state to disk:", err);
+  }
+}
+
+export function resetDevDemoDataset(): CatalogDataset {
+  try {
+    if (fs.existsSync(DEMO_STATE_FILE)) {
+      fs.unlinkSync(DEMO_STATE_FILE);
+    }
+  } catch (err) {
+    console.error("[demo-state] Failed to remove demo state file:", err);
+  }
+  cachedDevDemoDataset = null;
+  return getDevDemoDataset();
+}
+
 /**
  * Builds the clearly labeled `[DEMO]` dataset for local development preview
- * when `DATABASE_URL` has not been configured yet.
+ * when `DATABASE_URL` has not been configured yet, persisted to disk.
  */
 function getDevDemoDataset(): CatalogDataset {
   if (cachedDevDemoDataset) return cachedDevDemoDataset;
+
+  // Try reading persisted state from disk first
+  try {
+    if (fs.existsSync(DEMO_STATE_FILE)) {
+      const raw = fs.readFileSync(DEMO_STATE_FILE, "utf8");
+      const parsed = JSON.parse(raw) as CatalogDataset;
+      if (
+        Array.isArray(parsed?.categories) &&
+        Array.isArray(parsed?.brands) &&
+        Array.isArray(parsed?.products)
+      ) {
+        cachedDevDemoDataset = parsed;
+        return cachedDevDemoDataset;
+      }
+    }
+  } catch (err) {
+    console.warn("[demo-state] Error reading saved state file, generating fresh seed:", err);
+  }
 
   const catList = DEMO_CATEGORIES.map((c, idx) => ({
     id: `demo-cat-${idx + 1}`,
@@ -156,10 +203,12 @@ function getDevDemoDataset(): CatalogDataset {
     compatibilityLinks,
   };
 
+  saveDevDemoDataset(cachedDevDemoDataset);
+
   return cachedDevDemoDataset;
 }
 
-function getActiveInMemoryDataset(): CatalogDataset | null {
+export function getActiveInMemoryDataset(): CatalogDataset | null {
   if (testDatasetOverride) return testDatasetOverride;
   if (!env.DATABASE_URL && env.NODE_ENV === "development") {
     return getDevDemoDataset();

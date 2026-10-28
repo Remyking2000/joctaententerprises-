@@ -8,6 +8,8 @@ dist/
 build/
 *.tsbuildinfo
 *.zip
+.demo-state.json
+*.demo-state.json
 
 # Environment variables & secrets (NEVER commit real .env files)
 .env

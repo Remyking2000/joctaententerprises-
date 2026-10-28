@@ -3,6 +3,7 @@ import cors from "cors";
 import { env } from "./config/env.js";
 import healthRoutes from "./routes/health.routes.js";
 import catalogRoutes from "./routes/catalog.routes.js";
+import adminRoutes from "./routes/admin.routes.js";
 import { errorHandler, notFoundHandler } from "./middleware/error.middleware.js";
 
 export function createApp() {
@@ -35,6 +36,7 @@ export function createApp() {
   });
 
   app.use("/api/health", healthRoutes);
+  app.use("/api/admin", adminRoutes);
   app.use("/api", catalogRoutes);
 
   app.use(notFoundHandler);

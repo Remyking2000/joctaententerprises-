@@ -1,15 +1,24 @@
 import type {
+  AdminProductListQuery,
+  AdminStatsSummary,
   ApiErrorResponse,
   ApiSuccessResponse,
   BrandSummary,
   CategorySummary,
   CompatibleProductsQuery,
   CompatibleProductsResponse,
+  CreateBrandInput,
+  CreateCategoryInput,
+  CreateProductInput,
   PaginatedProductsResponse,
   PrinterModelQuery,
   PrinterModelSummary,
   ProductDetail,
   ProductListQuery,
+  ProductSummary,
+  UpdateBrandInput,
+  UpdateCategoryInput,
+  UpdateProductInput,
 } from "@jocta/shared";
 
 const API_BASE = (
@@ -39,14 +48,27 @@ function buildQueryString(params: Record<string, unknown>): string {
   return qs ? `?${qs}` : "";
 }
 
-async function fetchJson<T>(path: string): Promise<T> {
+async function fetchJson<T>(
+  path: string,
+  options?: {
+    method?: string;
+    body?: unknown;
+  },
+): Promise<T> {
   let response: Response;
   try {
+    const headers: Record<string, string> = {
+      Accept: "application/json",
+    };
+    if (options?.body !== undefined) {
+      headers["Content-Type"] = "application/json";
+    }
+
     response = await fetch(`${API_BASE}${path}`, {
-      method: "GET",
-      headers: {
-        Accept: "application/json",
-      },
+      method: options?.method ?? "GET",
+      headers,
+      body:
+        options?.body !== undefined ? JSON.stringify(options.body) : undefined,
     });
   } catch {
     throw new ApiClientError(
@@ -118,6 +140,101 @@ export const catalogApi = {
     const qs = buildQueryString(query as Record<string, unknown>);
     return fetchJson<CompatibleProductsResponse>(
       `/api/printer-models/${encodeURIComponent(printerModelSlug)}/compatible-products${qs}`,
+    );
+  },
+};
+
+export const adminApi = {
+  getStats(): Promise<AdminStatsSummary> {
+    return fetchJson<AdminStatsSummary>("/api/admin/stats");
+  },
+
+  resetDemoData(): Promise<AdminStatsSummary> {
+    return fetchJson<AdminStatsSummary>("/api/admin/demo/reset", {
+      method: "POST",
+    });
+  },
+
+  getProducts(
+    query: Partial<AdminProductListQuery> = {},
+  ): Promise<PaginatedProductsResponse> {
+    const qs = buildQueryString(query as Record<string, unknown>);
+    return fetchJson<PaginatedProductsResponse>(`/api/admin/products${qs}`);
+  },
+
+  getProductById(id: string): Promise<ProductDetail> {
+    return fetchJson<ProductDetail>(
+      `/api/admin/products/${encodeURIComponent(id)}`,
+    );
+  },
+
+  createProduct(input: CreateProductInput): Promise<ProductSummary> {
+    return fetchJson<ProductSummary>("/api/admin/products", {
+      method: "POST",
+      body: input,
+    });
+  },
+
+  updateProduct(
+    id: string,
+    input: UpdateProductInput,
+  ): Promise<ProductSummary> {
+    return fetchJson<ProductSummary>(
+      `/api/admin/products/${encodeURIComponent(id)}`,
+      {
+        method: "PUT",
+        body: input,
+      },
+    );
+  },
+
+  toggleProductPublish(
+    id: string,
+    isPublished: boolean,
+  ): Promise<ProductSummary> {
+    return fetchJson<ProductSummary>(
+      `/api/admin/products/${encodeURIComponent(id)}/publish`,
+      {
+        method: "PATCH",
+        body: { isPublished },
+      },
+    );
+  },
+
+  createCategory(input: CreateCategoryInput): Promise<CategorySummary> {
+    return fetchJson<CategorySummary>("/api/admin/categories", {
+      method: "POST",
+      body: input,
+    });
+  },
+
+  updateCategory(
+    id: string,
+    input: UpdateCategoryInput,
+  ): Promise<CategorySummary> {
+    return fetchJson<CategorySummary>(
+      `/api/admin/categories/${encodeURIComponent(id)}`,
+      {
+        method: "PUT",
+        body: input,
+      },
+    );
+  },
+
+  createBrand(input: CreateBrandInput): Promise<BrandSummary> {
+    return fetchJson<BrandSummary>("/api/admin/brands", {
+      method: "POST",
+      body: input,
+    });
+  },
+
+  updateBrand(id: string, input: UpdateBrandInput): Promise<BrandSummary> {
+    return fetchJson<BrandSummary>(
+      `/api/admin/brands/${encodeURIComponent(id)}`,
+      {
+        method: "PUT",
+        body: input,
+      },
     );
   },
 };

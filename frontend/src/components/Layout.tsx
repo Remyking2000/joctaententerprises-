@@ -15,18 +15,23 @@ import {
 import {
   ChevronDown,
   Menu,
+  Package,
   Search,
+  ShieldAlert,
   ShoppingBag,
   X,
 } from "lucide-react";
+import type { CategorySummary } from "@jocta/shared";
 import { JoctaLogo } from "./JoctaLogo";
 import { CartDrawer } from "./CartDrawer";
 import { CategoriesDropdown, CATEGORY_ITEMS } from "./CategoriesDropdown";
 import { useCart } from "../context/CartContext";
+import { catalogApi } from "../lib/api";
 
 export function Layout() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mobileCategoriesOpen, setMobileCategoriesOpen] = useState(false);
+  const [liveCategories, setLiveCategories] = useState<CategorySummary[]>([]);
   const [searchOpen, setSearchOpen] = useState(false);
   const [headerSearch, setHeaderSearch] = useState("");
   const [isScrolled, setIsScrolled] = useState(false);
@@ -35,6 +40,10 @@ export function Layout() {
   const location = useLocation();
   const navigate = useNavigate();
   const { totalCount, openCart } = useCart();
+
+  useEffect(() => {
+    catalogApi.getCategories().then(setLiveCategories).catch(() => {});
+  }, []);
 
   const isHomePage = location.pathname === "/";
   const isHeroOverlay =
@@ -175,6 +184,19 @@ export function Layout() {
               >
                 Find Toner
               </NavLink>
+
+              <Link
+                to="/admin"
+                className={`rounded-neo-sm px-2.5 py-1.5 text-xs font-bold transition-colors border inline-flex items-center gap-1.5 ${
+                  isHeroOverlay
+                    ? "border-white/30 text-white/90 hover:bg-white/15 hover:text-white"
+                    : "border-surface-border bg-surface-white text-ink-secondary hover:text-brand-red hover:border-brand-red"
+                }`}
+                title="Admin Panel (Testing Phase 1)"
+              >
+                <ShieldAlert className="h-3.5 w-3.5 text-brand-red" />
+                <span>Admin</span>
+              </Link>
             </nav>
 
             {/* Right Controls: Search Toggle Icon, Cart & Hamburger Menu */}
@@ -339,20 +361,32 @@ export function Layout() {
 
                 {mobileCategoriesOpen && (
                   <div className="border-t border-surface-border bg-canvas-ivory p-2 space-y-1">
-                    {CATEGORY_ITEMS.map((item) => {
-                      const Icon = item.icon;
-                      return (
-                        <Link
-                          key={item.id}
-                          to={item.href}
-                          onClick={handleMobileNav}
-                          className="flex items-center gap-2.5 rounded-neo-sm px-3 py-2 text-xs font-semibold text-ink-charcoal hover:bg-surface-white hover:text-brand-red"
-                        >
-                          <Icon className="h-4 w-4 text-brand-red shrink-0" />
-                          <span>{item.name}</span>
-                        </Link>
-                      );
-                    })}
+                    {liveCategories.length > 0
+                      ? liveCategories.map((cat) => (
+                          <Link
+                            key={cat.id}
+                            to={`/shop?category=${encodeURIComponent(cat.slug)}`}
+                            onClick={handleMobileNav}
+                            className="flex items-center gap-2.5 rounded-neo-sm px-3 py-2 text-xs font-semibold text-ink-charcoal hover:bg-surface-white hover:text-brand-red"
+                          >
+                            <Package className="h-4 w-4 text-brand-red shrink-0" />
+                            <span>{cat.name}</span>
+                          </Link>
+                        ))
+                      : CATEGORY_ITEMS.map((item) => {
+                          const Icon = item.icon;
+                          return (
+                            <Link
+                              key={item.id}
+                              to={item.href}
+                              onClick={handleMobileNav}
+                              className="flex items-center gap-2.5 rounded-neo-sm px-3 py-2 text-xs font-semibold text-ink-charcoal hover:bg-surface-white hover:text-brand-red"
+                            >
+                              <Icon className="h-4 w-4 text-brand-red shrink-0" />
+                              <span>{item.name}</span>
+                            </Link>
+                          );
+                        })}
                   </div>
                 )}
               </div>
@@ -370,6 +404,22 @@ export function Layout() {
               >
                 Find Toner by Printer
               </NavLink>
+
+              <div className="pt-2 border-t border-surface-border">
+                <Link
+                  to="/admin"
+                  onClick={handleMobileNav}
+                  className="flex items-center justify-between rounded-neo-sm border border-dashed border-brand-red/40 bg-brand-red/5 px-4 py-2.5 text-xs font-bold text-brand-red hover:bg-brand-red/10"
+                >
+                  <div className="flex items-center gap-2">
+                    <ShieldAlert className="h-4 w-4" />
+                    <span>Admin Panel</span>
+                  </div>
+                  <span className="rounded-neo-sm bg-brand-red px-1.5 py-0.5 text-[9px] font-extrabold text-white uppercase">
+                    Testing
+                  </span>
+                </Link>
+              </div>
             </nav>
           </div>
         )}
@@ -454,7 +504,16 @@ export function Layout() {
               &copy; {new Date().getFullYear()} Jocta Enterprises. All rights
               reserved.
             </p>
-            <p>Prices displayed in Kenyan Shillings (KSh).</p>
+            <div className="flex items-center gap-4">
+              <p>Prices displayed in Kenyan Shillings (KSh).</p>
+              <Link
+                to="/admin"
+                className="inline-flex items-center gap-1 font-bold text-ink-secondary hover:text-brand-red transition-colors"
+              >
+                <ShieldAlert className="h-3.5 w-3.5 text-brand-red" />
+                <span>Admin Panel</span>
+              </Link>
+            </div>
           </div>
         </div>
       </footer>
