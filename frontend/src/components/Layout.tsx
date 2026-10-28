@@ -104,12 +104,14 @@ export function Layout() {
 
   return (
     <div className="neo-app-shell flex min-h-screen flex-col pb-16 md:pb-0 selection:bg-brand-red selection:text-white">
-      {/* Sticky Header (Transparent over full-screen hero video on Home, solid neo-navbar elsewhere) */}
+      {/* Header (Transparent overlay on full-screen hero at the top of Home, solid neo-navbar elsewhere) */}
       <header
-        className={`sticky top-0 z-40 transition-colors duration-200 ${
+        className={`z-40 transition-colors duration-200 ${
           isHeroOverlay
-            ? "bg-transparent border-b border-transparent shadow-none"
-            : "neo-navbar"
+            ? "absolute top-0 inset-x-0 bg-transparent border-0 shadow-none"
+            : isHomePage
+              ? "fixed top-0 inset-x-0 neo-navbar"
+              : "sticky top-0 neo-navbar"
         }`}
       >
         <div className="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8">

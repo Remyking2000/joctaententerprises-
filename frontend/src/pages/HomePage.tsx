@@ -139,7 +139,7 @@ export function HomePage() {
       {/* 1. Full-Screen Borderless Background-Video Hero Section */}
       <section
         aria-labelledby="hero-heading"
-        className="relative -mt-16 sm:-mt-20 min-h-screen w-full flex flex-col justify-between overflow-hidden"
+        className="relative min-h-screen w-full flex flex-col justify-between overflow-hidden"
       >
         {/* Video Viewport Area */}
         <div className="relative flex-1 flex flex-col justify-between pt-24 pb-8 sm:pt-28 sm:pb-12 lg:pt-32 lg:pb-14">
