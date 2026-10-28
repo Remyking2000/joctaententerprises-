@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   AlertCircle,
@@ -71,6 +71,8 @@ const FOUR_CORE_CATEGORIES: CategoryShowcase[] = [
 const HERO_VIDEO_SRC = "/gemini_generated_video_03d92542.mp4";
 const HERO_FALLBACK_IMAGE =
   "https://images.unsplash.com/photo-1612815154858-60aa4c59eaa6?auto=format&fit=crop&w=1200&q=85";
+// Slower playback rate (~0.65x) for an elegant, calm cinematic ambient hero background
+const HERO_PLAYBACK_RATE = 0.65;
 
 const HERO_TICKER_ITEMS = [
   "GENUINE OEM & COMPATIBLE TONERS",
@@ -81,6 +83,7 @@ const HERO_TICKER_ITEMS = [
 
 export function HomePage() {
   const navigate = useNavigate();
+  const videoRef = useRef<HTMLVideoElement>(null);
   const [printerQuery, setPrinterQuery] = useState("");
   const [heroLogoFailed, setHeroLogoFailed] = useState(false);
   const [failedCatIds, setFailedCatIds] = useState<Record<string, boolean>>({});
@@ -122,6 +125,13 @@ export function HomePage() {
     void loadFeaturedProducts();
   }, []);
 
+  // Ensure hero video playback rate is consistently slowed down across all browsers & reloads
+  useEffect(() => {
+    if (videoRef.current) {
+      videoRef.current.playbackRate = HERO_PLAYBACK_RATE;
+    }
+  }, []);
+
   function handleCompatibilitySubmit(e: FormEvent) {
     e.preventDefault();
     const q = printerQuery.trim();
@@ -145,6 +155,7 @@ export function HomePage() {
         <div className="relative flex-1 flex flex-col justify-between pt-24 pb-8 sm:pt-28 sm:pb-12 lg:pt-32 lg:pb-14">
           {/* Background Video */}
           <video
+            ref={videoRef}
             src={HERO_VIDEO_SRC}
             poster={HERO_FALLBACK_IMAGE}
             autoPlay
@@ -152,6 +163,12 @@ export function HomePage() {
             muted
             playsInline
             aria-hidden="true"
+            onLoadedMetadata={(e) => {
+              e.currentTarget.playbackRate = HERO_PLAYBACK_RATE;
+            }}
+            onPlay={(e) => {
+              e.currentTarget.playbackRate = HERO_PLAYBACK_RATE;
+            }}
             className="absolute inset-0 h-full w-full object-cover"
           />
 
