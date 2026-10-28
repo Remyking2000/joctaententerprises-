@@ -153,7 +153,13 @@ export function CategoriesDropdown({
           aria-label="Categories menu"
           className="absolute left-0 top-full pt-2 z-50 w-80 sm:w-96"
         >
-          <div className="neo-card p-3 space-y-1">
+          <div
+            className={`rounded-neo border p-3 space-y-1 bg-surface-white ${
+              inverted
+                ? "border-surface-border shadow-2xl shadow-black/35"
+                : "border-surface-border shadow-xl shadow-black/10"
+            }`}
+          >
             {liveCategories.length > 0
               ? liveCategories.map((cat) => (
                   <Link
