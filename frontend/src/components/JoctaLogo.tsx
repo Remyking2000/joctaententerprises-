@@ -63,7 +63,7 @@ export function JoctaLogo({
             </span>
           </div>
           <span
-            className={`text-[11px] font-medium ${
+            className={`hidden sm:block text-[11px] font-medium ${
               inverted ? "text-white/75" : "text-ink-muted"
             }`}
           >

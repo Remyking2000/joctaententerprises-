@@ -433,17 +433,17 @@ export function HomePage() {
       {/* 4. Compatibility Finder Section (Below Main Shopping Sections) */}
       <section
         aria-labelledby="compatibility-finder-heading"
-        className="neo-card p-6 sm:p-8"
+        className="neo-card p-4 sm:p-6 lg:p-8"
       >
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 lg:items-center">
-          <div className="lg:col-span-6 space-y-2">
+        <div className="grid grid-cols-1 gap-5 lg:grid-cols-12 lg:items-center">
+          <div className="lg:col-span-6 space-y-1.5 sm:space-y-2">
             <div className="inline-flex items-center gap-2 text-xs font-bold text-brand-red">
               <Printer className="h-4 w-4" aria-hidden="true" />
               <span>Printer Compatibility Lookup</span>
             </div>
             <h2
               id="compatibility-finder-heading"
-              className="text-xl sm:text-2xl font-extrabold text-ink-charcoal"
+              className="text-lg sm:text-2xl font-extrabold text-ink-charcoal leading-snug"
             >
               Find the Right Toner for Your Printer
             </h2>

@@ -6,18 +6,15 @@ export interface PartnerCompany {
   id: string;
   name: string;
   tagline: string;
-  /**
-   * Optional image URL for when real client partner logos are added.
-   * When omitted, the bespoke SVG emblem below is rendered.
-   */
   logoUrl?: string;
   href?: string;
   renderEmblem: () => ReactNode;
 }
 
 /**
- * Dummy partner companies for the homepage slideshow.
- * Replace entries here (or set `logoUrl`) when the real client partner logos are provided.
+ * Partner companies for the homepage showcase slideshow.
+ * Emblems use responsive proportional dimensions (`h-10 sm:h-12 w-auto max-w-full`)
+ * to prevent any overlapping or protrusion on small screens.
  */
 export const PARTNER_COMPANIES: PartnerCompany[] = [
   {
@@ -28,7 +25,7 @@ export const PARTNER_COMPANIES: PartnerCompany[] = [
     renderEmblem: () => (
       <svg
         viewBox="0 0 150 64"
-        className="h-20 w-44 sm:h-24 sm:w-48"
+        className="h-10 sm:h-12 w-auto max-w-[150px] sm:max-w-[180px] object-contain"
         aria-hidden="true"
       >
         <circle cx="34" cy="32" r="25" className="fill-sky-600" />
@@ -66,7 +63,7 @@ export const PARTNER_COMPANIES: PartnerCompany[] = [
     renderEmblem: () => (
       <svg
         viewBox="0 0 160 64"
-        className="h-20 w-44 sm:h-24 sm:w-48"
+        className="h-10 sm:h-12 w-auto max-w-[150px] sm:max-w-[180px] object-contain"
         aria-hidden="true"
       >
         <polygon points="10,32 25,12 25,52" className="fill-brand-red" />
@@ -89,7 +86,7 @@ export const PARTNER_COMPANIES: PartnerCompany[] = [
     renderEmblem: () => (
       <svg
         viewBox="0 0 150 64"
-        className="h-20 w-44 sm:h-24 sm:w-48"
+        className="h-10 sm:h-12 w-auto max-w-[150px] sm:max-w-[180px] object-contain"
         aria-hidden="true"
       >
         <text
@@ -111,7 +108,7 @@ export const PARTNER_COMPANIES: PartnerCompany[] = [
     renderEmblem: () => (
       <svg
         viewBox="0 0 150 64"
-        className="h-20 w-44 sm:h-24 sm:w-48"
+        className="h-10 sm:h-12 w-auto max-w-[150px] sm:max-w-[180px] object-contain"
         aria-hidden="true"
       >
         <rect
@@ -141,7 +138,7 @@ export const PARTNER_COMPANIES: PartnerCompany[] = [
     renderEmblem: () => (
       <svg
         viewBox="0 0 150 64"
-        className="h-20 w-44 sm:h-24 sm:w-48"
+        className="h-10 sm:h-12 w-auto max-w-[150px] sm:max-w-[180px] object-contain"
         aria-hidden="true"
       >
         <text
@@ -172,7 +169,7 @@ export const PARTNER_COMPANIES: PartnerCompany[] = [
     renderEmblem: () => (
       <svg
         viewBox="0 0 160 64"
-        className="h-20 w-44 sm:h-24 sm:w-48"
+        className="h-10 sm:h-12 w-auto max-w-[150px] sm:max-w-[180px] object-contain"
         aria-hidden="true"
       >
         <circle cx="28" cy="32" r="20" className="fill-amber-500/20" />
@@ -202,7 +199,7 @@ export const PARTNER_COMPANIES: PartnerCompany[] = [
     renderEmblem: () => (
       <svg
         viewBox="0 0 160 64"
-        className="h-20 w-44 sm:h-24 sm:w-48"
+        className="h-10 sm:h-12 w-auto max-w-[150px] sm:max-w-[180px] object-contain"
         aria-hidden="true"
       >
         <rect
@@ -246,7 +243,7 @@ export const PARTNER_COMPANIES: PartnerCompany[] = [
     renderEmblem: () => (
       <svg
         viewBox="0 0 160 64"
-        className="h-20 w-44 sm:h-24 sm:w-48"
+        className="h-10 sm:h-12 w-auto max-w-[150px] sm:max-w-[180px] object-contain"
         aria-hidden="true"
       >
         <polygon
@@ -294,17 +291,17 @@ export function PartnerLogosCarousel() {
   const [enableTransition, setEnableTransition] = useState(true);
   const [visibleCount, setVisibleCount] = useState(5);
   const lastManualClickRef = useRef<number>(0);
+  const touchStartXRef = useRef<number | null>(null);
 
   // Responsive visible item count based on viewport width
+  // Mobile (<640px) shows 1 logo at a time to prevent any overlapping
   useEffect(() => {
     function updateVisibleCount() {
       const w = window.innerWidth;
       if (w < 640) {
-        setVisibleCount(2);
-      } else if (w < 768) {
-        setVisibleCount(3);
+        setVisibleCount(1);
       } else if (w < 1024) {
-        setVisibleCount(4);
+        setVisibleCount(3);
       } else {
         setVisibleCount(5);
       }
@@ -314,7 +311,7 @@ export function PartnerLogosCarousel() {
     return () => window.removeEventListener("resize", updateVisibleCount);
   }, []);
 
-  // Automatically slide every 2.2 seconds when user is not actively clicking arrows
+  // Automatically slide every 2.4 seconds when user is not actively interacting
   useEffect(() => {
     const interval = setInterval(() => {
       if (document.hidden) return;
@@ -324,7 +321,7 @@ export function PartnerLogosCarousel() {
       }
       setEnableTransition(true);
       setTrackIndex((prev) => prev + 1);
-    }, 2200);
+    }, 2400);
 
     return () => clearInterval(interval);
   }, []);
@@ -355,31 +352,52 @@ export function PartnerLogosCarousel() {
     setTrackIndex((prev) => prev + 1);
   };
 
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartXRef.current = e.touches[0].clientX;
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartXRef.current === null) return;
+    const deltaX = e.changedTouches[0].clientX - touchStartXRef.current;
+    if (Math.abs(deltaX) > 35) {
+      if (deltaX > 0) {
+        handlePrev();
+      } else {
+        handleNext();
+      }
+    }
+    touchStartXRef.current = null;
+  };
+
   const itemWidthPercent = 100 / visibleCount;
   const translatePercent = -(trackIndex * itemWidthPercent);
 
   return (
     <section
       aria-label="Partnered Companies & Brands"
-      className="py-8 sm:py-12 relative overflow-hidden"
+      className="py-6 sm:py-10 relative overflow-hidden"
     >
       {/* Main Carousel Row: Left Arrow + Sliding Logos Track + Right Arrow */}
-      <div className="flex items-center justify-between gap-3 sm:gap-6">
-        {/* Previous Slide Arrow (Borderless) */}
+      <div className="flex items-center justify-between gap-1.5 sm:gap-4 max-w-5xl mx-auto px-2">
+        {/* Previous Slide Arrow */}
         <button
           type="button"
           onClick={handlePrev}
-          aria-label="Previous partner logos"
-          className="shrink-0 p-2 flex items-center justify-center text-brand-red hover:scale-110 active:scale-95 transition-transform cursor-pointer bg-transparent border-0 shadow-none"
+          aria-label="Previous partner logo"
+          className="shrink-0 p-1.5 sm:p-2 flex items-center justify-center text-brand-red hover:scale-110 active:scale-95 transition-transform cursor-pointer bg-transparent border-0 shadow-none touch-manipulation"
         >
           <ChevronLeft
-            className="h-10 w-10 sm:h-12 sm:w-12 stroke-[2]"
+            className="h-6 w-6 sm:h-9 sm:w-9 stroke-[2.5]"
             aria-hidden="true"
           />
         </button>
 
-        {/* Smooth Sliding Viewport (Borderless) */}
-        <div className="flex-1 overflow-hidden">
+        {/* Smooth Sliding Viewport */}
+        <div
+          className="flex-1 overflow-hidden"
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+        >
           <div
             style={{
               transform: `translate3d(${translatePercent}%, 0, 0)`,
@@ -393,16 +411,18 @@ export function PartnerLogosCarousel() {
               const content = (
                 <div
                   title={`${partner.name} — ${partner.tagline}`}
-                  className="group w-full h-24 sm:h-28 flex flex-col items-center justify-center text-ink-charcoal transition-transform duration-200 hover:scale-105"
+                  className="group w-full max-w-[200px] h-16 sm:h-20 flex flex-col items-center justify-center text-ink-charcoal transition-transform duration-200 hover:scale-105"
                 >
                   {partner.logoUrl ? (
                     <img
                       src={partner.logoUrl}
                       alt={partner.name}
-                      className="max-h-20 max-w-[175px] object-contain"
+                      className="max-h-10 sm:max-h-12 max-w-[150px] object-contain"
                     />
                   ) : (
-                    <div>{partner.renderEmblem()}</div>
+                    <div className="flex items-center justify-center max-w-full">
+                      {partner.renderEmblem()}
+                    </div>
                   )}
                 </div>
               );
@@ -411,12 +431,12 @@ export function PartnerLogosCarousel() {
                 <div
                   key={`${partner.id}-${idx}`}
                   style={{ width: `${itemWidthPercent}%` }}
-                  className="shrink-0 px-2 sm:px-4 flex items-center justify-center"
+                  className="shrink-0 px-2 sm:px-4 flex items-center justify-center overflow-hidden min-w-0"
                 >
                   {partner.href ? (
                     <Link
                       to={partner.href}
-                      className="w-full focus:outline-none"
+                      className="w-full flex items-center justify-center focus:outline-none"
                       aria-label={partner.name}
                     >
                       {content}
@@ -430,22 +450,22 @@ export function PartnerLogosCarousel() {
           </div>
         </div>
 
-        {/* Next Slide Arrow (Borderless) */}
+        {/* Next Slide Arrow */}
         <button
           type="button"
           onClick={handleNext}
-          aria-label="Next partner logos"
-          className="shrink-0 p-2 flex items-center justify-center text-brand-red hover:scale-110 active:scale-95 transition-transform cursor-pointer bg-transparent border-0 shadow-none"
+          aria-label="Next partner logo"
+          className="shrink-0 p-1.5 sm:p-2 flex items-center justify-center text-brand-red hover:scale-110 active:scale-95 transition-transform cursor-pointer bg-transparent border-0 shadow-none touch-manipulation"
         >
           <ChevronRight
-            className="h-10 w-10 sm:h-12 sm:w-12 stroke-[2]"
+            className="h-6 w-6 sm:h-9 sm:w-9 stroke-[2.5]"
             aria-hidden="true"
           />
         </button>
       </div>
 
       {/* Bottom Call-To-Action Line */}
-      <p className="mt-6 text-center text-sm sm:text-base font-black uppercase tracking-wider text-ink-charcoal">
+      <p className="mt-4 sm:mt-6 text-center text-xs sm:text-sm font-black uppercase tracking-wider text-ink-charcoal px-4">
         Visit{" "}
         <Link
           to="/shop"
