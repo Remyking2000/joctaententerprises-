@@ -13,6 +13,7 @@ import { AdminProductsPage } from "./admin/AdminProductsPage";
 import { AdminProductFormPage } from "./admin/AdminProductFormPage";
 import { AdminCategoriesPage } from "./admin/AdminCategoriesPage";
 import { AdminBrandsPage } from "./admin/AdminBrandsPage";
+import { AdminPrinterModelsPage } from "./admin/AdminPrinterModelsPage";
 
 export function App() {
   return (
@@ -30,6 +31,7 @@ export function App() {
             />
             <Route path="categories" element={<AdminCategoriesPage />} />
             <Route path="brands" element={<AdminBrandsPage />} />
+            <Route path="printer-models" element={<AdminPrinterModelsPage />} />
           </Route>
 
           {/* Storefront Layout & Public Pages */}

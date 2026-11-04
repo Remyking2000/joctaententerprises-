@@ -52,6 +52,10 @@ export function setCatalogDatasetForTesting(dataset: CatalogDataset | null) {
   testDatasetOverride = dataset;
 }
 
+export function isTestingDatasetActive(): boolean {
+  return testDatasetOverride !== null;
+}
+
 const DEMO_STATE_FILE = path.resolve(process.cwd(), "backend/.demo-state.json");
 
 export function getDemoStateFilePath(): string {
@@ -59,6 +63,10 @@ export function getDemoStateFilePath(): string {
 }
 
 export function saveDevDemoDataset(dataset: CatalogDataset): void {
+  if (testDatasetOverride) {
+    testDatasetOverride = dataset;
+    return;
+  }
   try {
     cachedDevDemoDataset = dataset;
     fs.writeFileSync(DEMO_STATE_FILE, JSON.stringify(dataset, null, 2), "utf8");
@@ -67,7 +75,14 @@ export function saveDevDemoDataset(dataset: CatalogDataset): void {
   }
 }
 
+export function clearDevDemoMemoryCache(): void {
+  cachedDevDemoDataset = null;
+}
+
 export function resetDevDemoDataset(): CatalogDataset {
+  if (testDatasetOverride) {
+    return testDatasetOverride;
+  }
   try {
     if (fs.existsSync(DEMO_STATE_FILE)) {
       fs.unlinkSync(DEMO_STATE_FILE);
@@ -210,7 +225,7 @@ function getDevDemoDataset(): CatalogDataset {
 
 export function getActiveInMemoryDataset(): CatalogDataset | null {
   if (testDatasetOverride) return testDatasetOverride;
-  if (!env.DATABASE_URL && env.NODE_ENV === "development") {
+  if (!env.DATABASE_URL && env.NODE_ENV !== "production") {
     return getDevDemoDataset();
   }
   return null;

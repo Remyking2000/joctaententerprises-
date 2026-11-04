@@ -14,6 +14,7 @@ import {
   RefreshCw,
   RotateCcw,
   Sparkles,
+  Trash2,
   XCircle,
 } from "lucide-react";
 import type { AdminStatsSummary, ProductSummary } from "@jocta/shared";
@@ -27,6 +28,31 @@ export function AdminDashboardPage() {
   const [resetting, setResetting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [togglingId, setTogglingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+  async function handleDeleteProduct(product: ProductSummary) {
+    const confirmed = window.confirm(
+      `Delete product "${product.name}" (SKU: ${product.sku})?\n\nThis permanently removes the product and its variants from the database.`,
+    );
+    if (!confirmed) return;
+
+    setDeletingId(product.id);
+    setError(null);
+    setSuccessMessage(null);
+    try {
+      await adminApi.deleteProduct(product.id);
+      setSuccessMessage(`Product '${product.name}' deleted.`);
+      // Reload so stats and the recent list stay accurate
+      await loadDashboard();
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Failed to delete product.",
+      );
+    } finally {
+      setDeletingId(null);
+    }
+  }
 
   async function loadDashboard() {
     setLoading(true);
@@ -158,7 +184,7 @@ export function AdminDashboardPage() {
             className="neo-button-primary inline-flex items-center gap-1.5 text-xs py-2 px-3.5"
           >
             <Plus className="h-4 w-4" />
-            <span>Add Product</span>
+            <span>Create Product</span>
           </Link>
         </div>
       </div>
@@ -170,7 +196,7 @@ export function AdminDashboardPage() {
             <Database className="h-4 w-4 text-brand-red" />
           </div>
           <div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <span className="font-bold text-ink-charcoal">Backend Storage Mode:</span>
               <span
                 className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-extrabold uppercase tracking-wider ${
@@ -182,13 +208,17 @@ export function AdminDashboardPage() {
                 <span className="h-1.5 w-1.5 rounded-full bg-current" />
                 {stats?.storageMode === "postgresql"
                   ? "PostgreSQL Live Database"
-                  : "Local File-Backed Demonstration (.demo-state.json)"}
+                  : stats?.persistedPath
+                    ? "JSON Demonstration Storage (backend/.demo-state.json)"
+                    : "In-Memory Demonstration Mode"}
               </span>
             </div>
             <p className="text-ink-secondary text-[11px] mt-0.5">
               {stats?.storageMode === "postgresql"
                 ? "Changes are committed directly to your live PostgreSQL database connection."
-                : "All edits, creations, and toggles are automatically serialized to local disk. Changes survive browser reloads and backend restarts."}
+                : stats?.persistedPath
+                  ? "All edits, creations, and toggles are automatically serialized to local JSON storage (backend/.demo-state.json) and survive browser reloads and backend restarts."
+                  : "Operating in ephemeral memory mode for isolated testing."}
             </p>
           </div>
         </div>
@@ -222,6 +252,16 @@ export function AdminDashboardPage() {
           >
             Retry
           </button>
+        </div>
+      )}
+
+      {successMessage && (
+        <div
+          role="alert"
+          className="rounded-neo-base border border-emerald-300 bg-emerald-50 p-4 text-xs text-emerald-800 flex items-start gap-2.5"
+        >
+          <CheckCircle2 className="h-4 w-4 shrink-0 mt-0.5 text-emerald-600" />
+          <p className="font-bold">{successMessage}</p>
         </div>
       )}
 
@@ -351,9 +391,12 @@ export function AdminDashboardPage() {
               (stats?.totalPrinterModels ?? 0)
             )}
           </div>
-          <span className="mt-3 text-[11px] text-ink-muted">
-            Compatibility targets
-          </span>
+          <Link
+            to="/admin/printer-models"
+            className="mt-3 text-[11px] font-bold text-brand-red hover:underline flex items-center gap-1"
+          >
+            Manage models <ArrowRight className="h-3 w-3" />
+          </Link>
         </div>
       </div>
 
@@ -362,10 +405,10 @@ export function AdminDashboardPage() {
         <h2 className="text-xs font-black uppercase tracking-wider text-ink-charcoal mb-3">
           Quick Administrative Actions
         </h2>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
           <Link
             to="/admin/products/new"
-            className="neo-button-primary justify-center text-xs py-2.5 px-3 text-center"
+            className="neo-button-primary justify-center text-xs py-2.5 px-3 text-center col-span-2 sm:col-span-1"
           >
             <Plus className="h-4 w-4 mr-1.5" />
             Create Product
@@ -390,6 +433,13 @@ export function AdminDashboardPage() {
           >
             <Bookmark className="h-4 w-4 mr-1.5 text-purple-600" />
             Brands
+          </Link>
+          <Link
+            to="/admin/printer-models"
+            className="neo-button-secondary justify-center text-xs py-2.5 px-3 text-center"
+          >
+            <Printer className="h-4 w-4 mr-1.5 text-emerald-700" />
+            Printer Models
           </Link>
         </div>
       </div>
@@ -491,6 +541,17 @@ export function AdminDashboardPage() {
                   >
                     Edit
                   </Link>
+
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteProduct(product)}
+                    disabled={deletingId === product.id}
+                    className="neo-button-secondary inline-flex items-center gap-1 text-xs py-1 px-2.5 text-brand-red hover:border-brand-red disabled:opacity-50"
+                    title="Delete product"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                    <span>{deletingId === product.id ? "Deleting..." : "Delete"}</span>
+                  </button>
                 </div>
               </div>
             ))}

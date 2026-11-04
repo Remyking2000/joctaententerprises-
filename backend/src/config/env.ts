@@ -1,5 +1,7 @@
-import "dotenv/config";
+import dotenv from "dotenv";
 import { z } from "zod";
+
+dotenv.config({ path: [".env.local", ".env"] });
 
 const PLACEHOLDER_SECRETS = new Set([
   "fallback-secret",
@@ -12,6 +14,7 @@ const rawEnvSchema = z.object({
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
   PORT: z.coerce.number().int().min(1).max(65535).default(4000),
   DATABASE_URL: z.string().trim().optional(),
+  DATABASE_URL_UNPOOLED: z.string().trim().optional(),
   PGPOOL_MAX: z.coerce.number().int().min(1).max(100).default(10),
   CORS_ORIGINS: z
     .string()
@@ -23,6 +26,7 @@ export interface AppEnv {
   NODE_ENV: "development" | "test" | "production";
   PORT: number;
   DATABASE_URL: string | undefined;
+  DATABASE_URL_UNPOOLED: string | undefined;
   PGPOOL_MAX: number;
   CORS_ORIGINS: string[];
   JWT_SECRET: string | undefined;
@@ -43,8 +47,15 @@ export function parseEnv(source: Record<string, string | undefined> = process.en
     throw new Error(`Invalid environment configuration: ${details}`);
   }
 
-  const { NODE_ENV, PORT, DATABASE_URL, PGPOOL_MAX, CORS_ORIGINS, JWT_SECRET } =
-    parsed.data;
+  const {
+    NODE_ENV,
+    PORT,
+    DATABASE_URL,
+    DATABASE_URL_UNPOOLED,
+    PGPOOL_MAX,
+    CORS_ORIGINS,
+    JWT_SECRET,
+  } = parsed.data;
 
   if (DATABASE_URL !== undefined && DATABASE_URL.length > 0) {
     const isPostgresUrl =
@@ -53,6 +64,17 @@ export function parseEnv(source: Record<string, string | undefined> = process.en
     if (!isPostgresUrl) {
       throw new Error(
         "Invalid environment configuration: DATABASE_URL must start with postgres:// or postgresql://",
+      );
+    }
+  }
+
+  if (DATABASE_URL_UNPOOLED !== undefined && DATABASE_URL_UNPOOLED.length > 0) {
+    const isPostgresUrl =
+      DATABASE_URL_UNPOOLED.startsWith("postgres://") ||
+      DATABASE_URL_UNPOOLED.startsWith("postgresql://");
+    if (!isPostgresUrl) {
+      throw new Error(
+        "Invalid environment configuration: DATABASE_URL_UNPOOLED must start with postgres:// or postgresql://",
       );
     }
   }
@@ -83,6 +105,7 @@ export function parseEnv(source: Record<string, string | undefined> = process.en
     NODE_ENV,
     PORT,
     DATABASE_URL: DATABASE_URL || undefined,
+    DATABASE_URL_UNPOOLED: DATABASE_URL_UNPOOLED || undefined,
     PGPOOL_MAX,
     CORS_ORIGINS: origins,
     JWT_SECRET: JWT_SECRET || undefined,

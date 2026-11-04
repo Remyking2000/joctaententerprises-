@@ -151,3 +151,54 @@ export const createBrandSchema = z.object({
 export const updateBrandSchema = createBrandSchema.partial();
 export type CreateBrandInput = z.infer<typeof createBrandSchema>;
 export type UpdateBrandInput = z.infer<typeof updateBrandSchema>;
+
+export const adminPrinterModelListQuerySchema = z.object({
+  search: z.string().trim().max(120).optional(),
+  brandId: z.string().trim().optional(),
+  limit: z.coerce.number().int().min(1).max(200).default(100),
+});
+export type AdminPrinterModelListQuery = z.infer<
+  typeof adminPrinterModelListQuerySchema
+>;
+
+export const createPrinterModelSchema = z.object({
+  name: z
+    .string()
+    .trim()
+    .min(2, "Printer model name must be at least 2 characters")
+    .max(150, "Printer model name cannot exceed 150 characters"),
+  slug: z
+    .string()
+    .trim()
+    .min(2, "Slug must be at least 2 characters")
+    .max(160, "Slug cannot exceed 160 characters")
+    .regex(
+      /^[a-z0-9]+(?:-[a-z0-9]+)*$/,
+      "Slug must be lowercase kebab-case (e.g. hp-laserjet-pro-m404dn)",
+    ),
+  brandId: z.string().trim().nullable().optional(),
+  series: z.string().trim().max(100).nullable().optional(),
+});
+export type CreatePrinterModelInput = z.infer<typeof createPrinterModelSchema>;
+
+export const updatePrinterModelSchema = createPrinterModelSchema.partial();
+export type UpdatePrinterModelInput = z.infer<typeof updatePrinterModelSchema>;
+
+export const uploadImageSchema = z.object({
+  fileName: z.string().trim().min(1, "File name is required").max(255),
+  mimeType: z
+    .string()
+    .trim()
+    .regex(
+      /^image\/(png|jpeg|jpg|webp|svg\+xml|gif)$/i,
+      "Only PNG, JPG, WEBP, SVG, and GIF images are supported",
+    ),
+  dataBase64: z.string().trim().min(1, "Image data is required"),
+});
+export type UploadImageInput = z.infer<typeof uploadImageSchema>;
+
+export interface UploadedImageResponse {
+  url: string;
+  fileName: string;
+}
+

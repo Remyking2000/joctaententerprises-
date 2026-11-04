@@ -1,4 +1,5 @@
 import type {
+  AdminPrinterModelListQuery,
   AdminProductListQuery,
   AdminStatsSummary,
   ApiErrorResponse,
@@ -9,6 +10,7 @@ import type {
   CompatibleProductsResponse,
   CreateBrandInput,
   CreateCategoryInput,
+  CreatePrinterModelInput,
   CreateProductInput,
   PaginatedProductsResponse,
   PrinterModelQuery,
@@ -18,7 +20,10 @@ import type {
   ProductSummary,
   UpdateBrandInput,
   UpdateCategoryInput,
+  UpdatePrinterModelInput,
   UpdateProductInput,
+  UploadedImageResponse,
+  UploadImageInput,
 } from "@jocta/shared";
 
 const API_BASE = (
@@ -236,5 +241,77 @@ export const adminApi = {
         body: input,
       },
     );
+  },
+
+  getPrinterModels(
+    query: Partial<AdminPrinterModelListQuery> = {},
+  ): Promise<PrinterModelSummary[]> {
+    const qs = buildQueryString(query as Record<string, unknown>);
+    return fetchJson<PrinterModelSummary[]>(`/api/admin/printer-models${qs}`);
+  },
+
+  createPrinterModel(
+    input: CreatePrinterModelInput,
+  ): Promise<PrinterModelSummary> {
+    return fetchJson<PrinterModelSummary>("/api/admin/printer-models", {
+      method: "POST",
+      body: input,
+    });
+  },
+
+  updatePrinterModel(
+    id: string,
+    input: UpdatePrinterModelInput,
+  ): Promise<PrinterModelSummary> {
+    return fetchJson<PrinterModelSummary>(
+      `/api/admin/printer-models/${encodeURIComponent(id)}`,
+      {
+        method: "PUT",
+        body: input,
+      },
+    );
+  },
+
+  deleteProduct(id: string): Promise<{ id: string }> {
+    return fetchJson<{ id: string }>(
+      `/api/admin/products/${encodeURIComponent(id)}`,
+      {
+        method: "DELETE",
+      },
+    );
+  },
+
+  deleteCategory(id: string): Promise<{ id: string }> {
+    return fetchJson<{ id: string }>(
+      `/api/admin/categories/${encodeURIComponent(id)}`,
+      {
+        method: "DELETE",
+      },
+    );
+  },
+
+  deleteBrand(id: string): Promise<{ id: string }> {
+    return fetchJson<{ id: string }>(
+      `/api/admin/brands/${encodeURIComponent(id)}`,
+      {
+        method: "DELETE",
+      },
+    );
+  },
+
+  deletePrinterModel(id: string): Promise<{ id: string }> {
+    return fetchJson<{ id: string }>(
+      `/api/admin/printer-models/${encodeURIComponent(id)}`,
+      {
+        method: "DELETE",
+      },
+    );
+  },
+
+  uploadImage(input: UploadImageInput): Promise<UploadedImageResponse> {
+    return fetchJson<UploadedImageResponse>("/api/admin/upload", {
+      method: "POST",
+      body: input,
+    });
   },
 };

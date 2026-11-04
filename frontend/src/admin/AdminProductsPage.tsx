@@ -5,12 +5,13 @@ import {
   CheckCircle2,
   Edit,
   ExternalLink,
-  Filter,
+  Minus,
   Package,
   Plus,
   RefreshCw,
   Search,
-  XCircle,
+  Star,
+  Trash2,
 } from "lucide-react";
 import type {
   AdminProductListQuery,
@@ -28,7 +29,9 @@ export function AdminProductsPage() {
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [togglingId, setTogglingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   // Filters
   const [search, setSearch] = useState("");
@@ -49,7 +52,7 @@ export function AdminProductsPage() {
       setCategories(cats);
       setBrands(brs);
     } catch {
-      // Non-fatal if metadata fails, can still list products
+      // Non-fatal if metadata fails
     }
   }
 
@@ -89,29 +92,103 @@ export function AdminProductsPage() {
   }, []);
 
   useEffect(() => {
-    void loadProducts();
-  }, [selectedCategory, selectedBrand, publishedFilter, productTypeFilter, sortBy, page]);
-
-  function handleSearchSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setPage(1);
-    void loadProducts();
-  }
+    const timer = setTimeout(() => {
+      void loadProducts();
+    }, 180);
+    return () => clearTimeout(timer);
+  }, [
+    search,
+    selectedCategory,
+    selectedBrand,
+    publishedFilter,
+    productTypeFilter,
+    sortBy,
+    page,
+  ]);
 
   async function handleTogglePublish(product: ProductSummary) {
     const nextStatus = !product.isPublished;
     setTogglingId(product.id);
+    setError(null);
     try {
-      const updated = await adminApi.toggleProductPublish(product.id, nextStatus);
+      const updated = await adminApi.toggleProductPublish(
+        product.id,
+        nextStatus,
+      );
       setProducts((prev) =>
         prev.map((p) => (p.id === updated.id ? updated : p)),
       );
     } catch (err) {
-      alert(
+      setError(
         err instanceof Error ? err.message : "Failed to toggle status.",
       );
     } finally {
       setTogglingId(null);
+    }
+  }
+
+  async function handleToggleFeatured(product: ProductSummary) {
+    const nextFeatured = !product.isFeatured;
+    setTogglingId(product.id);
+    setError(null);
+    try {
+      const updated = await adminApi.updateProduct(product.id, {
+        isFeatured: nextFeatured,
+      });
+      setProducts((prev) =>
+        prev.map((p) => (p.id === updated.id ? updated : p)),
+      );
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Failed to update featured flag.",
+      );
+    } finally {
+      setTogglingId(null);
+    }
+  }
+
+  async function handleAdjustStock(product: ProductSummary, delta: number) {
+    const nextStock = Math.max(0, product.stockQuantity + delta);
+    if (nextStock === product.stockQuantity) return;
+
+    setTogglingId(product.id);
+    setError(null);
+    try {
+      const updated = await adminApi.updateProduct(product.id, {
+        stockQuantity: nextStock,
+      });
+      setProducts((prev) =>
+        prev.map((p) => (p.id === updated.id ? updated : p)),
+      );
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Failed to update stock.",
+      );
+    } finally {
+      setTogglingId(null);
+    }
+  }
+
+  async function handleDeleteProduct(product: ProductSummary) {
+    const confirmed = window.confirm(
+      `Delete product "${product.name}" (SKU: ${product.sku})?\n\nThis action permanently removes the product and its variants from the database.`,
+    );
+    if (!confirmed) return;
+
+    setDeletingId(product.id);
+    setError(null);
+    setSuccessMessage(null);
+    try {
+      await adminApi.deleteProduct(product.id);
+      setProducts((prev) => prev.filter((p) => p.id !== product.id));
+      setTotal((prev) => Math.max(0, prev - 1));
+      setSuccessMessage(`Product '${product.name}' deleted.`);
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Failed to delete product.",
+      );
+    } finally {
+      setDeletingId(null);
     }
   }
 
@@ -126,7 +203,7 @@ export function AdminProductsPage() {
             Product Management
           </h1>
           <p className="mt-1 text-xs sm:text-sm text-ink-secondary">
-            View, search, filter, publish, and edit products in the Jocta catalogue.
+            Manage products, adjust stock inline, toggle publication status, or add new items.
           </p>
         </div>
 
@@ -147,31 +224,26 @@ export function AdminProductsPage() {
             className="neo-button-primary inline-flex items-center gap-1.5 text-xs py-2 px-3.5"
           >
             <Plus className="h-4 w-4" />
-            <span>New Product</span>
+            <span>Create Product</span>
           </Link>
         </div>
       </div>
 
       {/* Filter and Search Bar */}
       <div className="rounded-neo-base border border-surface-border bg-surface-white p-4 shadow-neo space-y-3">
-        <form onSubmit={handleSearchSubmit} className="flex gap-2">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-ink-muted" />
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search by product name, SKU, or OEM part number..."
-              className="w-full rounded-neo-sm border border-surface-border bg-canvas-ivory pl-9 pr-3 py-2 text-xs font-semibold placeholder:text-ink-muted focus:border-brand-red focus:outline-hidden"
-            />
-          </div>
-          <button
-            type="submit"
-            className="neo-button-secondary text-xs py-2 px-4 shrink-0"
-          >
-            Search
-          </button>
-        </form>
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-ink-muted" />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setPage(1);
+            }}
+            placeholder="Type to search by product name, SKU, or OEM part number..."
+            className="w-full rounded-neo-sm border border-surface-border bg-canvas-ivory pl-9 pr-3 py-2 text-xs font-semibold placeholder:text-ink-muted focus:border-brand-red focus:outline-hidden"
+          />
+        </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5 pt-1 text-xs">
           {/* Category Filter */}
@@ -260,7 +332,7 @@ export function AdminProductsPage() {
         </div>
       </div>
 
-      {/* Error state */}
+      {/* Notifications */}
       {error && (
         <div
           role="alert"
@@ -268,7 +340,7 @@ export function AdminProductsPage() {
         >
           <AlertCircle className="h-5 w-5 shrink-0 text-brand-red mt-0.5" />
           <div className="flex-1">
-            <p className="font-bold">Catalogue Query Error</p>
+            <p className="font-bold">Action Error</p>
             <p className="mt-0.5 text-ink-secondary">{error}</p>
           </div>
           <button
@@ -278,6 +350,16 @@ export function AdminProductsPage() {
           >
             Retry
           </button>
+        </div>
+      )}
+
+      {successMessage && (
+        <div
+          role="alert"
+          className="rounded-neo-base border border-emerald-300 bg-emerald-50 p-4 text-xs text-emerald-800 flex items-start gap-2.5"
+        >
+          <CheckCircle2 className="h-4 w-4 shrink-0 mt-0.5 text-emerald-600" />
+          <p className="font-bold">{successMessage}</p>
         </div>
       )}
 
@@ -306,7 +388,7 @@ export function AdminProductsPage() {
           </div>
         ) : (
           <>
-            {/* Desktop / Tablet Table View (hidden on mobile) */}
+            {/* Desktop / Tablet Table View */}
             <div className="hidden md:block overflow-x-auto">
               <table className="w-full text-left border-collapse text-xs">
                 <thead>
@@ -315,7 +397,7 @@ export function AdminProductsPage() {
                     <th className="py-3 px-3">Category / Brand</th>
                     <th className="py-3 px-3">Type &amp; Auth</th>
                     <th className="py-3 px-3 text-right">Price (KSh)</th>
-                    <th className="py-3 px-3 text-center">Stock</th>
+                    <th className="py-3 px-3 text-center">Quick Stock</th>
                     <th className="py-3 px-3 text-center">Status</th>
                     <th className="py-3 px-4 text-right">Actions</th>
                   </tr>
@@ -328,7 +410,7 @@ export function AdminProductsPage() {
                     >
                       <td className="py-3 px-4">
                         <div className="flex items-center gap-3">
-                          <div className="h-10 w-10 rounded-neo-sm border border-surface-border bg-canvas-ivory shrink-0 overflow-hidden flex items-center justify-center">
+                          <div className="h-11 w-11 rounded-neo-sm border border-surface-border bg-canvas-ivory shrink-0 overflow-hidden flex items-center justify-center">
                             {product.thumbnailUrl ? (
                               <img
                                 src={product.thumbnailUrl}
@@ -340,12 +422,33 @@ export function AdminProductsPage() {
                             )}
                           </div>
                           <div className="min-w-0">
-                            <Link
-                              to={`/admin/products/${product.id}/edit`}
-                              className="font-bold text-ink-charcoal hover:text-brand-red block truncate max-w-xs"
-                            >
-                              {product.name}
-                            </Link>
+                            <div className="flex items-center gap-1.5">
+                              <Link
+                                to={`/admin/products/${product.id}/edit`}
+                                className="font-bold text-ink-charcoal hover:text-brand-red block truncate max-w-xs"
+                              >
+                                {product.name}
+                              </Link>
+                              <button
+                                type="button"
+                                onClick={() => handleToggleFeatured(product)}
+                                disabled={togglingId === product.id}
+                                className="cursor-pointer text-ink-muted hover:text-amber-500 shrink-0"
+                                title={
+                                  product.isFeatured
+                                    ? "Featured on Homepage (click to unfeature)"
+                                    : "Click to feature on Homepage"
+                                }
+                              >
+                                <Star
+                                  className={`h-3.5 w-3.5 ${
+                                    product.isFeatured
+                                      ? "fill-amber-400 text-amber-500"
+                                      : ""
+                                  }`}
+                                />
+                              </button>
+                            </div>
                             <span className="font-mono text-[11px] text-ink-muted">
                               SKU: {product.sku}
                               {product.oemPartNumber &&
@@ -366,7 +469,7 @@ export function AdminProductsPage() {
 
                       <td className="py-3 px-3">
                         <span className="capitalize font-semibold text-ink-charcoal">
-                          {product.productType}
+                          {product.productType.replace("_", " ")}
                         </span>
                         <div className="text-[11px] capitalize text-ink-muted">
                           {product.authenticity}
@@ -378,15 +481,38 @@ export function AdminProductsPage() {
                       </td>
 
                       <td className="py-3 px-3 text-center">
-                        <span
-                          className={`inline-block rounded px-2 py-0.5 text-[11px] font-extrabold ${
-                            product.stockQuantity > 0
-                              ? "bg-emerald-50 text-emerald-800"
-                              : "bg-red-50 text-red-800"
-                          }`}
-                        >
-                          {product.stockQuantity}
-                        </span>
+                        <div className="inline-flex items-center gap-1 rounded-neo-sm border border-surface-border bg-canvas-ivory p-0.5">
+                          <button
+                            type="button"
+                            disabled={
+                              togglingId === product.id ||
+                              product.stockQuantity <= 0
+                            }
+                            onClick={() => handleAdjustStock(product, -1)}
+                            className="p-1 rounded hover:bg-surface-white text-ink-secondary disabled:opacity-40 cursor-pointer"
+                            title="Decrease stock by 1"
+                          >
+                            <Minus className="h-3 w-3" />
+                          </button>
+                          <span
+                            className={`min-w-7 text-center text-[11px] font-extrabold ${
+                              product.stockQuantity > 0
+                                ? "text-emerald-800"
+                                : "text-red-700"
+                            }`}
+                          >
+                            {product.stockQuantity}
+                          </span>
+                          <button
+                            type="button"
+                            disabled={togglingId === product.id}
+                            onClick={() => handleAdjustStock(product, 1)}
+                            className="p-1 rounded hover:bg-surface-white text-ink-secondary disabled:opacity-40 cursor-pointer"
+                            title="Increase stock by 1"
+                          >
+                            <Plus className="h-3 w-3" />
+                          </button>
+                        </div>
                       </td>
 
                       <td className="py-3 px-3 text-center">
@@ -394,7 +520,7 @@ export function AdminProductsPage() {
                           type="button"
                           onClick={() => handleTogglePublish(product)}
                           disabled={togglingId === product.id}
-                          className={`rounded-neo-sm px-2 py-1 text-[11px] font-bold border transition-colors cursor-pointer ${
+                          className={`rounded-neo-sm px-2.5 py-1 text-[11px] font-bold border transition-colors cursor-pointer ${
                             product.isPublished
                               ? "bg-emerald-50 text-emerald-800 border-emerald-300 hover:bg-emerald-100"
                               : "bg-amber-50 text-amber-800 border-amber-300 hover:bg-amber-100"
@@ -402,7 +528,7 @@ export function AdminProductsPage() {
                           title="Click to toggle published status"
                         >
                           {togglingId === product.id
-                            ? "Updating..."
+                            ? "..."
                             : product.isPublished
                               ? "Published"
                               : "Draft"}
@@ -416,7 +542,7 @@ export function AdminProductsPage() {
                               to={`/shop/${product.slug}`}
                               target="_blank"
                               rel="noreferrer"
-                              className="p-1.5 rounded-neo-sm border border-surface-border text-ink-secondary hover:text-brand-red hover:bg-canvas-ivory"
+                              className="inline-flex items-center gap-1 px-2 py-1.5 text-xs font-bold rounded-neo-sm border border-surface-border text-ink-secondary hover:text-brand-red hover:bg-canvas-ivory"
                               title="View on storefront"
                             >
                               <ExternalLink className="h-3.5 w-3.5" />
@@ -429,6 +555,16 @@ export function AdminProductsPage() {
                             <Edit className="h-3 w-3 mr-1" />
                             Edit
                           </Link>
+                          <button
+                            type="button"
+                            disabled={deletingId === product.id}
+                            onClick={() => handleDeleteProduct(product)}
+                            className="inline-flex items-center gap-1 px-2 py-1.5 text-xs font-bold rounded-neo-sm border border-surface-border text-ink-secondary hover:text-brand-red hover:border-brand-red transition-colors cursor-pointer"
+                            title="Delete product"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                            <span>Delete</span>
+                          </button>
                         </div>
                       </td>
                     </tr>
@@ -437,7 +573,7 @@ export function AdminProductsPage() {
               </table>
             </div>
 
-            {/* Mobile Stacked Card View (visible on <768px) */}
+            {/* Mobile Stacked Card View */}
             <div className="md:hidden divide-y divide-surface-border">
               {products.map((product) => (
                 <div key={product.id} className="p-4 space-y-3">
@@ -480,7 +616,7 @@ export function AdminProductsPage() {
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5">
                       <button
                         type="button"
                         onClick={() => handleTogglePublish(product)}
@@ -500,10 +636,21 @@ export function AdminProductsPage() {
 
                       <Link
                         to={`/admin/products/${product.id}/edit`}
-                        className="neo-button-secondary text-xs py-1 px-3"
+                        className="neo-button-secondary text-xs py-1 px-2.5"
                       >
                         Edit
                       </Link>
+
+                      <button
+                        type="button"
+                        disabled={deletingId === product.id}
+                        onClick={() => handleDeleteProduct(product)}
+                        className="inline-flex items-center gap-1 px-2 py-1.5 text-xs font-bold rounded-neo-sm border border-surface-border text-ink-secondary hover:text-brand-red"
+                        title="Delete product"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                        <span>Delete</span>
+                      </button>
                     </div>
                   </div>
                 </div>

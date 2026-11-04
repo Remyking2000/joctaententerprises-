@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import { readdir, readFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
-import { getPool, closeDb } from "../config/db.js";
+import { getMigrationPool, closeDb } from "../config/db.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 export const DEFAULT_MIGRATIONS_DIR = join(__dirname, "migrations");
@@ -100,7 +100,7 @@ export async function runMigrations(
 }
 
 async function main() {
-  const pool = getPool();
+  const pool = getMigrationPool();
   const client = await pool.connect();
 
   try {

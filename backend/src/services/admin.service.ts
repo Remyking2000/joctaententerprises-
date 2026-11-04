@@ -1,11 +1,15 @@
+import fs from "node:fs";
+import path from "node:path";
 import { and, asc, desc, eq, ilike, ne, or, sql } from "drizzle-orm";
 import type {
+  AdminPrinterModelListQuery,
   AdminProductListQuery,
   AdminStatsSummary,
   BrandSummary,
   CategorySummary,
   CreateBrandInput,
   CreateCategoryInput,
+  CreatePrinterModelInput,
   CreateProductInput,
   PaginatedProductsResponse,
   PrinterModelSummary,
@@ -14,8 +18,12 @@ import type {
   ProductVariantSummary,
   UpdateBrandInput,
   UpdateCategoryInput,
+  UpdatePrinterModelInput,
   UpdateProductInput,
+  UploadedImageResponse,
+  UploadImageInput,
 } from "@jocta/shared";
+import { env } from "../config/env.js";
 import { getDb } from "../config/db.js";
 import {
   brands,
@@ -29,6 +37,7 @@ import { AppError } from "../middleware/error.middleware.js";
 import {
   getActiveInMemoryDataset,
   getDemoStateFilePath,
+  isTestingDatasetActive,
   resetDevDemoDataset,
   saveDevDemoDataset,
   type CatalogDataset,
@@ -74,7 +83,9 @@ export const AdminService = {
         totalBrands,
         totalPrinterModels,
         storageMode: "memory",
-        persistedPath: getDemoStateFilePath(),
+        persistedPath: isTestingDatasetActive()
+          ? undefined
+          : getDemoStateFilePath(),
       };
     }
 
@@ -112,8 +123,19 @@ export const AdminService = {
 
   /**
    * Resets the local demo dataset to the factory initial seed.
+   * Disabled in production and when operating against PostgreSQL.
    */
   async resetDemoData(): Promise<AdminStatsSummary> {
+    if (
+      env.NODE_ENV === "production" ||
+      (env.DATABASE_URL && !isTestingDatasetActive())
+    ) {
+      throw new AppError(
+        403,
+        "FORBIDDEN",
+        "Demonstration dataset reset is disabled in production and when connected to a PostgreSQL database.",
+      );
+    }
     resetDevDemoDataset();
     return this.getStats();
   },
@@ -1302,6 +1324,573 @@ export const AdminService = {
       slug: updated.slug,
       name: updated.name,
       logoUrl: updated.logoUrl,
+    };
+  },
+
+  /**
+   * Lists printer models for admin management with optional search, brand filter, and product count.
+   */
+  async listPrinterModels(
+    query: Partial<AdminPrinterModelListQuery> = {},
+  ): Promise<PrinterModelSummary[]> {
+    const inMemory = getActiveInMemoryDataset();
+    if (inMemory) {
+      const publishedProductIds = new Set(
+        inMemory.products.filter((p) => p.isPublished).map((p) => p.id),
+      );
+
+      let models: PrinterModelSummary[] = inMemory.printerModels.map((pm) => {
+        const brand = pm.brandId
+          ? inMemory.brands.find((b) => b.id === pm.brandId)
+          : undefined;
+        const compatCount = inMemory.compatibilityLinks.filter(
+          (l) =>
+            l.printerModelId === pm.id && publishedProductIds.has(l.productId),
+        ).length;
+
+        return {
+          ...pm,
+          brandName: brand?.name ?? null,
+          brandSlug: brand?.slug ?? null,
+          compatibleProductCount: compatCount,
+        };
+      });
+
+      if (query.brandId) {
+        models = models.filter((m) => m.brandId === query.brandId);
+      }
+
+      if (query.search) {
+        const s = query.search.toLowerCase().trim();
+        models = models.filter(
+          (m) =>
+            m.name.toLowerCase().includes(s) ||
+            (m.series && m.series.toLowerCase().includes(s)) ||
+            (m.brandName && m.brandName.toLowerCase().includes(s)),
+        );
+      }
+
+      models.sort((a, b) => a.name.localeCompare(b.name));
+      return models.slice(0, query.limit ?? 100);
+    }
+
+    const db = getDb();
+    const conditions = [];
+
+    if (query.brandId) {
+      conditions.push(eq(printerModels.brandId, query.brandId));
+    }
+
+    if (query.search) {
+      const pattern = `%${query.search.trim()}%`;
+      const searchCond = or(
+        ilike(printerModels.name, pattern),
+        ilike(printerModels.series, pattern),
+        ilike(brands.name, pattern),
+      );
+      if (searchCond) conditions.push(searchCond);
+    }
+
+    const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
+    const rows = await db
+      .select({
+        id: printerModels.id,
+        slug: printerModels.slug,
+        name: printerModels.name,
+        series: printerModels.series,
+        brandId: printerModels.brandId,
+        brandName: brands.name,
+        brandSlug: brands.slug,
+        compatibleProductCount: sql<number>`(
+          SELECT count(*)::int
+          FROM product_printer_compatibility ppc
+          INNER JOIN products p ON p.id = ppc.product_id
+          WHERE ppc.printer_model_id = ${printerModels.id}
+            AND p.is_published = true
+        )`,
+      })
+      .from(printerModels)
+      .leftJoin(brands, eq(printerModels.brandId, brands.id))
+      .where(whereClause)
+      .orderBy(asc(printerModels.name))
+      .limit(query.limit ?? 100);
+
+    return rows;
+  },
+
+  /**
+   * Creates a new printer model.
+   */
+  async createPrinterModel(
+    input: CreatePrinterModelInput,
+  ): Promise<PrinterModelSummary> {
+    const inMemory = getActiveInMemoryDataset();
+    if (inMemory) {
+      if (inMemory.printerModels.some((m) => m.slug === input.slug)) {
+        throw new AppError(
+          409,
+          "DUPLICATE_SLUG",
+          `A printer model with slug '${input.slug}' already exists.`,
+        );
+      }
+
+      let brandName: string | null = null;
+      let brandSlug: string | null = null;
+      if (input.brandId) {
+        const br = inMemory.brands.find((b) => b.id === input.brandId);
+        if (!br) {
+          throw new AppError(
+            400,
+            "INVALID_BRAND",
+            `Selected brand does not exist.`,
+          );
+        }
+        brandName = br.name;
+        brandSlug = br.slug;
+      }
+
+      const newModel: PrinterModelSummary = {
+        id: `pm-${crypto.randomUUID()}`,
+        slug: input.slug,
+        name: input.name,
+        series: input.series ?? null,
+        brandId: input.brandId ?? null,
+        brandName,
+        brandSlug,
+        compatibleProductCount: 0,
+      };
+
+      inMemory.printerModels.push(newModel);
+      saveDevDemoDataset(inMemory);
+      return newModel;
+    }
+
+    const db = getDb();
+    const existing = await db
+      .select({ id: printerModels.id })
+      .from(printerModels)
+      .where(eq(printerModels.slug, input.slug))
+      .limit(1);
+
+    if (existing.length > 0) {
+      throw new AppError(
+        409,
+        "DUPLICATE_SLUG",
+        `A printer model with slug '${input.slug}' already exists.`,
+      );
+    }
+
+    if (input.brandId) {
+      const [br] = await db
+        .select({ id: brands.id, name: brands.name, slug: brands.slug })
+        .from(brands)
+        .where(eq(brands.id, input.brandId))
+        .limit(1);
+
+      if (!br) {
+        throw new AppError(
+          400,
+          "INVALID_BRAND",
+          `Selected brand does not exist.`,
+        );
+      }
+    }
+
+    const [inserted] = await db
+      .insert(printerModels)
+      .values({
+        slug: input.slug,
+        name: input.name,
+        series: input.series ?? null,
+        brandId: input.brandId ?? null,
+      })
+      .returning();
+
+    let brandDetails = null;
+    if (inserted.brandId) {
+      const [br] = await db
+        .select({ name: brands.name, slug: brands.slug })
+        .from(brands)
+        .where(eq(brands.id, inserted.brandId))
+        .limit(1);
+      brandDetails = br;
+    }
+
+    return {
+      id: inserted.id,
+      slug: inserted.slug,
+      name: inserted.name,
+      series: inserted.series,
+      brandId: inserted.brandId,
+      brandName: brandDetails?.name ?? null,
+      brandSlug: brandDetails?.slug ?? null,
+      compatibleProductCount: 0,
+    };
+  },
+
+  /**
+   * Updates an existing printer model.
+   */
+  async updatePrinterModel(
+    id: string,
+    input: UpdatePrinterModelInput,
+  ): Promise<PrinterModelSummary> {
+    const inMemory = getActiveInMemoryDataset();
+    if (inMemory) {
+      const idx = inMemory.printerModels.findIndex((m) => m.id === id);
+      if (idx === -1) {
+        throw new AppError(404, "NOT_FOUND", `Printer model not found.`);
+      }
+
+      const current = inMemory.printerModels[idx];
+      if (
+        input.slug &&
+        input.slug !== current.slug &&
+        inMemory.printerModels.some((m) => m.slug === input.slug && m.id !== id)
+      ) {
+        throw new AppError(
+          409,
+          "DUPLICATE_SLUG",
+          `A printer model with slug '${input.slug}' already exists.`,
+        );
+      }
+
+      const targetBrandId =
+        input.brandId !== undefined ? input.brandId : current.brandId;
+      let brandName: string | null = null;
+      let brandSlug: string | null = null;
+      if (targetBrandId) {
+        const br = inMemory.brands.find((b) => b.id === targetBrandId);
+        if (!br) {
+          throw new AppError(
+            400,
+            "INVALID_BRAND",
+            `Selected brand does not exist.`,
+          );
+        }
+        brandName = br.name;
+        brandSlug = br.slug;
+      }
+
+      const publishedProductIds = new Set(
+        inMemory.products.filter((p) => p.isPublished).map((p) => p.id),
+      );
+      const compatCount = inMemory.compatibilityLinks.filter(
+        (l) => l.printerModelId === id && publishedProductIds.has(l.productId),
+      ).length;
+
+      const updated: PrinterModelSummary = {
+        ...current,
+        name: input.name !== undefined ? input.name : current.name,
+        slug: input.slug !== undefined ? input.slug : current.slug,
+        series: input.series !== undefined ? input.series : current.series,
+        brandId: targetBrandId,
+        brandName,
+        brandSlug,
+        compatibleProductCount: compatCount,
+      };
+
+      inMemory.printerModels[idx] = updated;
+      saveDevDemoDataset(inMemory);
+      return updated;
+    }
+
+    const db = getDb();
+    const [existing] = await db
+      .select()
+      .from(printerModels)
+      .where(eq(printerModels.id, id))
+      .limit(1);
+
+    if (!existing) {
+      throw new AppError(404, "NOT_FOUND", `Printer model not found.`);
+    }
+
+    if (input.slug && input.slug !== existing.slug) {
+      const slugClash = await db
+        .select({ id: printerModels.id })
+        .from(printerModels)
+        .where(
+          and(eq(printerModels.slug, input.slug), ne(printerModels.id, id)),
+        )
+        .limit(1);
+
+      if (slugClash.length > 0) {
+        throw new AppError(
+          409,
+          "DUPLICATE_SLUG",
+          `A printer model with slug '${input.slug}' already exists.`,
+        );
+      }
+    }
+
+    const targetBrandId =
+      input.brandId !== undefined ? input.brandId : existing.brandId;
+    if (targetBrandId) {
+      const [br] = await db
+        .select({ id: brands.id })
+        .from(brands)
+        .where(eq(brands.id, targetBrandId))
+        .limit(1);
+
+      if (!br) {
+        throw new AppError(
+          400,
+          "INVALID_BRAND",
+          `Selected brand does not exist.`,
+        );
+      }
+    }
+
+    const [updated] = await db
+      .update(printerModels)
+      .set({
+        ...input,
+        updatedAt: new Date(),
+      })
+      .where(eq(printerModels.id, id))
+      .returning();
+
+    let brandDetails = null;
+    if (updated.brandId) {
+      const [br] = await db
+        .select({ name: brands.name, slug: brands.slug })
+        .from(brands)
+        .where(eq(brands.id, updated.brandId))
+        .limit(1);
+      brandDetails = br;
+    }
+
+    const [countResult] = await db
+      .select({
+        count: sql<number>`count(*)::int`,
+      })
+      .from(productPrinterCompatibility)
+      .innerJoin(
+        products,
+        eq(products.id, productPrinterCompatibility.productId),
+      )
+      .where(
+        and(
+          eq(productPrinterCompatibility.printerModelId, id),
+          eq(products.isPublished, true),
+        ),
+      );
+
+    return {
+      id: updated.id,
+      slug: updated.slug,
+      name: updated.name,
+      series: updated.series,
+      brandId: updated.brandId,
+      brandName: brandDetails?.name ?? null,
+      brandSlug: brandDetails?.slug ?? null,
+      compatibleProductCount: Number(countResult?.count ?? 0),
+    };
+  },
+
+  /**
+   * Deletes an existing product and cascades to variants & compatibility links.
+   */
+  async deleteProduct(id: string): Promise<{ id: string }> {
+    const inMemory = getActiveInMemoryDataset();
+    if (inMemory) {
+      const idx = inMemory.products.findIndex((p) => p.id === id);
+      if (idx === -1) {
+        throw new AppError(404, "NOT_FOUND", `Product not found.`);
+      }
+      inMemory.products.splice(idx, 1);
+      inMemory.variants = inMemory.variants.filter((v) => v.productId !== id);
+      inMemory.compatibilityLinks = inMemory.compatibilityLinks.filter(
+        (l) => l.productId !== id,
+      );
+      saveDevDemoDataset(inMemory);
+      return { id };
+    }
+
+    const db = getDb();
+    const [deleted] = await db
+      .delete(products)
+      .where(eq(products.id, id))
+      .returning({ id: products.id });
+
+    if (!deleted) {
+      throw new AppError(404, "NOT_FOUND", `Product not found.`);
+    }
+
+    return { id: deleted.id };
+  },
+
+  /**
+   * Deletes a category if no products are assigned to it.
+   */
+  async deleteCategory(id: string): Promise<{ id: string }> {
+    const inMemory = getActiveInMemoryDataset();
+    if (inMemory) {
+      const idx = inMemory.categories.findIndex((c) => c.id === id);
+      if (idx === -1) {
+        throw new AppError(404, "NOT_FOUND", `Category not found.`);
+      }
+      const assignedCount = inMemory.products.filter(
+        (p) => p.categoryId === id,
+      ).length;
+      if (assignedCount > 0) {
+        throw new AppError(
+          409,
+          "CATEGORY_IN_USE",
+          `Cannot delete this category because ${assignedCount} product(s) are assigned to it. Reassign or delete those products first.`,
+        );
+      }
+      inMemory.categories.splice(idx, 1);
+      saveDevDemoDataset(inMemory);
+      return { id };
+    }
+
+    const db = getDb();
+    const [existing] = await db
+      .select({ id: categories.id })
+      .from(categories)
+      .where(eq(categories.id, id))
+      .limit(1);
+
+    if (!existing) {
+      throw new AppError(404, "NOT_FOUND", `Category not found.`);
+    }
+
+    const [prodCount] = await db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(products)
+      .where(eq(products.categoryId, id));
+
+    const count = Number(prodCount?.count ?? 0);
+    if (count > 0) {
+      throw new AppError(
+        409,
+        "CATEGORY_IN_USE",
+        `Cannot delete this category because ${count} product(s) are assigned to it. Reassign or delete those products first.`,
+      );
+    }
+
+    await db.delete(categories).where(eq(categories.id, id));
+    return { id };
+  },
+
+  /**
+   * Deletes a brand and unlinks any associated products or printer models.
+   */
+  async deleteBrand(id: string): Promise<{ id: string }> {
+    const inMemory = getActiveInMemoryDataset();
+    if (inMemory) {
+      const idx = inMemory.brands.findIndex((b) => b.id === id);
+      if (idx === -1) {
+        throw new AppError(404, "NOT_FOUND", `Brand not found.`);
+      }
+      inMemory.brands.splice(idx, 1);
+      inMemory.products = inMemory.products.map((p) =>
+        p.brandId === id ? { ...p, brandId: null, brand: null } : p,
+      );
+      inMemory.printerModels = inMemory.printerModels.map((m) =>
+        m.brandId === id
+          ? { ...m, brandId: null, brandName: null, brandSlug: null }
+          : m,
+      );
+      saveDevDemoDataset(inMemory);
+      return { id };
+    }
+
+    const db = getDb();
+    const [deleted] = await db
+      .delete(brands)
+      .where(eq(brands.id, id))
+      .returning({ id: brands.id });
+
+    if (!deleted) {
+      throw new AppError(404, "NOT_FOUND", `Brand not found.`);
+    }
+
+    return { id: deleted.id };
+  },
+
+  /**
+   * Deletes a printer model and cascades to compatibility links.
+   */
+  async deletePrinterModel(id: string): Promise<{ id: string }> {
+    const inMemory = getActiveInMemoryDataset();
+    if (inMemory) {
+      const idx = inMemory.printerModels.findIndex((m) => m.id === id);
+      if (idx === -1) {
+        throw new AppError(404, "NOT_FOUND", `Printer model not found.`);
+      }
+      inMemory.printerModels.splice(idx, 1);
+      inMemory.compatibilityLinks = inMemory.compatibilityLinks.filter(
+        (l) => l.printerModelId !== id,
+      );
+      saveDevDemoDataset(inMemory);
+      return { id };
+    }
+
+    const db = getDb();
+    const [deleted] = await db
+      .delete(printerModels)
+      .where(eq(printerModels.id, id))
+      .returning({ id: printerModels.id });
+
+    if (!deleted) {
+      throw new AppError(404, "NOT_FOUND", `Printer model not found.`);
+    }
+
+    return { id: deleted.id };
+  },
+
+  /**
+   * Saves an uploaded base64 image file to `frontend/public/uploads` and returns its public URL.
+   */
+  async uploadImage(input: UploadImageInput): Promise<UploadedImageResponse> {
+    const cleanBase64 = input.dataBase64.replace(
+      /^data:image\/[a-zA-Z0-9+.-]+;base64,/,
+      "",
+    );
+    const buffer = Buffer.from(cleanBase64, "base64");
+
+    if (buffer.byteLength === 0) {
+      throw new AppError(400, "EMPTY_FILE", "Uploaded image file is empty.");
+    }
+
+    if (buffer.byteLength > 10 * 1024 * 1024) {
+      throw new AppError(
+        400,
+        "FILE_TOO_LARGE",
+        "Image file exceeds the 10MB maximum size limit.",
+      );
+    }
+
+    const extMap: Record<string, string> = {
+      "image/png": ".png",
+      "image/jpeg": ".jpg",
+      "image/jpg": ".jpg",
+      "image/webp": ".webp",
+      "image/svg+xml": ".svg",
+      "image/gif": ".gif",
+    };
+
+    const ext = extMap[input.mimeType.toLowerCase()] ?? ".png";
+    const baseName = path
+      .basename(input.fileName, path.extname(input.fileName))
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 60) || "image";
+
+    const uniqueFileName = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${baseName}${ext}`;
+    const uploadsDir = path.resolve(process.cwd(), "frontend/public/uploads");
+
+    fs.mkdirSync(uploadsDir, { recursive: true });
+    fs.writeFileSync(path.join(uploadsDir, uniqueFileName), buffer);
+
+    return {
+      url: `/uploads/${uniqueFileName}`,
+      fileName: uniqueFileName,
     };
   },
 };

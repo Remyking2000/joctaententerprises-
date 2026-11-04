@@ -117,4 +117,85 @@ export const AdminController = {
       next(err);
     }
   },
+
+  async listPrinterModels(_req: Request, res: Response, next: NextFunction) {
+    try {
+      const validatedQuery = res.locals.validated?.query ?? {};
+      const models = await AdminService.listPrinterModels(validatedQuery);
+      res.json({ success: true, data: models });
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  async createPrinterModel(_req: Request, res: Response, next: NextFunction) {
+    try {
+      const validatedBody = res.locals.validated?.body;
+      const model = await AdminService.createPrinterModel(validatedBody);
+      res.status(201).json({ success: true, data: model });
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  async updatePrinterModel(req: Request, res: Response, next: NextFunction) {
+    try {
+      const id = String(req.params.id);
+      const validatedBody = res.locals.validated?.body;
+      const model = await AdminService.updatePrinterModel(id, validatedBody);
+      res.json({ success: true, data: model });
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  async deleteProduct(req: Request, res: Response, next: NextFunction) {
+    try {
+      const id = String(req.params.id);
+      const result = await AdminService.deleteProduct(id);
+      res.json({ success: true, data: result });
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  async deleteCategory(req: Request, res: Response, next: NextFunction) {
+    try {
+      const id = String(req.params.id);
+      const result = await AdminService.deleteCategory(id);
+      res.json({ success: true, data: result });
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  async deleteBrand(req: Request, res: Response, next: NextFunction) {
+    try {
+      const id = String(req.params.id);
+      const result = await AdminService.deleteBrand(id);
+      res.json({ success: true, data: result });
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  async deletePrinterModel(req: Request, res: Response, next: NextFunction) {
+    try {
+      const id = String(req.params.id);
+      const result = await AdminService.deletePrinterModel(id);
+      res.json({ success: true, data: result });
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  async uploadImage(_req: Request, res: Response, next: NextFunction) {
+    try {
+      const validatedBody = res.locals.validated?.body;
+      const uploaded = await AdminService.uploadImage(validatedBody);
+      res.status(201).json({ success: true, data: uploaded });
+    } catch (err) {
+      next(err);
+    }
+  },
 };

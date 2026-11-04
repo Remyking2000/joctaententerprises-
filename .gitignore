@@ -36,3 +36,9 @@ coverage/
 Thumbs.db
 *.swp
 *.swo
+.neon
+
+# Uploaded user media
+frontend/public/uploads/*
+!frontend/public/uploads/.gitkeep
+

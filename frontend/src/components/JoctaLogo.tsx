@@ -23,7 +23,7 @@ export function JoctaLogo({
   }[size];
 
   return (
-    <div className="inline-flex items-center gap-2.5">
+    <div className="inline-flex items-center gap-1.5 sm:gap-2.5">
       <div
         className={`${sizeClasses} shrink-0 rounded-neo-sm bg-surface-white p-1 flex items-center justify-center overflow-hidden ${
           inverted
@@ -52,13 +52,13 @@ export function JoctaLogo({
         <div className="flex flex-col leading-tight select-none">
           <div className="flex items-center gap-1">
             <span
-              className={`text-sm sm:text-base font-extrabold tracking-tight ${
+              className={`text-xs sm:text-base font-extrabold tracking-tight ${
                 inverted ? "text-white" : "text-ink-charcoal"
               }`}
             >
               JOCTA
             </span>
-            <span className="text-sm sm:text-base font-extrabold tracking-tight text-brand-red">
+            <span className="text-xs sm:text-base font-extrabold tracking-tight text-brand-red">
               ENTERPRISES
             </span>
           </div>

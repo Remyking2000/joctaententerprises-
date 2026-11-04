@@ -6,14 +6,13 @@ import {
   Layers,
   Plus,
   RefreshCw,
+  Search,
+  Trash2,
   X,
 } from "lucide-react";
-import type {
-  CategorySummary,
-  CreateCategoryInput,
-  UpdateCategoryInput,
-} from "@jocta/shared";
+import type { CategorySummary, CreateCategoryInput } from "@jocta/shared";
 import { adminApi, catalogApi, ApiClientError } from "../lib/api";
+import { ImageUploadDropzone } from "./components/ImageUploadDropzone";
 
 function generateSlug(name: string): string {
   return name
@@ -29,6 +28,8 @@ export function AdminCategoriesPage() {
   const [error, setError] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   // Modal / Form state
   const [formOpen, setFormOpen] = useState(false);
@@ -38,7 +39,7 @@ export function AdminCategoriesPage() {
   // Form fields
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
-  const [slugEdited, setSlugEdited] = useState(false);
+  const [showCustomSlug, setShowCustomSlug] = useState(false);
   const [description, setDescription] = useState("");
   const [imageUrl, setImageUrl] = useState("");
   const [sortOrder, setSortOrder] = useState("0");
@@ -68,7 +69,7 @@ export function AdminCategoriesPage() {
     setEditingId(null);
     setName("");
     setSlug("");
-    setSlugEdited(false);
+    setShowCustomSlug(false);
     setDescription("");
     setImageUrl("");
     setSortOrder(String(categories.length + 1));
@@ -80,7 +81,7 @@ export function AdminCategoriesPage() {
     setEditingId(cat.id);
     setName(cat.name);
     setSlug(cat.slug);
-    setSlugEdited(true);
+    setShowCustomSlug(false);
     setDescription(cat.description);
     setImageUrl(cat.imageUrl);
     setSortOrder(String(cat.sortOrder));
@@ -90,8 +91,32 @@ export function AdminCategoriesPage() {
 
   function handleNameChange(val: string) {
     setName(val);
-    if (!slugEdited && !editingId) {
+    if (!showCustomSlug && !editingId) {
       setSlug(generateSlug(val));
+    }
+  }
+
+  async function handleDelete(cat: CategorySummary) {
+    const confirmed = window.confirm(
+      `Delete category "${cat.name}"?\n\nNote: Categories that still have products assigned cannot be deleted until those products are reassigned or removed.`,
+    );
+    if (!confirmed) return;
+
+    setDeletingId(cat.id);
+    setError(null);
+    setSuccessMessage(null);
+    try {
+      await adminApi.deleteCategory(cat.id);
+      setCategories((prev) => prev.filter((c) => c.id !== cat.id));
+      setSuccessMessage(`Category '${cat.name}' deleted.`);
+    } catch (err) {
+      if (err instanceof ApiClientError) {
+        setError(err.message);
+      } else {
+        setError("Failed to delete category.");
+      }
+    } finally {
+      setDeletingId(null);
     }
   }
 
@@ -100,20 +125,23 @@ export function AdminCategoriesPage() {
     setFormError(null);
     setSuccessMessage(null);
 
-    if (!name.trim()) {
+    const trimmedName = name.trim();
+    const effectiveSlug = (slug.trim() || generateSlug(trimmedName)).trim();
+
+    if (!trimmedName) {
       setFormError("Category name is required.");
       return;
     }
-    if (!slug.trim()) {
-      setFormError("Category slug is required.");
+    if (!effectiveSlug) {
+      setFormError("Category slug could not be generated.");
       return;
     }
 
     setSubmitting(true);
     try {
       const payload: CreateCategoryInput = {
-        name: name.trim(),
-        slug: slug.trim(),
+        name: trimmedName,
+        slug: effectiveSlug,
         description: description.trim(),
         imageUrl: imageUrl.trim(),
         sortOrder: parseInt(sortOrder, 10) || 0,
@@ -143,6 +171,16 @@ export function AdminCategoriesPage() {
     }
   }
 
+  const filteredCategories = categories.filter((c) => {
+    if (!search.trim()) return true;
+    const q = search.toLowerCase().trim();
+    return (
+      c.name.toLowerCase().includes(q) ||
+      c.slug.toLowerCase().includes(q) ||
+      c.description.toLowerCase().includes(q)
+    );
+  });
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -152,7 +190,7 @@ export function AdminCategoriesPage() {
             Category Management
           </h1>
           <p className="mt-1 text-xs sm:text-sm text-ink-secondary">
-            Manage product categories and navigation taxonomy.
+            Manage product categories and storefront navigation taxonomy.
           </p>
         </div>
 
@@ -176,9 +214,26 @@ export function AdminCategoriesPage() {
             className="neo-button-primary inline-flex items-center gap-1.5 text-xs py-2 px-3.5"
           >
             <Plus className="h-4 w-4" />
-            <span>Add Category</span>
+            <span>Create Category</span>
           </button>
         </div>
+      </div>
+
+      {/* Quick Search Bar */}
+      <div className="rounded-neo-base border border-surface-border bg-surface-white p-3.5 shadow-neo flex items-center gap-3">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-ink-muted" />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Filter categories by name or description..."
+            className="w-full rounded-neo-sm border border-surface-border bg-canvas-ivory pl-9 pr-3 py-2 text-xs font-semibold text-ink-charcoal focus:border-brand-red focus:outline-hidden"
+          />
+        </div>
+        <span className="text-xs font-bold text-ink-secondary shrink-0">
+          {filteredCategories.length} categor{filteredCategories.length === 1 ? "y" : "ies"}
+        </span>
       </div>
 
       {/* Global Notifications */}
@@ -189,15 +244,15 @@ export function AdminCategoriesPage() {
         >
           <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
           <div className="flex-1">
-            <p className="font-bold">Category Load Error</p>
+            <p className="font-bold">Category Error</p>
             <p className="mt-0.5 text-ink-secondary">{error}</p>
           </div>
           <button
             type="button"
-            onClick={loadCategories}
+            onClick={() => setError(null)}
             className="neo-button-secondary text-xs py-1 px-2.5"
           >
-            Retry
+            Dismiss
           </button>
         </div>
       )}
@@ -219,27 +274,35 @@ export function AdminCategoriesPage() {
             <RefreshCw className="h-6 w-6 mx-auto animate-spin mb-2 text-brand-red" />
             Loading categories from database...
           </div>
-        ) : categories.length === 0 ? (
+        ) : filteredCategories.length === 0 ? (
           <div className="p-12 text-center text-xs text-ink-muted">
-            No categories defined in the database.
+            No categories found. Click &ldquo;Create Category&rdquo; to create one.
           </div>
         ) : (
           <div className="divide-y divide-surface-border">
-            {categories.map((cat) => (
+            {filteredCategories.map((cat) => (
               <div
                 key={cat.id}
                 className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-canvas-ivory/50 transition-colors"
               >
                 <div className="flex items-start gap-3">
-                  <div className="h-10 w-10 rounded-neo-sm border border-surface-border bg-canvas-ivory shrink-0 flex items-center justify-center text-brand-red">
-                    <Layers className="h-5 w-5" />
+                  <div className="h-11 w-11 rounded-neo-sm border border-surface-border bg-canvas-ivory shrink-0 flex items-center justify-center text-brand-red overflow-hidden p-1">
+                    {cat.imageUrl ? (
+                      <img
+                        src={cat.imageUrl}
+                        alt={cat.name}
+                        className="h-full w-full object-contain"
+                      />
+                    ) : (
+                      <Layers className="h-5 w-5" />
+                    )}
                   </div>
                   <div>
                     <h2 className="font-bold text-xs sm:text-sm text-ink-charcoal">
                       {cat.name}
                     </h2>
                     <p className="font-mono text-[11px] text-ink-muted">
-                      Slug: {cat.slug} • Order: {cat.sortOrder}
+                      /{cat.slug} • Priority: {cat.sortOrder}
                     </p>
                     {cat.description && (
                       <p className="text-xs text-ink-secondary mt-0.5 line-clamp-1">
@@ -253,10 +316,20 @@ export function AdminCategoriesPage() {
                   <button
                     type="button"
                     onClick={() => openEditForm(cat)}
-                    className="neo-button-secondary text-xs py-1 px-3 inline-flex items-center gap-1"
+                    className="neo-button-secondary text-xs py-1.5 px-3 inline-flex items-center gap-1"
                   >
                     <Edit className="h-3 w-3" />
                     <span>Edit</span>
+                  </button>
+                  <button
+                    type="button"
+                    disabled={deletingId === cat.id}
+                    onClick={() => handleDelete(cat)}
+                    className="inline-flex items-center gap-1 px-2 py-1.5 text-xs font-bold rounded-neo-sm border border-surface-border text-ink-secondary hover:text-brand-red hover:border-brand-red transition-colors cursor-pointer"
+                    title="Delete category"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                    <span>Delete</span>
                   </button>
                 </div>
               </div>
@@ -268,16 +341,16 @@ export function AdminCategoriesPage() {
       {/* Modal / Dialog Form for Create & Edit */}
       {formOpen && (
         <div
-          className="fixed inset-0 z-50 bg-ink-charcoal/60 backdrop-blur-xs flex items-center justify-center p-4"
+          className="fixed inset-0 z-50 bg-ink-charcoal/50 flex items-center justify-center p-4"
           onClick={() => setFormOpen(false)}
         >
           <div
-            className="w-full max-w-md rounded-neo-base border border-surface-border bg-surface-white p-5 sm:p-6 shadow-neo space-y-4"
+            className="w-full max-w-md rounded-neo-base border border-surface-border bg-surface-white p-5 sm:p-6 shadow-neo space-y-4 max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between border-b border-surface-border pb-3">
               <h2 className="text-sm font-black text-ink-charcoal uppercase tracking-tight">
-                {editingId ? "Edit Category" : "Create New Category"}
+                {editingId ? "Edit Category" : "Create Category"}
               </h2>
               <button
                 type="button"
@@ -298,7 +371,7 @@ export function AdminCategoriesPage() {
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-3.5 text-xs">
+            <form onSubmit={handleSubmit} className="space-y-4 text-xs">
               <div>
                 <label className="block font-bold text-ink-charcoal mb-1">
                   Category Name <span className="text-brand-red">*</span>
@@ -306,54 +379,77 @@ export function AdminCategoriesPage() {
                 <input
                   type="text"
                   required
+                  autoFocus
                   value={name}
                   onChange={(e) => handleNameChange(e.target.value)}
-                  placeholder="e.g. Laser Toners"
+                  placeholder="e.g. Laser Toners, Drum Units, Office Printers"
                   className="w-full rounded-neo-sm border border-surface-border bg-canvas-ivory px-3 py-2 font-semibold text-ink-charcoal focus:border-brand-red focus:outline-hidden"
                 />
+                <div className="mt-1 flex items-center justify-between text-[11px] text-ink-muted">
+                  <span>
+                    URL Slug:{" "}
+                    <code className="font-mono text-ink-charcoal">
+                      {slug || generateSlug(name) || "auto-generated"}
+                    </code>
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setShowCustomSlug((v) => !v)}
+                    className="text-brand-red hover:underline font-semibold cursor-pointer"
+                  >
+                    {showCustomSlug ? "Hide slug" : "Customize slug"}
+                  </button>
+                </div>
               </div>
+
+              {showCustomSlug && (
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div className="sm:col-span-2">
+                    <label className="block font-bold text-ink-charcoal mb-1">
+                      Custom URL Slug
+                    </label>
+                    <input
+                      type="text"
+                      value={slug}
+                      onChange={(e) => setSlug(generateSlug(e.target.value))}
+                      placeholder="e.g. laser-toners"
+                      className="w-full rounded-neo-sm border border-surface-border bg-canvas-ivory px-3 py-2 font-mono text-xs font-semibold text-ink-charcoal focus:border-brand-red focus:outline-hidden"
+                    />
+                  </div>
+                  <div>
+                    <label className="block font-bold text-ink-charcoal mb-1">
+                      Display Order
+                    </label>
+                    <input
+                      type="number"
+                      value={sortOrder}
+                      onChange={(e) => setSortOrder(e.target.value)}
+                      className="w-full rounded-neo-sm border border-surface-border bg-canvas-ivory px-3 py-2 font-mono font-semibold text-ink-charcoal focus:border-brand-red focus:outline-hidden"
+                    />
+                  </div>
+                </div>
+              )}
 
               <div>
                 <label className="block font-bold text-ink-charcoal mb-1">
-                  URL Slug <span className="text-brand-red">*</span>
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={slug}
-                  onChange={(e) => {
-                    setSlug(e.target.value);
-                    setSlugEdited(true);
-                  }}
-                  placeholder="e.g. laser-toners"
-                  className="w-full rounded-neo-sm border border-surface-border bg-canvas-ivory px-3 py-2 font-mono text-xs font-semibold text-ink-charcoal focus:border-brand-red focus:outline-hidden"
-                />
-              </div>
-
-              <div>
-                <label className="block font-bold text-ink-charcoal mb-1">
-                  Description
+                  Description (Optional)
                 </label>
                 <textarea
                   rows={2}
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Optional brief description..."
+                  placeholder="Brief description shown on category pages..."
                   className="w-full rounded-neo-sm border border-surface-border bg-canvas-ivory px-3 py-2 text-ink-charcoal focus:border-brand-red focus:outline-hidden"
                 />
               </div>
 
-              <div>
-                <label className="block font-bold text-ink-charcoal mb-1">
-                  Sort Order Priority
-                </label>
-                <input
-                  type="number"
-                  value={sortOrder}
-                  onChange={(e) => setSortOrder(e.target.value)}
-                  className="w-full rounded-neo-sm border border-surface-border bg-canvas-ivory px-3 py-2 font-mono font-semibold text-ink-charcoal focus:border-brand-red focus:outline-hidden"
-                />
-              </div>
+              <ImageUploadDropzone
+                label="Category Image / Icon (Optional)"
+                helperText="Drag & drop an image or icon here, or click to upload"
+                value={imageUrl}
+                onChange={setImageUrl}
+                compact
+              />
 
               <div className="flex items-center justify-end gap-2 pt-2 border-t border-surface-border">
                 <button
@@ -369,7 +465,7 @@ export function AdminCategoriesPage() {
                   className="neo-button-primary text-xs py-2 px-4"
                 >
                   {submitting
-                    ? "Saving..."
+                    ? editingId ? "Updating..." : "Creating..."
                     : editingId
                       ? "Update Category"
                       : "Create Category"}

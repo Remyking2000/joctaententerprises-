@@ -1,3 +1,4 @@
+import path from "node:path";
 import express from "express";
 import cors from "cors";
 import { env } from "./config/env.js";
@@ -23,8 +24,13 @@ export function createApp() {
     }),
   );
 
-  app.use(express.json({ limit: "1mb" }));
-  app.use(express.urlencoded({ limit: "1mb", extended: true }));
+  app.use(express.json({ limit: "15mb" }));
+  app.use(express.urlencoded({ limit: "15mb", extended: true }));
+
+  app.use(
+    "/uploads",
+    express.static(path.resolve(process.cwd(), "frontend/public/uploads")),
+  );
 
   app.use("/api", (_req, res, next) => {
     res.setHeader(

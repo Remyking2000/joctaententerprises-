@@ -8,6 +8,7 @@ import {
   LayoutDashboard,
   Menu,
   Package,
+  Printer,
   ShieldAlert,
   X,
 } from "lucide-react";
@@ -37,6 +38,12 @@ const ADMIN_NAV_LINKS = [
     end: false,
     label: "Brands",
     icon: Bookmark,
+  },
+  {
+    to: "/admin/printer-models",
+    end: false,
+    label: "Printer Models",
+    icon: Printer,
   },
 ];
 
@@ -154,7 +161,7 @@ export function AdminLayout() {
         {/* Mobile Slide-Out Drawer */}
         {mobileNavOpen && (
           <div
-            className="md:hidden fixed inset-0 z-40 bg-ink-charcoal/60 backdrop-blur-xs flex"
+            className="md:hidden fixed inset-0 z-40 bg-ink-charcoal/50 flex"
             onClick={() => setMobileNavOpen(false)}
           >
             <div
