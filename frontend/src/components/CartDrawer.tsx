@@ -1,8 +1,23 @@
 import { useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Minus, Plus, ShoppingBag, Trash2, X, Info } from "lucide-react";
+import {
+  Minus,
+  Plus,
+  ShoppingBag,
+  Trash2,
+  X,
+  Info,
+  MessageCircle,
+} from "lucide-react";
 import { useCart } from "../context/CartContext";
 import { formatKes, PRODUCT_AUTHENTICITY_LABELS } from "../lib/format";
+import {
+  buildWhatsAppOrderMessage,
+  buildWhatsAppOrderUrl,
+  getStoreWhatsAppNumber,
+} from "../lib/whatsapp";
+
+const STORE_WHATSAPP_NUMBER = getStoreWhatsAppNumber();
 
 export function CartDrawer() {
   const {
@@ -28,6 +43,14 @@ export function CartDrawer() {
   }, [isOpen, closeCart]);
 
   if (!isOpen) return null;
+
+  const whatsAppOrderUrl =
+    STORE_WHATSAPP_NUMBER && items.length > 0
+      ? buildWhatsAppOrderUrl(
+          STORE_WHATSAPP_NUMBER,
+          buildWhatsAppOrderMessage(items, window.location.origin),
+        )
+      : null;
 
   return (
     <div
@@ -67,11 +90,19 @@ export function CartDrawer() {
         {/* Provisional boundary notice */}
         <div className="border-b border-surface-border bg-brand-red-tint px-5 py-3 text-xs text-ink-charcoal flex items-start gap-2.5">
           <Info className="h-4 w-4 shrink-0 text-brand-red mt-0.5" aria-hidden="true" />
-          <span>
-            <strong>Provisional Cart Preview:</strong> Items added here are saved
-            locally in your browser while browsing the catalogue. Order submission
-            and checkout will be enabled in the next phase.
-          </span>
+          {STORE_WHATSAPP_NUMBER ? (
+            <span>
+              <strong>Order on WhatsApp:</strong> Send this list to our sales
+              desk and we&apos;ll confirm availability, final price and
+              delivery before you pay.
+            </span>
+          ) : (
+            <span>
+              <strong>Provisional Cart Preview:</strong> Items added here are
+              saved locally in your browser while browsing the catalogue. Order
+              submission and checkout will be enabled in the next phase.
+            </span>
+          )}
         </div>
 
         {/* Cart items */}
@@ -191,6 +222,17 @@ export function CartDrawer() {
                 {formatKes(subtotalKes)}
               </span>
             </div>
+            {whatsAppOrderUrl && (
+              <a
+                href={whatsAppOrderUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="neo-button-primary w-full py-3 text-sm"
+              >
+                <MessageCircle className="h-4 w-4" aria-hidden="true" />
+                Order on WhatsApp
+              </a>
+            )}
             <div className="flex items-center gap-3">
               <button
                 type="button"
@@ -202,7 +244,9 @@ export function CartDrawer() {
               <button
                 type="button"
                 onClick={closeCart}
-                className="neo-button-primary flex-1 py-2.5 text-xs"
+                className={`${
+                  whatsAppOrderUrl ? "neo-button-secondary" : "neo-button-primary"
+                } flex-1 py-2.5 text-xs`}
               >
                 Continue Browsing
               </button>
