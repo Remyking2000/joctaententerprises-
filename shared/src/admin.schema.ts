@@ -190,8 +190,8 @@ export const uploadImageSchema = z.object({
     .string()
     .trim()
     .regex(
-      /^image\/(png|jpeg|jpg|webp|svg\+xml|gif)$/i,
-      "Only PNG, JPG, WEBP, SVG, and GIF images are supported",
+      /^image\/(png|jpeg|jpg|webp|gif)$/i,
+      "Only PNG, JPG, WEBP, and GIF images are supported",
     ),
   dataBase64: z.string().trim().min(1, "Image data is required"),
 });

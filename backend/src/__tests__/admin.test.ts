@@ -778,6 +778,8 @@ describe("Admin API Foundation (Phase 1)", () => {
         // Restore original .demo-state.json untouched
         if (backupExists && backupRaw !== null) {
           fs.writeFileSync(stateFilePath, backupRaw, "utf8");
+        } else {
+          fs.rmSync(stateFilePath, { force: true });
         }
         clearDevDemoMemoryCache();
       }

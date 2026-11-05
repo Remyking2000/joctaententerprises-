@@ -1870,7 +1870,6 @@ export const AdminService = {
       "image/jpeg": ".jpg",
       "image/jpg": ".jpg",
       "image/webp": ".webp",
-      "image/svg+xml": ".svg",
       "image/gif": ".gif",
     };
 

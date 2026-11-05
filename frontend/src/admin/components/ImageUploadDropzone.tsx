@@ -35,7 +35,7 @@ function readFileAsBase64(file: File): Promise<string> {
 
 export function ImageUploadDropzone({
   label = "Upload Image",
-  helperText = "Drag & drop an image here, or click to browse (PNG, JPG, WEBP, SVG up to 10MB)",
+  helperText = "Drag & drop an image here, or click to browse (PNG, JPG, WEBP, GIF up to 10MB)",
   value,
   onChange,
   compact = false,
@@ -47,8 +47,8 @@ export function ImageUploadDropzone({
 
   async function processFile(file: File) {
     setError(null);
-    if (!/^image\/(png|jpeg|jpg|webp|svg\+xml|gif)$/i.test(file.type)) {
-      setError("Please select a valid image file (PNG, JPG, WEBP, SVG, or GIF).");
+    if (!/^image\/(png|jpeg|jpg|webp|gif)$/i.test(file.type)) {
+      setError("Please select a valid image file (PNG, JPG, WEBP, or GIF).");
       return;
     }
     if (file.size > 10 * 1024 * 1024) {
@@ -115,7 +115,7 @@ export function ImageUploadDropzone({
       <input
         ref={inputRef}
         type="file"
-        accept="image/png,image/jpeg,image/webp,image/svg+xml,image/gif"
+        accept="image/png,image/jpeg,image/webp,image/gif"
         onChange={handleFileChange}
         className="hidden"
       />
@@ -237,9 +237,9 @@ export function ProductImageGalleryDropzone({
     if (files.length === 0) return;
 
     for (const file of files) {
-      if (!/^image\/(png|jpeg|jpg|webp|svg\+xml|gif)$/i.test(file.type)) {
+      if (!/^image\/(png|jpeg|jpg|webp|gif)$/i.test(file.type)) {
         setError(
-          `Unsupported file "${file.name}". Please upload PNG, JPG, WEBP, SVG, or GIF images.`,
+          `Unsupported file "${file.name}". Please upload PNG, JPG, WEBP, or GIF images.`,
         );
         return;
       }
@@ -294,7 +294,7 @@ export function ProductImageGalleryDropzone({
         ref={inputRef}
         type="file"
         multiple
-        accept="image/png,image/jpeg,image/webp,image/svg+xml,image/gif"
+        accept="image/png,image/jpeg,image/webp,image/gif"
         onChange={(e) => {
           if (e.target.files) {
             void processFiles(e.target.files);
@@ -351,7 +351,7 @@ export function ProductImageGalleryDropzone({
                 </span>
               </p>
               <p className="text-[11px] text-ink-muted mt-0.5">
-                Supports PNG, JPG, WEBP, SVG (up to 10MB per photo). Drop
+                Supports PNG, JPG, WEBP, GIF (up to 10MB per photo). Drop
                 multiple photos at once.
               </p>
             </div>
