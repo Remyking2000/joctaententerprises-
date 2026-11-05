@@ -152,7 +152,7 @@ export function AdminLoginPage() {
 
   return (
     <div className="min-h-screen bg-canvas-ivory text-ink-charcoal flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 selection:bg-brand-red selection:text-white">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md">
+      <div className="sm:mx-auto sm:w-full sm:max-w-lg">
         {/* Top Header & Brand */}
         <div className="flex flex-col items-center text-center">
           <Link
@@ -162,7 +162,7 @@ export function AdminLoginPage() {
           >
             <JoctaLogo size="lg" showText={false} />
             <div className="flex flex-col text-left">
-              <span className="text-xl font-extrabold tracking-tight text-ink-charcoal group-hover:text-brand-red transition-colors">
+              <span className="text-2xl font-extrabold tracking-tight text-ink-charcoal group-hover:text-brand-red transition-colors">
                 Jocta Enterprises
               </span>
               <span className="text-[11px] font-bold uppercase tracking-wider text-brand-red">
@@ -171,19 +171,19 @@ export function AdminLoginPage() {
             </div>
           </Link>
 
-          <h1 className="text-2xl font-black text-ink-charcoal tracking-tight sm:text-3xl">
+          <h1 className="text-3xl font-black text-ink-charcoal tracking-tight sm:text-4xl">
             Administrator Sign-In
           </h1>
-          <p className="mt-2 text-xs sm:text-sm text-ink-muted max-w-sm">
+          <p className="mt-3 text-sm sm:text-base text-ink-muted max-w-md">
             Sign in with an approved Google account to manage products,
             categories, inventory, and printer models.
           </p>
         </div>
 
         {/* Card Box */}
-        <div className="mt-8 bg-surface-white border border-surface-border rounded-neo shadow-neo p-6 sm:p-8">
+        <div className="mt-8 bg-surface-white border border-surface-border rounded-neo shadow-neo p-6 sm:p-10">
           {/* Security Banner */}
-          <div className="mb-6 flex items-center gap-2.5 rounded-neo-sm bg-emerald-50 border border-emerald-200 p-3 text-xs text-emerald-900">
+          <div className="mb-6 flex items-center gap-2.5 rounded-neo-sm bg-emerald-50 border border-emerald-200 p-3.5 text-sm text-emerald-900">
             <ShieldCheck className="h-4 w-4 text-emerald-700 shrink-0" />
             <span>
               Secure server-verified authentication enabled with Google
@@ -195,13 +195,13 @@ export function AdminLoginPage() {
           {errorMessage && (
             <div
               role="alert"
-              className={`mb-6 rounded-neo-sm border p-4 text-xs font-medium space-y-1 ${
+              className={`mb-6 rounded-neo-sm border p-4 text-sm font-medium space-y-1 ${
                 isForbiddenError
                   ? "bg-amber-50 border-amber-300 text-amber-950"
                   : "bg-red-50 border-red-300 text-red-900"
               }`}
             >
-              <div className="flex items-center gap-2 font-bold text-sm">
+              <div className="flex items-center gap-2 font-bold text-base">
                 {isForbiddenError ? (
                   <ShieldAlert className="h-4 w-4 text-amber-700 shrink-0" />
                 ) : (
@@ -215,7 +215,7 @@ export function AdminLoginPage() {
               </div>
               <p className="pl-6 leading-relaxed">{errorMessage}</p>
               {isForbiddenError && (
-                <p className="pl-6 text-[11px] text-amber-800 pt-1">
+                <p className="pl-6 text-sm text-amber-800 pt-1">
                   If you require administrator access, request that your Google
                   email be added to the server's administrator allowlist.
                 </p>
@@ -228,20 +228,20 @@ export function AdminLoginPage() {
             {isSubmitting ? (
               <div className="flex flex-col items-center justify-center py-6 gap-3">
                 <Loader2 className="h-8 w-8 text-brand-red animate-spin" />
-                <span className="text-xs font-bold text-ink-charcoal">
+                <span className="text-sm font-bold text-ink-charcoal">
                   Verifying administrator credentials...
                 </span>
-                <span className="text-[11px] text-ink-muted">
+                <span className="text-sm text-ink-muted">
                   Validating Google identity &amp; session security
                 </span>
               </div>
             ) : !googleClientId ? (
-              <div className="rounded-neo-sm border border-amber-300 bg-amber-50 p-4 text-xs text-amber-950 space-y-2">
+              <div className="rounded-neo-sm border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950 space-y-2">
                 <p className="font-bold flex items-center gap-1.5 text-amber-900">
                   <AlertCircle className="h-4 w-4 text-amber-700" />
                   Google Client ID Required
                 </p>
-                <p className="text-[11px] leading-relaxed">
+                <p className="text-sm leading-relaxed">
                   Configure <code className="font-mono font-bold bg-amber-100 px-1 py-0.5 rounded">VITE_GOOGLE_CLIENT_ID</code> and{" "}
                   <code className="font-mono font-bold bg-amber-100 px-1 py-0.5 rounded">GOOGLE_CLIENT_ID</code> in your{" "}
                   <code className="font-mono font-bold bg-amber-100 px-1 py-0.5 rounded">.env</code> configuration to render Google Sign-In.
@@ -254,7 +254,7 @@ export function AdminLoginPage() {
                   className="min-h-[44px] flex items-center justify-center"
                 />
                 {!gsiLoaded && (
-                  <div className="flex items-center gap-2 text-xs text-ink-muted py-2">
+                  <div className="flex items-center gap-2 text-sm text-ink-muted py-2">
                     <Loader2 className="h-4 w-4 animate-spin text-ink-muted" />
                     <span>Loading Google authentication...</span>
                   </div>
@@ -265,7 +265,7 @@ export function AdminLoginPage() {
 
           {/* Access Policy Note */}
           <div className="mt-6 pt-5 border-t border-surface-border text-center">
-            <p className="text-[11px] text-ink-muted">
+            <p className="text-sm text-ink-muted">
               Only authorized email accounts (including{" "}
               <span className="font-mono font-semibold text-ink-charcoal">
                 ycremy2000@gmail.com
@@ -279,7 +279,7 @@ export function AdminLoginPage() {
         <div className="mt-6 text-center">
           <Link
             to="/"
-            className="inline-flex items-center gap-1.5 text-xs font-bold text-ink-secondary hover:text-brand-red transition-colors"
+            className="inline-flex items-center gap-1.5 text-sm font-bold text-ink-secondary hover:text-brand-red transition-colors"
           >
             <ArrowLeft className="h-3.5 w-3.5" />
             <span>Return to Jocta Storefront</span>
