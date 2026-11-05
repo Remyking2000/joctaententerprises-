@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import {
   buildWhatsAppOrderMessage,
   buildWhatsAppOrderUrl,
+  DEFAULT_STORE_WHATSAPP_NUMBER,
+  getStoreWhatsAppNumber,
   normalizeWhatsAppNumber,
   type WhatsAppOrderItem,
 } from "./whatsapp";
@@ -60,6 +62,15 @@ describe("buildWhatsAppOrderMessage", () => {
   it("adds product links when a site origin is given", () => {
     const msg = buildWhatsAppOrderMessage([toner], "https://jocta.co.ke/");
     expect(msg).toContain("https://jocta.co.ke/shop/hp-26a-black-toner");
+  });
+});
+
+describe("store number", () => {
+  it("defaults to the Jocta sales desk when no env number is set", () => {
+    expect(normalizeWhatsAppNumber("+254723494623")).toBe(
+      DEFAULT_STORE_WHATSAPP_NUMBER,
+    );
+    expect(getStoreWhatsAppNumber()).toBe("254723494623");
   });
 });
 

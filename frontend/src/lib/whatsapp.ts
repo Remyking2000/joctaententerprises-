@@ -34,10 +34,18 @@ export function normalizeWhatsAppNumber(
   return digits;
 }
 
-/** The store's configured WhatsApp ordering number, or null if unset. */
+/** Jocta Enterprises sales desk, used when VITE_WHATSAPP_NUMBER is not set. */
+export const DEFAULT_STORE_WHATSAPP_NUMBER = "254723494623";
+
+/**
+ * The store's WhatsApp ordering number: VITE_WHATSAPP_NUMBER when it holds a
+ * valid number, otherwise the Jocta sales desk default.
+ */
 export function getStoreWhatsAppNumber(): string | null {
-  return normalizeWhatsAppNumber(
-    import.meta.env.VITE_WHATSAPP_NUMBER as string | undefined,
+  return (
+    normalizeWhatsAppNumber(
+      import.meta.env.VITE_WHATSAPP_NUMBER as string | undefined,
+    ) ?? DEFAULT_STORE_WHATSAPP_NUMBER
   );
 }
 
