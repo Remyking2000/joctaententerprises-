@@ -47,7 +47,10 @@ export const AdminController = {
   async createProduct(_req: Request, res: Response, next: NextFunction) {
     try {
       const validatedBody = res.locals.validated?.body;
-      const product = await AdminService.createProduct(validatedBody);
+      const product = await AdminService.createProduct(
+        validatedBody,
+        res.locals.user?.email ?? "",
+      );
       res.status(201).json({ success: true, data: product });
     } catch (err) {
       next(err);
@@ -58,7 +61,11 @@ export const AdminController = {
     try {
       const id = String(req.params.id);
       const validatedBody = res.locals.validated?.body;
-      const product = await AdminService.updateProduct(id, validatedBody);
+      const product = await AdminService.updateProduct(
+        id,
+        validatedBody,
+        res.locals.user?.email ?? "",
+      );
       res.json({ success: true, data: product });
     } catch (err) {
       next(err);

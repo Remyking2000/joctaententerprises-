@@ -17,6 +17,7 @@ import {
 import { AdminController } from "../controllers/admin.controller.js";
 import { AuthController } from "../controllers/auth.controller.js";
 import { requireAdminAuth } from "../middleware/auth.middleware.js";
+import inventoryRoutes from "./inventory.routes.js";
 import { validateRequest } from "../middleware/error.middleware.js";
 
 const router = Router();
@@ -47,6 +48,9 @@ router.use(requireAdminAuth);
 // Stats & Demo Maintenance
 router.get("/stats", AdminController.getStats);
 router.post("/demo/reset", AdminController.resetDemoData);
+
+// Inventory: stock levels, ledger, receiving, stock takes, sales & reports
+router.use("/inventory", inventoryRoutes);
 
 // Image Upload
 router.post(

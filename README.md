@@ -69,3 +69,15 @@ frontend/public/logo.png
 | `npm run db:seed` | Insert idempotent `[DEMO]` catalogue records for local development |
 | `npm run db:seed:clean` | Remove all `[DEMO]` catalogue records safely |
 | `npm run db:generate` | Generate Drizzle SQL migrations from `backend/src/db/schema.ts` |
+
+## Inventory
+
+The admin portal includes an inventory system at `/admin/inventory` (admin sign-in required). It reads and writes the same `stock_quantity` columns the storefront uses, so there is no second copy of stock to drift.
+
+- **Stock items** — every product without variants, and every variant (e.g. Original vs Compatible) of products that have them, is counted separately. A product with variants shows the total of its active variants on the storefront.
+- **Stock ledger** — every change writes a row to `stock_movements` with the reason, the resulting balance, the staff email and an optional reference, so the latest balance always matches the quantity on hand. Stock edited on the product form is recorded too (as an opening balance or a correction).
+- **Screens** — Overview (stock value at cost and retail, low/out-of-stock, 14-day activity, 30-day sales and profit), Stock Levels (adjust, reorder level, cost price, CSV export), Receive Stock (multi-line supplier deliveries), Stock Take (physical count, only differences recorded), Stock History, Sales (record walk-in / WhatsApp / phone sales with M-Pesa, cash, bank, card or credit; void returns stock) and a monthly Sales Report (revenue, gross profit, channels, payment methods, top products).
+- **Costs stay private** — cost prices live in `stock_item_settings`, never on the product rows the public catalogue returns.
+- **Safety** — each operation is one transaction with row locks, so a multi-line receipt or sale lands completely or not at all, and two people selling the last unit at the same time cannot take stock below zero. Days are counted in Nairobi time.
+
+Run `npm run db:migrate` to apply `0002_inventory.sql`; it records an opening balance for stock already on hand.

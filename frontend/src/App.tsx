@@ -16,6 +16,14 @@ import { AdminProductFormPage } from "./admin/AdminProductFormPage";
 import { AdminCategoriesPage } from "./admin/AdminCategoriesPage";
 import { AdminBrandsPage } from "./admin/AdminBrandsPage";
 import { AdminPrinterModelsPage } from "./admin/AdminPrinterModelsPage";
+import { InventoryDashboardPage } from "./admin/inventory/InventoryDashboardPage";
+import { StockLevelsPage } from "./admin/inventory/StockLevelsPage";
+import { ReceiveStockPage } from "./admin/inventory/ReceiveStockPage";
+import { StockTakePage } from "./admin/inventory/StockTakePage";
+import { MovementsPage } from "./admin/inventory/MovementsPage";
+import { RecordSalePage } from "./admin/inventory/RecordSalePage";
+import { SalesHistoryPage } from "./admin/inventory/SalesHistoryPage";
+import { SalesReportPage } from "./admin/inventory/SalesReportPage";
 
 export function App() {
   return (
@@ -38,6 +46,16 @@ export function App() {
               <Route path="categories" element={<AdminCategoriesPage />} />
               <Route path="brands" element={<AdminBrandsPage />} />
               <Route path="printer-models" element={<AdminPrinterModelsPage />} />
+              <Route path="inventory">
+                <Route index element={<InventoryDashboardPage />} />
+                <Route path="stock" element={<StockLevelsPage />} />
+                <Route path="receive" element={<ReceiveStockPage />} />
+                <Route path="stock-take" element={<StockTakePage />} />
+                <Route path="movements" element={<MovementsPage />} />
+                <Route path="sales" element={<SalesHistoryPage />} />
+                <Route path="sales/new" element={<RecordSalePage />} />
+                <Route path="reports" element={<SalesReportPage />} />
+              </Route>
             </Route>
 
             {/* Storefront Layout & Public Pages */}

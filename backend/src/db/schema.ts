@@ -163,3 +163,82 @@ export const productPrinterCompatibility = pgTable(
     index("idx_compat_printer_model").on(table.printerModelId),
   ],
 );
+
+// ── 7. Inventory (migration 0002_inventory.sql) ──────────────────────────────
+// Queried with raw SQL in services/inventory.service.ts (row locks need a
+// dedicated client); declared here so the schema stays the single reference.
+
+export const stockItemSettings = pgTable("stock_item_settings", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  productId: uuid("product_id")
+    .notNull()
+    .references(() => products.id, { onDelete: "cascade" }),
+  variantId: uuid("variant_id").references(() => productVariants.id, {
+    onDelete: "cascade",
+  }),
+  reorderLevel: integer("reorder_level").notNull().default(3),
+  costPriceKes: numeric("cost_price_kes", { precision: 12, scale: 2 }),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const stockMovements = pgTable(
+  "stock_movements",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    productId: uuid("product_id").references(() => products.id, { onDelete: "set null" }),
+    variantId: uuid("variant_id").references(() => productVariants.id, {
+      onDelete: "set null",
+    }),
+    productName: text("product_name").notNull().default(""),
+    variantName: text("variant_name"),
+    sku: text("sku").notNull().default(""),
+    delta: integer("delta").notNull(),
+    balanceAfter: integer("balance_after").notNull(),
+    reason: text("reason").notNull(),
+    note: text("note").notNull().default(""),
+    unitCostKes: numeric("unit_cost_kes", { precision: 12, scale: 2 }),
+    reference: text("reference").notNull().default(""),
+    userEmail: text("user_email").notNull().default(""),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [index("idx_stock_movements_created").on(table.createdAt)],
+);
+
+export const sales = pgTable("sales", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  reference: text("reference").notNull().unique(),
+  channel: text("channel").notNull().default("walk_in"),
+  paymentMethod: text("payment_method").notNull().default("cash"),
+  customerName: text("customer_name").notNull().default(""),
+  customerPhone: text("customer_phone").notNull().default(""),
+  note: text("note").notNull().default(""),
+  status: text("status").notNull().default("completed"),
+  subtotalKes: numeric("subtotal_kes", { precision: 12, scale: 2 }).notNull().default("0"),
+  discountKes: numeric("discount_kes", { precision: 12, scale: 2 }).notNull().default("0"),
+  totalKes: numeric("total_kes", { precision: 12, scale: 2 }).notNull().default("0"),
+  createdBy: text("created_by").notNull().default(""),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  voidReason: text("void_reason"),
+  voidedBy: text("voided_by"),
+  voidedAt: timestamp("voided_at", { withTimezone: true }),
+});
+
+export const saleItems = pgTable("sale_items", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  saleId: uuid("sale_id")
+    .notNull()
+    .references(() => sales.id, { onDelete: "cascade" }),
+  productId: uuid("product_id").references(() => products.id, { onDelete: "set null" }),
+  variantId: uuid("variant_id").references(() => productVariants.id, {
+    onDelete: "set null",
+  }),
+  productName: text("product_name").notNull().default(""),
+  variantName: text("variant_name"),
+  sku: text("sku").notNull().default(""),
+  quantity: integer("quantity").notNull(),
+  listPriceKes: numeric("list_price_kes", { precision: 12, scale: 2 }).notNull(),
+  unitPriceKes: numeric("unit_price_kes", { precision: 12, scale: 2 }).notNull(),
+  unitCostKes: numeric("unit_cost_kes", { precision: 12, scale: 2 }),
+  lineTotalKes: numeric("line_total_kes", { precision: 12, scale: 2 }).notNull(),
+  sortOrder: integer("sort_order").notNull().default(0),
+});

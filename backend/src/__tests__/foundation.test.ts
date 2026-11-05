@@ -226,8 +226,11 @@ describe("Database Migration Runner Tracking Logic", () => {
     };
 
     const firstRun = await runMigrations(mockClient);
-    expect(firstRun.totalFiles).toBe(1);
-    expect(firstRun.newlyApplied).toEqual(["0001_initial_catalog.sql"]);
+    expect(firstRun.totalFiles).toBe(2);
+    expect(firstRun.newlyApplied).toEqual([
+      "0001_initial_catalog.sql",
+      "0002_inventory.sql",
+    ]);
     expect(firstRun.skipped).toEqual([]);
     expect(executedQueries).toContain("BEGIN");
     expect(executedQueries).toContain("COMMIT");
@@ -235,7 +238,10 @@ describe("Database Migration Runner Tracking Logic", () => {
     // Second run should skip the already-applied migration
     const secondRun = await runMigrations(mockClient);
     expect(secondRun.newlyApplied).toEqual([]);
-    expect(secondRun.skipped).toEqual(["0001_initial_catalog.sql"]);
+    expect(secondRun.skipped).toEqual([
+      "0001_initial_catalog.sql",
+      "0002_inventory.sql",
+    ]);
   });
 
   it("rolls back safely when a migration statement fails", async () => {

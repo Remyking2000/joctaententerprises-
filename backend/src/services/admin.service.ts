@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import { and, asc, desc, eq, ilike, ne, or, sql } from "drizzle-orm";
+import { and, asc, desc, eq, ilike, inArray, ne, or, sql } from "drizzle-orm";
 import type {
   AdminPrinterModelListQuery,
   AdminProductListQuery,
@@ -34,6 +34,7 @@ import {
   productVariants,
 } from "../db/schema.js";
 import { AppError } from "../middleware/error.middleware.js";
+import { InventoryService } from "./inventory.service.js";
 import {
   getActiveInMemoryDataset,
   getDemoStateFilePath,
@@ -530,7 +531,24 @@ export const AdminService = {
   /**
    * Creates a new product. Validates category, brand, and uniqueness of slug & SKU.
    */
-  async createProduct(input: CreateProductInput): Promise<ProductSummary> {
+  /**
+   * Creates a product and records any opening stock in the inventory ledger.
+   */
+  async createProduct(
+    input: CreateProductInput,
+    actorEmail = "",
+  ): Promise<ProductSummary> {
+    await InventoryService.prepare();
+    const created = await this.createProductRecord(input);
+    await InventoryService.recordProductFormChanges(
+      new Map(),
+      await InventoryService.snapshotProductStock(created.id),
+      actorEmail,
+    );
+    return created;
+  },
+
+  async createProductRecord(input: CreateProductInput): Promise<ProductSummary> {
     const inMemory = getActiveInMemoryDataset();
     if (inMemory) {
       if (inMemory.products.some((p) => p.slug === input.slug)) {
@@ -740,7 +758,27 @@ export const AdminService = {
   /**
    * Updates an existing product.
    */
+  /**
+   * Updates a product. Stock edited on the form is recorded in the inventory
+   * ledger as a correction so the stock history stays complete.
+   */
   async updateProduct(
+    id: string,
+    input: UpdateProductInput,
+    actorEmail = "",
+  ): Promise<ProductSummary> {
+    await InventoryService.prepare();
+    const before = await InventoryService.snapshotProductStock(id);
+    const updated = await this.updateProductRecord(id, input);
+    await InventoryService.recordProductFormChanges(
+      before,
+      await InventoryService.snapshotProductStock(id),
+      actorEmail,
+    );
+    return updated;
+  },
+
+  async updateProductRecord(
     id: string,
     input: UpdateProductInput,
   ): Promise<ProductSummary> {
@@ -917,25 +955,47 @@ export const AdminService = {
     }
 
     if (variants !== undefined) {
-      await db
-        .delete(productVariants)
+      // Update variants in place rather than deleting and re-inserting them:
+      // a variant's id is what its stock history, cost price and past sales
+      // point at, so it must survive an edit of the product form.
+      const existingVariants = await db
+        .select({ id: productVariants.id })
+        .from(productVariants)
         .where(eq(productVariants.productId, id));
-      if (variants.length > 0) {
-        await db.insert(productVariants).values(
-          variants.map((v, vIdx) => ({
-            productId: id,
-            name: v.name,
-            sku: v.sku,
-            oemPartNumber: v.oemPartNumber ?? null,
-            authenticity: v.authenticity,
-            pageYield: v.pageYield ?? null,
-            priceKes: v.priceKes,
-            comparePriceKes: v.comparePriceKes ?? null,
-            stockQuantity: v.stockQuantity,
-            isActive: v.isActive ?? true,
-            sortOrder: v.sortOrder ?? vIdx,
-          })),
-        );
+      const existingIds = new Set(existingVariants.map((v) => v.id));
+      const keptIds = new Set(
+        variants
+          .map((v) => v.id)
+          .filter((vid): vid is string => !!vid && existingIds.has(vid)),
+      );
+      const removedIds = [...existingIds].filter((vid) => !keptIds.has(vid));
+      if (removedIds.length > 0) {
+        await db
+          .delete(productVariants)
+          .where(inArray(productVariants.id, removedIds));
+      }
+
+      for (const [vIdx, v] of variants.entries()) {
+        const values = {
+          name: v.name,
+          sku: v.sku,
+          oemPartNumber: v.oemPartNumber ?? null,
+          authenticity: v.authenticity,
+          pageYield: v.pageYield ?? null,
+          priceKes: v.priceKes,
+          comparePriceKes: v.comparePriceKes ?? null,
+          stockQuantity: v.stockQuantity,
+          isActive: v.isActive ?? true,
+          sortOrder: v.sortOrder ?? vIdx,
+        };
+        if (v.id && keptIds.has(v.id)) {
+          await db
+            .update(productVariants)
+            .set({ ...values, updatedAt: new Date() })
+            .where(eq(productVariants.id, v.id));
+        } else {
+          await db.insert(productVariants).values({ productId: id, ...values });
+        }
       }
     }
 

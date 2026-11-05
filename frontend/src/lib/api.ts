@@ -25,6 +25,20 @@ import type {
   UpdateProductInput,
   UploadedImageResponse,
   UploadImageInput,
+  BulkStockResult,
+  CreateSalePayload,
+  InventoryDashboard,
+  ReceiveStockPayload,
+  Sale,
+  SalesQuery,
+  SalesReport,
+  StockAdjustPayload,
+  StockItem,
+  StockMovement,
+  StockMovementsQuery,
+  StockSettingsPayload,
+  StockTakePayload,
+  VoidSaleInput,
 } from "@jocta/shared";
 
 const API_BASE = (
@@ -346,5 +360,75 @@ export const authApi = {
   },
   logout(): Promise<{ message: string }> {
     return adminApi.logout();
+  },
+};
+
+// ── Inventory (admin only) ───────────────────────────────────────────────────
+
+const INVENTORY = "/api/admin/inventory";
+
+export const inventoryApi = {
+  getItems(): Promise<StockItem[]> {
+    return fetchJson<StockItem[]>(`${INVENTORY}/items`);
+  },
+
+  getDashboard(): Promise<InventoryDashboard> {
+    return fetchJson<InventoryDashboard>(`${INVENTORY}/dashboard`);
+  },
+
+  getMovements(
+    query: Partial<Omit<StockMovementsQuery, "limit">> & { limit?: number } = {},
+  ): Promise<StockMovement[]> {
+    return fetchJson<StockMovement[]>(
+      `${INVENTORY}/movements${buildQueryString(query)}`,
+    );
+  },
+
+  adjust(
+    input: StockAdjustPayload,
+  ): Promise<{ item: StockItem; movement: StockMovement | null }> {
+    return fetchJson(`${INVENTORY}/adjust`, { method: "POST", body: input });
+  },
+
+  receive(input: ReceiveStockPayload): Promise<BulkStockResult> {
+    return fetchJson<BulkStockResult>(`${INVENTORY}/receive`, {
+      method: "POST",
+      body: input,
+    });
+  },
+
+  stockTake(input: StockTakePayload): Promise<BulkStockResult> {
+    return fetchJson<BulkStockResult>(`${INVENTORY}/stock-take`, {
+      method: "POST",
+      body: input,
+    });
+  },
+
+  updateSettings(input: StockSettingsPayload): Promise<StockItem> {
+    return fetchJson<StockItem>(`${INVENTORY}/settings`, {
+      method: "PATCH",
+      body: input,
+    });
+  },
+
+  getSales(query: SalesQuery = {}): Promise<Sale[]> {
+    return fetchJson<Sale[]>(`${INVENTORY}/sales${buildQueryString(query)}`);
+  },
+
+  createSale(input: CreateSalePayload): Promise<Sale> {
+    return fetchJson<Sale>(`${INVENTORY}/sales`, { method: "POST", body: input });
+  },
+
+  voidSale(id: string, input: VoidSaleInput): Promise<Sale> {
+    return fetchJson<Sale>(
+      `${INVENTORY}/sales/${encodeURIComponent(id)}/void`,
+      { method: "POST", body: input },
+    );
+  },
+
+  getSalesReport(month?: string): Promise<SalesReport> {
+    return fetchJson<SalesReport>(
+      `${INVENTORY}/sales/report${buildQueryString({ month })}`,
+    );
   },
 };

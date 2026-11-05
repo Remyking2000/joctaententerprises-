@@ -8,8 +8,15 @@ import {
   useNavigate,
 } from "react-router-dom";
 import {
+  BarChart3,
   Bookmark,
+  Boxes,
+  ClipboardCheck,
   ExternalLink,
+  History,
+  PackagePlus,
+  Receipt,
+  Warehouse,
   Layers,
   LayoutDashboard,
   Loader2,
@@ -55,7 +62,58 @@ const ADMIN_NAV_LINKS = [
     label: "Printer Models",
     icon: Printer,
   },
-];
+  {
+    to: "/admin/inventory",
+    end: true,
+    label: "Overview",
+    icon: Warehouse,
+    group: "Inventory",
+  },
+  {
+    to: "/admin/inventory/stock",
+    end: false,
+    label: "Stock Levels",
+    icon: Boxes,
+  },
+  {
+    to: "/admin/inventory/receive",
+    end: false,
+    label: "Receive Stock",
+    icon: PackagePlus,
+  },
+  {
+    to: "/admin/inventory/stock-take",
+    end: false,
+    label: "Stock Take",
+    icon: ClipboardCheck,
+  },
+  {
+    to: "/admin/inventory/movements",
+    end: false,
+    label: "Stock History",
+    icon: History,
+  },
+  {
+    to: "/admin/inventory/sales",
+    end: false,
+    label: "Sales",
+    icon: Receipt,
+  },
+  {
+    to: "/admin/inventory/reports",
+    end: false,
+    label: "Sales Report",
+    icon: BarChart3,
+  },
+] as const;
+
+function NavGroupHeading({ label }: { label: string }) {
+  return (
+    <p className="px-3.5 pt-4 pb-1 text-[10px] font-black uppercase tracking-widest text-ink-muted">
+      {label}
+    </p>
+  );
+}
 
 export function AdminLayout() {
   const { user, loading, logout } = useAdminAuth();
@@ -134,7 +192,7 @@ export function AdminLayout() {
       <div
         role="status"
         aria-label="Administrator session info"
-        className="bg-ink-charcoal text-white border-b border-surface-border px-3 py-1.5 text-xs font-medium flex items-center justify-between gap-2 shadow-sm"
+        className="print:hidden bg-ink-charcoal text-white border-b border-surface-border px-3 py-1.5 text-xs font-medium flex items-center justify-between gap-2 shadow-sm"
       >
         <div className="flex items-center justify-between max-w-7xl mx-auto w-full">
           <div className="flex items-center gap-2">
@@ -153,7 +211,7 @@ export function AdminLayout() {
       </div>
 
       {/* 2. Top Header Bar */}
-      <header className="sticky top-0 z-30 bg-surface-white border-b border-surface-border shadow-neo px-4 py-3 sm:px-6">
+      <header className="print:hidden sticky top-0 z-30 bg-surface-white border-b border-surface-border shadow-neo px-4 py-3 sm:px-6">
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <button
@@ -236,13 +294,14 @@ export function AdminLayout() {
       {/* 3. Main Body: Sidebar + Content */}
       <div className="flex-1 flex max-w-7xl mx-auto w-full">
         {/* Desktop Sidebar */}
-        <aside className="hidden md:flex flex-col w-56 shrink-0 border-r border-surface-border bg-surface-white py-6 px-3">
+        <aside className="print:hidden hidden md:flex flex-col w-56 shrink-0 border-r border-surface-border bg-surface-white py-6 px-3">
           <nav aria-label="Admin Navigation" className="space-y-1">
             {ADMIN_NAV_LINKS.map((link) => {
               const Icon = link.icon;
               return (
+                <div key={link.to}>
+                {"group" in link && <NavGroupHeading label={link.group} />}
                 <NavLink
-                  key={link.to}
                   to={link.to}
                   end={link.end}
                   className={({ isActive }) =>
@@ -256,6 +315,7 @@ export function AdminLayout() {
                   <Icon className="h-4 w-4 shrink-0" />
                   <span>{link.label}</span>
                 </NavLink>
+                </div>
               );
             })}
           </nav>
@@ -324,8 +384,9 @@ export function AdminLayout() {
                 {ADMIN_NAV_LINKS.map((link) => {
                   const Icon = link.icon;
                   return (
+                    <div key={link.to}>
+                    {"group" in link && <NavGroupHeading label={link.group} />}
                     <NavLink
-                      key={link.to}
                       to={link.to}
                       end={link.end}
                       onClick={() => setMobileNavOpen(false)}
@@ -340,6 +401,7 @@ export function AdminLayout() {
                       <Icon className="h-4 w-4 shrink-0" />
                       <span>{link.label}</span>
                     </NavLink>
+                    </div>
                   );
                 })}
               </nav>
