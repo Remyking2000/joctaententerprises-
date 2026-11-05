@@ -1,18 +1,28 @@
-import { useState, type ReactNode } from "react";
-import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
+import { useState } from "react";
 import {
-  AlertTriangle,
+  Link,
+  NavLink,
+  Navigate,
+  Outlet,
+  useLocation,
+  useNavigate,
+} from "react-router-dom";
+import {
   Bookmark,
   ExternalLink,
   Layers,
   LayoutDashboard,
+  Loader2,
+  LogOut,
   Menu,
   Package,
   Printer,
-  ShieldAlert,
+  ShieldCheck,
+  User,
   X,
 } from "lucide-react";
 import { JoctaLogo } from "../components/JoctaLogo";
+import { useAdminAuth } from "../context/AdminAuthContext";
 
 const ADMIN_NAV_LINKS = [
   {
@@ -48,23 +58,96 @@ const ADMIN_NAV_LINKS = [
 ];
 
 export function AdminLayout() {
+  const { user, loading, logout } = useAdminAuth();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+
+  async function handleLogout() {
+    setIsLoggingOut(true);
+    try {
+      await logout();
+      navigate("/admin/login", { replace: true });
+    } finally {
+      setIsLoggingOut(false);
+    }
+  }
+
+  // 1. Loading state while checking session
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-canvas-ivory text-ink-charcoal flex flex-col items-center justify-center p-4">
+        <div className="flex flex-col items-center gap-3">
+          <Loader2 className="h-8 w-8 text-brand-red animate-spin" />
+          <p className="text-xs font-bold text-ink-charcoal uppercase tracking-wider">
+            Verifying Administrator Session...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // 2. Unauthenticated redirect to /admin/login
+  if (!user) {
+    return <Navigate to="/admin/login" state={{ from: location }} replace />;
+  }
+
+  // 3. Authenticated but not an authorized administrator
+  if (!user.isAdmin) {
+    return (
+      <div className="min-h-screen bg-canvas-ivory text-ink-charcoal flex flex-col items-center justify-center p-4">
+        <div className="max-w-md w-full bg-surface-white border border-surface-border rounded-neo shadow-neo p-6 text-center space-y-4">
+          <div className="mx-auto h-12 w-12 rounded-full bg-amber-100 text-amber-800 flex items-center justify-center font-bold">
+            403
+          </div>
+          <h1 className="text-lg font-extrabold text-ink-charcoal">
+            Administrator Access Required
+          </h1>
+          <p className="text-xs text-ink-muted leading-relaxed">
+            You are signed in as{" "}
+            <span className="font-mono font-bold text-ink-charcoal">
+              {user.email}
+            </span>
+            , which does not have administrator privileges.
+          </p>
+          <div className="flex items-center justify-center gap-3 pt-2">
+            <Link to="/" className="neo-button-secondary text-xs py-2 px-4">
+              Return to Storefront
+            </Link>
+            <button
+              type="button"
+              onClick={() => void handleLogout()}
+              className="neo-button-primary text-xs py-2 px-4"
+            >
+              Sign Out
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-canvas-ivory text-ink-charcoal flex flex-col selection:bg-brand-red selection:text-white">
-      {/* 1. Development & Functional Testing Warning Banner */}
+      {/* 1. Verified Session Status Bar */}
       <div
-        role="alert"
-        className="bg-amber-500 text-ink-charcoal border-b border-amber-600/40 px-3 py-2 text-xs font-semibold flex items-center justify-between gap-2 shadow-sm"
+        role="status"
+        aria-label="Administrator session info"
+        className="bg-ink-charcoal text-white border-b border-surface-border px-3 py-1.5 text-xs font-medium flex items-center justify-between gap-2 shadow-sm"
       >
-        <div className="flex items-center gap-2 max-w-6xl mx-auto w-full">
-          <AlertTriangle className="h-4 w-4 shrink-0 text-amber-950" />
-          <span className="leading-tight">
-            <strong>Development &amp; Testing Build:</strong> This admin panel is
-            for functional testing and schema verification. Google
-            authentication and production access control are deferred to Phase 2.
-            Do not use as production security.
+        <div className="flex items-center justify-between max-w-7xl mx-auto w-full">
+          <div className="flex items-center gap-2">
+            <ShieldCheck className="h-4 w-4 shrink-0 text-emerald-400" />
+            <span className="leading-tight text-[11px] sm:text-xs">
+              <strong>Admin Session:</strong> Authenticated as{" "}
+              <span className="font-mono text-emerald-300 font-semibold">
+                {user.email}
+              </span>
+            </span>
+          </div>
+          <span className="hidden sm:inline-flex items-center gap-1.5 text-[10px] font-bold text-ink-muted">
+            Google Identity Verified
           </span>
         </div>
       </div>
@@ -97,18 +180,32 @@ export function AdminLayout() {
                   Admin Portal
                 </span>
                 <span className="text-[10px] font-bold text-ink-muted leading-tight">
-                  Phase 1 Testing
+                  Jocta Enterprises
                 </span>
               </div>
             </Link>
           </div>
 
           <div className="flex items-center gap-2 sm:gap-3">
-            <span className="hidden sm:inline-flex items-center gap-1.5 rounded-neo-sm border border-emerald-300 bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-800">
-              <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-              Backend Connected
-            </span>
+            {/* User Chip */}
+            <div className="hidden sm:flex items-center gap-2 rounded-neo-sm border border-surface-border bg-canvas-ivory px-2.5 py-1 text-xs">
+              {user.picture ? (
+                <img
+                  src={user.picture}
+                  alt={user.name || user.email}
+                  className="h-5 w-5 rounded-full border border-surface-border object-cover"
+                />
+              ) : (
+                <div className="h-5 w-5 rounded-full bg-brand-red text-white text-[10px] font-bold flex items-center justify-center">
+                  {(user.name || user.email).charAt(0).toUpperCase()}
+                </div>
+              )}
+              <span className="font-semibold text-ink-charcoal max-w-[160px] truncate">
+                {user.name || user.email}
+              </span>
+            </div>
 
+            {/* Storefront Link */}
             <Link
               to="/"
               className="neo-button-secondary inline-flex items-center gap-1.5 text-xs py-1.5 px-3"
@@ -116,6 +213,22 @@ export function AdminLayout() {
               <ExternalLink className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">View</span> Storefront
             </Link>
+
+            {/* Sign Out Button */}
+            <button
+              type="button"
+              onClick={() => void handleLogout()}
+              disabled={isLoggingOut}
+              className="neo-button-secondary inline-flex items-center gap-1.5 text-xs py-1.5 px-3 hover:text-brand-red hover:border-brand-red"
+              title="Sign out of Admin Portal"
+            >
+              {isLoggingOut ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <LogOut className="h-3.5 w-3.5" />
+              )}
+              <span className="hidden sm:inline">Sign Out</span>
+            </button>
           </div>
         </div>
       </header>
@@ -148,12 +261,38 @@ export function AdminLayout() {
           </nav>
 
           <div className="mt-auto pt-6 border-t border-surface-border">
-            <div className="rounded-neo-sm border border-surface-border bg-canvas-ivory p-3 text-[11px] text-ink-muted">
-              <p className="font-bold text-ink-charcoal flex items-center gap-1 mb-1">
-                <ShieldAlert className="h-3.5 w-3.5 text-brand-red" />
-                Auth: Deferred
-              </p>
-              <p>Google OAuth integration will be configured in Phase 2.</p>
+            <div className="rounded-neo-sm border border-surface-border bg-canvas-ivory p-3 text-[11px] text-ink-muted space-y-2">
+              <div className="flex items-center gap-2">
+                {user.picture ? (
+                  <img
+                    src={user.picture}
+                    alt={user.name || user.email}
+                    className="h-7 w-7 rounded-full border border-surface-border object-cover"
+                  />
+                ) : (
+                  <div className="h-7 w-7 rounded-full bg-brand-red text-white font-bold flex items-center justify-center text-xs">
+                    {(user.name || user.email).charAt(0).toUpperCase()}
+                  </div>
+                )}
+                <div className="min-w-0 flex-1">
+                  <p className="font-bold text-ink-charcoal truncate">
+                    {user.name || "Administrator"}
+                  </p>
+                  <p className="text-[10px] text-ink-muted truncate" title={user.email}>
+                    {user.email}
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => void handleLogout()}
+                disabled={isLoggingOut}
+                className="w-full neo-button-secondary py-1.5 text-xs justify-center text-ink-muted hover:text-brand-red"
+              >
+                <LogOut className="h-3 w-3 mr-1.5" />
+                Sign Out
+              </button>
             </div>
           </div>
         </aside>
@@ -205,7 +344,27 @@ export function AdminLayout() {
                 })}
               </nav>
 
-              <div className="mt-auto pt-4 border-t border-surface-border space-y-2">
+              <div className="mt-auto pt-4 border-t border-surface-border space-y-3">
+                <div className="rounded-neo-sm bg-canvas-ivory p-2.5 border border-surface-border text-xs">
+                  <div className="flex items-center gap-2 mb-2">
+                    <User className="h-4 w-4 text-ink-muted shrink-0" />
+                    <span className="font-semibold truncate text-[11px]">
+                      {user.email}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMobileNavOpen(false);
+                      void handleLogout();
+                    }}
+                    className="neo-button-secondary w-full justify-center text-xs py-1.5 hover:text-brand-red"
+                  >
+                    <LogOut className="h-3.5 w-3.5 mr-1" />
+                    Sign Out
+                  </button>
+                </div>
+
                 <Link
                   to="/"
                   onClick={() => setMobileNavOpen(false)}

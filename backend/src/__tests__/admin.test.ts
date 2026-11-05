@@ -11,10 +11,23 @@ import {
   setCatalogDatasetForTesting,
   type CatalogDataset,
 } from "../services/catalog.service.js";
+import { AuthService, SESSION_COOKIE_NAME } from "../services/auth.service.js";
+
+const defaultAdminToken = AuthService.generateSessionToken({
+  email: "ycremy2000@gmail.com",
+  name: "Remy Admin",
+  isAdmin: true,
+});
 
 async function invokeApp(
   app: express.Express,
-  options: { method?: string; url: string; body?: unknown },
+  options: {
+    method?: string;
+    url: string;
+    body?: unknown;
+    headers?: Record<string, string>;
+    cookie?: string | null;
+  },
 ): Promise<{
   status: number;
   body: Record<string, any>;
@@ -29,10 +42,17 @@ async function invokeApp(
       options.body !== undefined ? JSON.stringify(options.body) : "";
     const buf = Buffer.from(jsonStr, "utf8");
 
+    const cookieHeader =
+      options.cookie === null
+        ? undefined
+        : options.cookie ?? `${SESSION_COOKIE_NAME}=${defaultAdminToken}`;
+
     req.headers = {
       host: "localhost",
       "content-type": "application/json",
       "content-length": String(buf.length),
+      ...(cookieHeader ? { cookie: cookieHeader } : {}),
+      ...options.headers,
     };
 
     const res = new ServerResponse(req);

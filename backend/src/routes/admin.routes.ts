@@ -6,6 +6,7 @@ import {
   createCategorySchema,
   createPrinterModelSchema,
   createProductSchema,
+  googleAuthInputSchema,
   togglePublishSchema,
   updateBrandSchema,
   updateCategorySchema,
@@ -14,11 +15,36 @@ import {
   uploadImageSchema,
 } from "@jocta/shared";
 import { AdminController } from "../controllers/admin.controller.js";
+import { AuthController } from "../controllers/auth.controller.js";
+import { requireAdminAuth } from "../middleware/auth.middleware.js";
 import { validateRequest } from "../middleware/error.middleware.js";
 
 const router = Router();
 
-// Stats
+// =============================================================================
+// Admin Authentication Routes
+// =============================================================================
+
+// Google Sign-In exchange
+router.post(
+  "/auth/google",
+  validateRequest({ body: googleAuthInputSchema }),
+  AuthController.googleLogin,
+);
+
+// Logout
+router.post("/auth/logout", AuthController.logout);
+
+// Session check / restore
+router.get("/auth/me", requireAdminAuth, AuthController.getMe);
+
+// =============================================================================
+// Protected Admin API Endpoints
+// All routes below require verified administrator authorization
+// =============================================================================
+router.use(requireAdminAuth);
+
+// Stats & Demo Maintenance
 router.get("/stats", AdminController.getStats);
 router.post("/demo/reset", AdminController.resetDemoData);
 

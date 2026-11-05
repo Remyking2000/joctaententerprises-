@@ -26,10 +26,13 @@ import type { CategorySummary } from "@jocta/shared";
 import { JoctaLogo } from "./JoctaLogo";
 import { CartDrawer } from "./CartDrawer";
 import { CategoriesDropdown, CATEGORY_ITEMS } from "./CategoriesDropdown";
+import { UserNavMenu } from "./UserNavMenu";
 import { useCart } from "../context/CartContext";
+import { useAdminAuth } from "../context/AdminAuthContext";
 import { catalogApi } from "../lib/api";
 
 export function Layout() {
+  const { user } = useAdminAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mobileCategoriesOpen, setMobileCategoriesOpen] = useState(false);
   const [liveCategories, setLiveCategories] = useState<CategorySummary[]>([]);
@@ -185,19 +188,6 @@ export function Layout() {
               >
                 Find Toner
               </NavLink>
-
-              <Link
-                to="/admin"
-                className={`rounded-neo-sm px-2.5 py-1.5 text-xs font-bold transition-colors border inline-flex items-center gap-1.5 ${
-                  isHeroOverlay
-                    ? "border-white/30 text-white/90 hover:bg-white/15 hover:text-white"
-                    : "border-surface-border bg-surface-white text-ink-secondary hover:text-brand-red hover:border-brand-red"
-                }`}
-                title="Admin Panel (Testing Phase 1)"
-              >
-                <ShieldAlert className="h-3.5 w-3.5 text-brand-red" />
-                <span>Admin</span>
-              </Link>
             </nav>
 
             {/* Right Controls: Search Toggle Icon, Cart & Hamburger Menu */}
@@ -226,6 +216,9 @@ export function Layout() {
                   <Search className="h-4 w-4" aria-hidden="true" />
                 )}
               </button>
+
+              {/* User Account / Google Sign-In & Profile Menu */}
+              <UserNavMenu isHeroOverlay={isHeroOverlay} />
 
               {/* Cart Button */}
               <button
@@ -406,21 +399,23 @@ export function Layout() {
                 Find Toner by Printer
               </NavLink>
 
-              <div className="pt-2 border-t border-surface-border">
-                <Link
-                  to="/admin"
-                  onClick={handleMobileNav}
-                  className="flex items-center justify-between rounded-neo-sm border border-dashed border-brand-red/40 bg-brand-red/5 px-4 py-2.5 text-xs font-bold text-brand-red hover:bg-brand-red/10"
-                >
-                  <div className="flex items-center gap-2">
-                    <ShieldAlert className="h-4 w-4" />
-                    <span>Admin Panel</span>
-                  </div>
-                  <span className="rounded-neo-sm bg-brand-red px-1.5 py-0.5 text-[9px] font-extrabold text-white uppercase">
-                    Testing
-                  </span>
-                </Link>
-              </div>
+              {user?.isAdmin && (
+                <div className="pt-2 border-t border-surface-border">
+                  <Link
+                    to="/admin"
+                    onClick={handleMobileNav}
+                    className="flex items-center justify-between rounded-neo-sm border border-emerald-300 bg-emerald-50 px-4 py-2.5 text-xs font-bold text-emerald-900 hover:bg-emerald-100"
+                  >
+                    <div className="flex items-center gap-2">
+                      <ShieldCheck className="h-4 w-4 text-emerald-600" />
+                      <span>Admin Dashboard</span>
+                    </div>
+                    <span className="rounded-neo-sm bg-emerald-600 px-1.5 py-0.5 text-[9px] font-extrabold text-white uppercase">
+                      Admin
+                    </span>
+                  </Link>
+                </div>
+              )}
             </nav>
           </div>
         )}
@@ -524,13 +519,6 @@ export function Layout() {
             </div>
             <div className="flex items-center gap-4">
               <p>Prices displayed in Kenyan Shillings (KSh).</p>
-              <Link
-                to="/admin"
-                className="inline-flex items-center gap-1 font-bold text-ink-secondary hover:text-brand-red transition-colors"
-              >
-                <ShieldAlert className="h-3.5 w-3.5 text-brand-red" />
-                <span>Admin Panel</span>
-              </Link>
             </div>
           </div>
         </div>

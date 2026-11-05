@@ -2,6 +2,7 @@ import type {
   AdminPrinterModelListQuery,
   AdminProductListQuery,
   AdminStatsSummary,
+  AdminUser,
   ApiErrorResponse,
   ApiSuccessResponse,
   BrandSummary,
@@ -72,6 +73,7 @@ async function fetchJson<T>(
     response = await fetch(`${API_BASE}${path}`, {
       method: options?.method ?? "GET",
       headers,
+      credentials: "include",
       body:
         options?.body !== undefined ? JSON.stringify(options.body) : undefined,
     });
@@ -313,5 +315,36 @@ export const adminApi = {
       method: "POST",
       body: input,
     });
+  },
+
+  loginWithGoogle(credential: string): Promise<{ user: AdminUser }> {
+    return fetchJson<{ user: AdminUser }>("/api/auth/google", {
+      method: "POST",
+      body: { credential },
+    });
+  },
+
+  getMe(): Promise<{ user: AdminUser }> {
+    return fetchJson<{ user: AdminUser }>("/api/auth/me", {
+      method: "GET",
+    });
+  },
+
+  logout(): Promise<{ message: string }> {
+    return fetchJson<{ message: string }>("/api/auth/logout", {
+      method: "POST",
+    });
+  },
+};
+
+export const authApi = {
+  loginWithGoogle(credential: string): Promise<{ user: AdminUser }> {
+    return adminApi.loginWithGoogle(credential);
+  },
+  getMe(): Promise<{ user: AdminUser }> {
+    return adminApi.getMe();
+  },
+  logout(): Promise<{ message: string }> {
+    return adminApi.logout();
   },
 };
