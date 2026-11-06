@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Link, useNavigate } from "react-router-dom";
 import {
   Heart,
@@ -45,6 +46,29 @@ export function UserNavMenu({ isHeroOverlay = false }: UserNavMenuProps) {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  // Escape closes whichever is open
+  useEffect(() => {
+    if (!dropdownOpen && !loginModalOpen) return;
+    function handleKey(e: KeyboardEvent) {
+      if (e.key === "Escape") {
+        setDropdownOpen(false);
+        setLoginModalOpen(false);
+      }
+    }
+    document.addEventListener("keydown", handleKey);
+    return () => document.removeEventListener("keydown", handleKey);
+  }, [dropdownOpen, loginModalOpen]);
+
+  // Keep the page behind the sign-in sheet from scrolling on phones
+  useEffect(() => {
+    if (!loginModalOpen) return;
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previous;
+    };
+  }, [loginModalOpen]);
 
   // Check when Google Identity Services is available
   useEffect(() => {
@@ -105,6 +129,7 @@ export function UserNavMenu({ isHeroOverlay = false }: UserNavMenuProps) {
         },
       });
 
+      const available = googleBtnContainerRef.current.parentElement?.clientWidth ?? 280;
       googleBtnContainerRef.current.innerHTML = "";
       window.google?.accounts.id.renderButton(googleBtnContainerRef.current, {
         type: "standard",
@@ -112,7 +137,7 @@ export function UserNavMenu({ isHeroOverlay = false }: UserNavMenuProps) {
         size: "large",
         text: "signin_with",
         shape: "rectangular",
-        width: 280,
+        width: Math.max(200, Math.min(280, available)),
         logo_alignment: "left",
       });
     } catch (err) {
@@ -164,7 +189,7 @@ export function UserNavMenu({ isHeroOverlay = false }: UserNavMenuProps) {
           <div
             role="menu"
             aria-label="User navigation"
-            className="absolute right-0 mt-2 w-72 origin-top-right rounded-neo bg-surface-white border border-surface-border shadow-neo py-2 z-50 text-ink-charcoal animate-in fade-in zoom-in-95 duration-100"
+            className="fixed inset-x-3 top-[4.25rem] max-h-[calc(100vh-5.5rem)] overflow-y-auto sm:absolute sm:inset-x-auto sm:top-auto sm:right-0 sm:mt-2 sm:w-72 sm:max-h-none sm:overflow-visible origin-top-right rounded-neo bg-surface-white border border-surface-border shadow-neo py-2 z-50 text-ink-charcoal animate-in fade-in zoom-in-95 duration-100"
           >
             {/* Header: User Profile Info */}
             <div className="px-4 py-3 border-b border-surface-border/60 flex items-center gap-3">
@@ -197,7 +222,7 @@ export function UserNavMenu({ isHeroOverlay = false }: UserNavMenuProps) {
               <button
                 type="button"
                 onClick={() => setDropdownOpen(false)}
-                className="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-semibold text-ink-secondary hover:text-ink-charcoal hover:bg-canvas-ivory transition-colors text-left"
+                className="w-full flex items-center gap-3 px-4 py-3 sm:py-2.5 text-sm sm:text-xs font-semibold text-ink-secondary hover:text-ink-charcoal hover:bg-canvas-ivory transition-colors text-left"
               >
                 <User className="h-4 w-4 text-ink-muted" />
                 <span>My Account</span>
@@ -206,7 +231,7 @@ export function UserNavMenu({ isHeroOverlay = false }: UserNavMenuProps) {
               <button
                 type="button"
                 onClick={() => setDropdownOpen(false)}
-                className="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-semibold text-ink-secondary hover:text-ink-charcoal hover:bg-canvas-ivory transition-colors text-left"
+                className="w-full flex items-center gap-3 px-4 py-3 sm:py-2.5 text-sm sm:text-xs font-semibold text-ink-secondary hover:text-ink-charcoal hover:bg-canvas-ivory transition-colors text-left"
               >
                 <Package className="h-4 w-4 text-ink-muted" />
                 <span>My Orders</span>
@@ -215,7 +240,7 @@ export function UserNavMenu({ isHeroOverlay = false }: UserNavMenuProps) {
               <button
                 type="button"
                 onClick={() => setDropdownOpen(false)}
-                className="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-semibold text-ink-secondary hover:text-ink-charcoal hover:bg-canvas-ivory transition-colors text-left"
+                className="w-full flex items-center gap-3 px-4 py-3 sm:py-2.5 text-sm sm:text-xs font-semibold text-ink-secondary hover:text-ink-charcoal hover:bg-canvas-ivory transition-colors text-left"
               >
                 <Heart className="h-4 w-4 text-ink-muted" />
                 <span>Wishlist</span>
@@ -228,7 +253,7 @@ export function UserNavMenu({ isHeroOverlay = false }: UserNavMenuProps) {
                 <Link
                   to="/admin"
                   onClick={() => setDropdownOpen(false)}
-                  className="w-full flex items-center justify-between px-4 py-2.5 text-xs font-extrabold text-brand-red hover:bg-brand-red/10 transition-colors"
+                  className="w-full flex items-center justify-between px-4 py-3 sm:py-2.5 text-sm sm:text-xs font-extrabold text-brand-red hover:bg-brand-red/10 transition-colors"
                 >
                   <div className="flex items-center gap-3">
                     <LayoutDashboard className="h-4 w-4 text-brand-red" />
@@ -244,7 +269,7 @@ export function UserNavMenu({ isHeroOverlay = false }: UserNavMenuProps) {
               <button
                 type="button"
                 onClick={() => void handleSignOut()}
-                className="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-semibold text-ink-muted hover:text-brand-red hover:bg-red-50 transition-colors text-left"
+                className="w-full flex items-center gap-3 px-4 py-3 sm:py-2.5 text-sm sm:text-xs font-semibold text-ink-muted hover:text-brand-red hover:bg-red-50 transition-colors text-left"
               >
                 <LogOut className="h-4 w-4 text-ink-muted" />
                 <span>Sign out</span>
@@ -275,15 +300,19 @@ export function UserNavMenu({ isHeroOverlay = false }: UserNavMenuProps) {
       </button>
 
       {/* Sign-In Modal */}
-      {loginModalOpen && (
+      {loginModalOpen && createPortal(
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 animate-in fade-in duration-150"
+          className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center bg-black/50 sm:p-4 animate-in fade-in duration-150"
           onClick={() => setLoginModalOpen(false)}
         >
           <div
-            className="w-full max-w-sm rounded-neo bg-surface-white p-6 shadow-neo border border-surface-border text-ink-charcoal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="signin-dialog-title"
+            className="w-full sm:max-w-sm max-h-[90vh] overflow-y-auto rounded-t-2xl sm:rounded-neo bg-surface-white px-5 pt-5 pb-[max(1.5rem,env(safe-area-inset-bottom))] sm:p-6 shadow-neo border border-surface-border text-ink-charcoal"
             onClick={(e) => e.stopPropagation()}
           >
+            <div className="sm:hidden mx-auto -mt-1 mb-3 h-1.5 w-10 rounded-full bg-surface-border" aria-hidden="true" />
             {/* Modal Header */}
             <div className="flex items-center justify-between pb-4 border-b border-surface-border mb-4">
               <div className="flex items-center gap-2">
@@ -295,18 +324,18 @@ export function UserNavMenu({ isHeroOverlay = false }: UserNavMenuProps) {
               <button
                 type="button"
                 onClick={() => setLoginModalOpen(false)}
-                className="p-1 rounded-neo-sm hover:bg-canvas-ivory text-ink-muted"
+                className="h-10 w-10 -mr-2 inline-flex items-center justify-center rounded-neo-sm hover:bg-canvas-ivory text-ink-muted"
                 aria-label="Close dialog"
               >
-                <X className="h-4 w-4" />
+                <X className="h-5 w-5" />
               </button>
             </div>
 
             <div className="text-center mb-6">
-              <h2 className="text-base font-extrabold text-ink-charcoal">
+              <h2 id="signin-dialog-title" className="text-lg sm:text-base font-extrabold text-ink-charcoal">
                 Sign In to Your Account
               </h2>
-              <p className="text-xs text-ink-muted mt-1">
+              <p className="text-sm sm:text-xs text-ink-muted mt-1">
                 Use your Google account to access your orders, account, or
                 administrator dashboard.
               </p>
@@ -328,7 +357,7 @@ export function UserNavMenu({ isHeroOverlay = false }: UserNavMenuProps) {
                   <span>Signing in with Google...</span>
                 </div>
               ) : !googleClientId ? (
-                <div className="text-xs text-amber-800 bg-amber-50 p-3 rounded-neo-sm border border-amber-300 text-center">
+                <div className="w-full text-sm sm:text-xs text-amber-800 bg-amber-50 p-3 rounded-neo-sm border border-amber-300 text-center">
                   Google Client ID is being configured.
                 </div>
               ) : (
@@ -337,13 +366,14 @@ export function UserNavMenu({ isHeroOverlay = false }: UserNavMenuProps) {
             </div>
 
             <div className="mt-4 pt-4 border-t border-surface-border text-center">
-              <p className="text-[11px] text-ink-muted">
+              <p className="text-xs sm:text-[11px] text-ink-muted">
                 Authorized administrators will automatically receive access to
                 the Admin Dashboard upon signing in.
               </p>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body,
       )}
     </>
   );
