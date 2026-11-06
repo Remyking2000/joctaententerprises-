@@ -16,6 +16,7 @@ import {
   X,
 } from "lucide-react";
 import { JoctaLogo } from "../components/JoctaLogo";
+import { UserAvatar } from "../components/UserAvatar";
 import { useAdminAuth } from "../context/AdminAuthContext";
 
 /**
@@ -95,8 +96,6 @@ export function InventoryLayout() {
     );
   }
 
-  const initial = (user.name || user.email).charAt(0).toUpperCase();
-
   return (
     <div className="min-h-screen bg-canvas-ivory text-ink-charcoal flex flex-col">
       <header className="print:hidden sticky top-0 z-30 bg-surface-white border-b border-surface-border shadow-neo">
@@ -131,15 +130,8 @@ export function InventoryLayout() {
               <Settings className="h-4 w-4" />
               <span className="hidden md:inline">Admin Panel</span>
             </Link>
-            <span
-              className="hidden sm:flex h-9 w-9 shrink-0 rounded-full bg-brand-red text-white text-sm font-bold items-center justify-center overflow-hidden"
-              title={user.email}
-            >
-              {user.picture ? (
-                <img src={user.picture} alt={user.name || user.email} className="h-full w-full object-cover" />
-              ) : (
-                initial
-              )}
+            <span className="hidden sm:flex" title={user.email}>
+              <UserAvatar user={user} className="h-9 w-9 text-sm" />
             </span>
             <button
               type="button"

@@ -23,6 +23,7 @@ import {
   X,
 } from "lucide-react";
 import { JoctaLogo } from "../components/JoctaLogo";
+import { UserAvatar } from "../components/UserAvatar";
 import { useAdminAuth } from "../context/AdminAuthContext";
 
 const ADMIN_NAV_LINKS = [
@@ -205,17 +206,7 @@ export function AdminLayout() {
           <div className="flex items-center gap-2 sm:gap-3">
             {/* User Chip */}
             <div className="hidden sm:flex items-center gap-2 rounded-neo-sm border border-surface-border bg-canvas-ivory px-2.5 py-1 text-xs">
-              {user.picture ? (
-                <img
-                  src={user.picture}
-                  alt={user.name || user.email}
-                  className="h-5 w-5 rounded-full border border-surface-border object-cover"
-                />
-              ) : (
-                <div className="h-5 w-5 rounded-full bg-brand-red text-white text-[10px] font-bold flex items-center justify-center">
-                  {(user.name || user.email).charAt(0).toUpperCase()}
-                </div>
-              )}
+              <UserAvatar user={user} className="h-5 w-5 text-[10px] border border-surface-border" />
               <span className="font-semibold text-ink-charcoal max-w-[160px] truncate">
                 {user.name || user.email}
               </span>
@@ -281,17 +272,7 @@ export function AdminLayout() {
           <div className="mt-auto pt-6 border-t border-surface-border">
             <div className="rounded-neo-sm border border-surface-border bg-canvas-ivory p-3 text-[11px] text-ink-muted space-y-2">
               <div className="flex items-center gap-2">
-                {user.picture ? (
-                  <img
-                    src={user.picture}
-                    alt={user.name || user.email}
-                    className="h-7 w-7 rounded-full border border-surface-border object-cover"
-                  />
-                ) : (
-                  <div className="h-7 w-7 rounded-full bg-brand-red text-white font-bold flex items-center justify-center text-xs">
-                    {(user.name || user.email).charAt(0).toUpperCase()}
-                  </div>
-                )}
+                <UserAvatar user={user} className="h-7 w-7 text-xs border border-surface-border" />
                 <div className="min-w-0 flex-1">
                   <p className="font-bold text-ink-charcoal truncate">
                     {user.name || "Administrator"}

@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { useAdminAuth } from "../context/AdminAuthContext";
 import { JoctaLogo } from "./JoctaLogo";
+import { UserAvatar } from "./UserAvatar";
 
 interface UserNavMenuProps {
   isHeroOverlay?: boolean;
@@ -152,8 +153,6 @@ export function UserNavMenu({ isHeroOverlay = false }: UserNavMenuProps) {
 
   // 1. Authenticated User Dropdown (matches reference design)
   if (user) {
-    const avatarInitial = (user.name || user.email).charAt(0).toUpperCase();
-
     return (
       <div className="relative" ref={dropdownRef}>
         {/* User Avatar Button in Header */}
@@ -171,17 +170,7 @@ export function UserNavMenu({ isHeroOverlay = false }: UserNavMenuProps) {
                 : "border-surface-border hover:border-brand-red"
           }`}
         >
-          {user.picture ? (
-            <img
-              src={user.picture}
-              alt={user.name || user.email}
-              className="h-full w-full rounded-full object-cover"
-            />
-          ) : (
-            <div className="h-full w-full rounded-full bg-brand-red text-white font-bold flex items-center justify-center text-xs">
-              {avatarInitial}
-            </div>
-          )}
+          <UserAvatar user={user} className="h-full w-full text-xs" />
         </button>
 
         {/* Dropdown Card Popover */}
@@ -193,17 +182,7 @@ export function UserNavMenu({ isHeroOverlay = false }: UserNavMenuProps) {
           >
             {/* Header: User Profile Info */}
             <div className="px-4 py-3 border-b border-surface-border/60 flex items-center gap-3">
-              {user.picture ? (
-                <img
-                  src={user.picture}
-                  alt={user.name || user.email}
-                  className="h-10 w-10 rounded-full border border-surface-border object-cover shrink-0"
-                />
-              ) : (
-                <div className="h-10 w-10 rounded-full bg-brand-red text-white font-extrabold flex items-center justify-center text-sm shrink-0">
-                  {avatarInitial}
-                </div>
-              )}
+              <UserAvatar user={user} className="h-10 w-10 text-sm border border-surface-border" />
               <div className="min-w-0 flex-1">
                 <p className="font-extrabold text-sm text-ink-charcoal truncate">
                   {user.name || "Customer"}
