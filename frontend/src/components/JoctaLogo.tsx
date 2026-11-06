@@ -4,6 +4,8 @@ interface JoctaLogoProps {
   size?: "sm" | "md" | "lg";
   showText?: boolean;
   inverted?: boolean;
+  /** Extra classes for the wordmark, e.g. to hide it on very small screens. */
+  textClassName?: string;
 }
 
 /**
@@ -13,6 +15,7 @@ export function JoctaLogo({
   size = "md",
   showText = true,
   inverted = false,
+  textClassName = "",
 }: JoctaLogoProps) {
   const [imgFailed, setImgFailed] = useState(false);
 
@@ -49,7 +52,7 @@ export function JoctaLogo({
       </div>
 
       {showText && (
-        <div className="flex flex-col leading-tight select-none">
+        <div className={`flex flex-col leading-tight select-none ${textClassName}`}>
           <div className="flex items-center gap-1">
             <span
               className={`text-xs sm:text-base font-extrabold tracking-tight ${

@@ -2,8 +2,8 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { ClipboardCheck, PackagePlus, RefreshCw, ShoppingCart } from "lucide-react";
 import type { InventoryDashboard } from "@jocta/shared";
-import { inventoryApi } from "../../lib/api";
-import { formatKes } from "../../lib/format";
+import { inventoryApi } from "../lib/api";
+import { formatKes } from "../lib/format";
 import {
   Card,
   DeltaText,
@@ -66,7 +66,7 @@ export function InventoryDashboardPage() {
               <RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} />
               Refresh
             </button>
-            <Link to="/admin/inventory/sales/new" className="neo-button-primary text-xs py-2 px-3.5">
+            <Link to="/inventory/sales/new" className="neo-button-primary text-xs py-2 px-3.5">
               <ShoppingCart className="h-4 w-4" />
               Record Sale
             </Link>
@@ -87,19 +87,19 @@ export function InventoryDashboardPage() {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         {[
           {
-            to: "/admin/inventory/receive",
+            to: "/inventory/receive",
             icon: PackagePlus,
             title: "Receive stock",
             text: "Log a supplier delivery and its costs.",
           },
           {
-            to: "/admin/inventory/stock-take",
+            to: "/inventory/stock-take",
             icon: ClipboardCheck,
             title: "Stock take",
             text: "Count the shelves and fix differences.",
           },
           {
-            to: "/admin/inventory/sales/new",
+            to: "/inventory/sales/new",
             icon: ShoppingCart,
             title: "Record a sale",
             text: "Walk-in, phone or WhatsApp orders.",
@@ -134,7 +134,7 @@ export function InventoryDashboardPage() {
               value={formatKes(stats.stockCostValueKes)}
               hint={
                 stats.uncosted > 0 ? (
-                  <Link to="/admin/inventory/stock?filter=uncosted" className="text-amber-700 underline">
+                  <Link to="/inventory/stock?filter=uncosted" className="text-amber-700 underline">
                     {stats.uncosted} item{stats.uncosted === 1 ? "" : "s"} missing a cost
                   </Link>
                 ) : (
@@ -151,13 +151,13 @@ export function InventoryDashboardPage() {
               label="Low stock"
               value={stats.lowStock}
               tone={stats.lowStock > 0 ? "warn" : "good"}
-              hint={<Link to="/admin/inventory/stock?filter=low" className="underline">View items</Link>}
+              hint={<Link to="/inventory/stock?filter=low" className="underline">View items</Link>}
             />
             <StatCard
               label="Out of stock"
               value={stats.outOfStock}
               tone={stats.outOfStock > 0 ? "danger" : "good"}
-              hint={<Link to="/admin/inventory/stock?filter=out" className="underline">View items</Link>}
+              hint={<Link to="/inventory/stock?filter=out" className="underline">View items</Link>}
             />
           </div>
 
@@ -216,7 +216,7 @@ export function InventoryDashboardPage() {
                 <h2 className="text-sm font-black text-ink-charcoal uppercase tracking-tight">
                   Needs reordering
                 </h2>
-                <Link to="/admin/inventory/stock?filter=low" className="text-xs font-bold text-brand-red hover:underline">
+                <Link to="/inventory/stock?filter=low" className="text-xs font-bold text-brand-red hover:underline">
                   All stock
                 </Link>
               </div>
@@ -247,7 +247,7 @@ export function InventoryDashboardPage() {
                 <h2 className="text-sm font-black text-ink-charcoal uppercase tracking-tight">
                   Recent activity
                 </h2>
-                <Link to="/admin/inventory/movements" className="text-xs font-bold text-brand-red hover:underline">
+                <Link to="/inventory/movements" className="text-xs font-bold text-brand-red hover:underline">
                   Full history
                 </Link>
               </div>

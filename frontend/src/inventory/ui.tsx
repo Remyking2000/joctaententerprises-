@@ -7,7 +7,7 @@ import type {
   StockReason,
   StockStatus,
 } from "@jocta/shared";
-import { ApiClientError, inventoryApi } from "../../lib/api";
+import { ApiClientError, inventoryApi } from "../lib/api";
 
 // ── Labels ───────────────────────────────────────────────────────────────────
 

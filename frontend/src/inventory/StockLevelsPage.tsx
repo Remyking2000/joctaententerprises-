@@ -6,8 +6,8 @@ import {
   type ManualAdjustReason,
   type StockItem,
 } from "@jocta/shared";
-import { inventoryApi } from "../../lib/api";
-import { formatKes, PRODUCT_TYPE_LABELS } from "../../lib/format";
+import { inventoryApi } from "../lib/api";
+import { formatKes, PRODUCT_TYPE_LABELS } from "../lib/format";
 import {
   Card,
   Modal,
@@ -124,7 +124,7 @@ export function StockLevelsPage() {
               <Download className="h-3.5 w-3.5" />
               Export CSV
             </button>
-            <Link to="/admin/inventory/receive" className="neo-button-primary text-xs py-2 px-3.5">
+            <Link to="/inventory/receive" className="neo-button-primary text-xs py-2 px-3.5">
               <PackagePlus className="h-4 w-4" />
               Receive Stock
             </Link>
@@ -183,7 +183,75 @@ export function StockLevelsPage() {
         </div>
       </Card>
 
-      <Card className="overflow-hidden">
+      {/* Phones: one card per item */}
+      <div className="md:hidden space-y-2.5">
+        {loading && items.length === 0 ? (
+          <Card className="p-8 text-center text-sm text-ink-muted">Loading stock…</Card>
+        ) : visible.length === 0 ? (
+          <Card className="p-8 text-center text-sm text-ink-muted">No items match these filters.</Card>
+        ) : (
+          visible.map((item) => (
+            <Card key={item.key} className={`p-3.5 ${item.isActive ? "" : "opacity-60"}`}>
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-sm font-bold text-ink-charcoal leading-snug">{itemName(item)}</p>
+                  <p className="mt-0.5 font-mono text-[11px] text-ink-muted break-all">
+                    {item.sku}
+                    {!item.isActive ? " · inactive variant" : ""}
+                  </p>
+                </div>
+                <div className="text-right shrink-0">
+                  <p
+                    className={`text-xl font-black leading-none ${
+                      item.status === "out_of_stock"
+                        ? "text-brand-red"
+                        : item.status === "low_stock"
+                          ? "text-amber-700"
+                          : "text-ink-charcoal"
+                    }`}
+                  >
+                    {item.stockQuantity}
+                  </p>
+                  <p className="mt-1 text-[11px] text-ink-muted">reorder at {item.reorderLevel}</p>
+                </div>
+              </div>
+              <div className="mt-2.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-ink-secondary">
+                <StockBadge status={item.status} />
+                <span>
+                  Cost{" "}
+                  {item.costPriceKes ? (
+                    <span className="font-bold text-ink-charcoal">{formatKes(item.costPriceKes)}</span>
+                  ) : (
+                    <span className="font-bold text-amber-700">not set</span>
+                  )}
+                </span>
+                <span>
+                  Price <span className="font-bold text-ink-charcoal">{formatKes(item.priceKes)}</span>
+                </span>
+              </div>
+              <div className="mt-3 grid grid-cols-3 gap-2">
+                <button type="button" onClick={() => setAdjusting(item)} className="neo-button-secondary text-xs py-2">
+                  <SlidersHorizontal className="h-3.5 w-3.5" />
+                  Adjust
+                </button>
+                <button type="button" onClick={() => setConfiguring(item)} className="neo-button-secondary text-xs py-2">
+                  <Settings2 className="h-3.5 w-3.5" />
+                  Settings
+                </button>
+                <Link
+                  to={`/inventory/movements?productId=${item.productId}${item.variantId ? `&variantId=${item.variantId}` : ""}`}
+                  className="neo-button-secondary text-xs py-2"
+                >
+                  <History className="h-3.5 w-3.5" />
+                  History
+                </Link>
+              </div>
+            </Card>
+          ))
+        )}
+      </div>
+
+      <Card className="overflow-hidden hidden md:block">
         <div className="overflow-x-auto">
           <table className="w-full text-xs">
             <thead className="bg-canvas-ivory text-left text-[10px] uppercase tracking-wide text-ink-muted">
@@ -250,7 +318,7 @@ export function StockLevelsPage() {
                           <Settings2 className="h-3 w-3" />
                         </button>
                         <Link
-                          to={`/admin/inventory/movements?productId=${item.productId}${item.variantId ? `&variantId=${item.variantId}` : ""}`}
+                          to={`/inventory/movements?productId=${item.productId}${item.variantId ? `&variantId=${item.variantId}` : ""}`}
                           className="neo-button-secondary text-[11px] py-1.5 px-2"
                           title="Stock history"
                           aria-label={`History for ${itemName(item)}`}

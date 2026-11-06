@@ -518,12 +518,17 @@ export function ProductPage() {
                 type="button"
                 disabled={!stockStatus.available}
                 onClick={handleAddToSelection}
-                className="neo-button-primary flex-1 py-3 px-6 text-sm"
+                className="neo-button-primary flex-1 py-3 px-4 sm:px-6 text-sm whitespace-nowrap"
               >
-                <ShoppingBag className="h-4 w-4" aria-hidden="true" />
-                {stockStatus.available
-                  ? "Add to Selection List"
-                  : "Currently Out of Stock"}
+                <ShoppingBag className="h-4 w-4 shrink-0" aria-hidden="true" />
+                {stockStatus.available ? (
+                  <>
+                    <span className="sm:hidden">Add to List</span>
+                    <span className="hidden sm:inline">Add to Selection List</span>
+                  </>
+                ) : (
+                  "Out of Stock"
+                )}
               </button>
             </div>
           </div>

@@ -2,8 +2,8 @@ import { useEffect, useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { Ban, ChevronDown, ChevronRight, Download, RefreshCw, ShoppingCart } from "lucide-react";
 import type { Sale } from "@jocta/shared";
-import { inventoryApi } from "../../lib/api";
-import { formatKes } from "../../lib/format";
+import { inventoryApi } from "../lib/api";
+import { formatKes } from "../lib/format";
 import {
   CHANNEL_LABELS,
   Card,
@@ -100,7 +100,7 @@ export function SalesHistoryPage() {
               <Download className="h-3.5 w-3.5" />
               Export CSV
             </button>
-            <Link to="/admin/inventory/sales/new" className="neo-button-primary text-xs py-2 px-3.5">
+            <Link to="/inventory/sales/new" className="neo-button-primary text-xs py-2 px-3.5">
               <ShoppingCart className="h-4 w-4" />
               Record Sale
             </Link>

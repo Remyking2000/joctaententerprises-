@@ -437,26 +437,26 @@ export function AdminPrinterModelsPage() {
             <div className="md:hidden divide-y divide-surface-border">
               {filteredModels.map((model) => (
                 <div key={model.id} className="p-4 space-y-3">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-start gap-2.5">
+                  <div className="flex flex-col gap-3">
+                    <div className="flex items-start gap-2.5 min-w-0">
                       <div className="h-9 w-9 rounded-neo-sm border border-surface-border bg-canvas-ivory shrink-0 flex items-center justify-center mt-0.5">
                         <Printer className="h-4 w-4 text-brand-red" />
                       </div>
                       <div>
-                        <h2 className="font-bold text-xs sm:text-sm text-ink-charcoal">
+                        <h2 className="font-bold text-sm text-ink-charcoal">
                           {model.name}
                         </h2>
-                        <span className="font-mono text-[10px] text-ink-muted block mt-0.5">
+                        <span className="font-mono text-[11px] text-ink-muted block mt-0.5 break-all">
                           /{model.slug}
                         </span>
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-1.5 shrink-0">
+                    <div className="grid grid-cols-2 gap-2">
                       <button
                         type="button"
                         onClick={() => openEditForm(model)}
-                        className="neo-button-secondary text-xs py-1 px-2.5"
+                        className="neo-button-secondary text-xs py-2 px-2.5"
                       >
                         <Edit className="h-3 w-3 mr-1 text-brand-red" />
                         Edit
@@ -465,7 +465,7 @@ export function AdminPrinterModelsPage() {
                         type="button"
                         disabled={deletingId === model.id}
                         onClick={() => handleDelete(model)}
-                        className="inline-flex items-center gap-1 px-2 py-1.5 text-xs font-bold rounded-neo-sm border border-surface-border text-ink-secondary hover:text-brand-red"
+                        className="inline-flex items-center justify-center gap-1 px-2 py-2 text-xs font-bold rounded-neo-sm border border-surface-border text-ink-secondary hover:text-brand-red"
                         title="Delete printer model"
                       >
                         <Trash2 className="h-3.5 w-3.5" />

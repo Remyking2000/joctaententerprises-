@@ -9,8 +9,8 @@ import {
   type SalesChannel,
   type StockItem,
 } from "@jocta/shared";
-import { inventoryApi } from "../../lib/api";
-import { formatKes } from "../../lib/format";
+import { inventoryApi } from "../lib/api";
+import { formatKes } from "../lib/format";
 import {
   CHANNEL_LABELS,
   Card,
@@ -163,7 +163,7 @@ export function RecordSalePage() {
             <Printer className="h-3.5 w-3.5" />
             Print receipt
           </button>
-          <Link to="/admin/inventory/sales" className="neo-button-secondary text-xs py-2 px-3.5">
+          <Link to="/inventory/sales" className="neo-button-secondary text-xs py-2 px-3.5">
             Sales history
           </Link>
         </div>
@@ -196,7 +196,46 @@ export function RecordSalePage() {
               Search above to add items. Only items in stock are listed.
             </p>
           ) : (
-            <div className="overflow-x-auto">
+            <>
+            {/* Phones: one card per line */}
+            <ul className="md:hidden divide-y divide-surface-border">
+              {lines.map((l) => {
+                const qty = parseInt(l.quantity, 10) || 0;
+                const over = qty > l.item.stockQuantity;
+                const price = parseFloat(l.unitPrice) || 0;
+                const listPrice = parseFloat(l.item.priceKes);
+                return (
+                  <li key={l.item.key} className="py-3 space-y-2">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <p className="text-sm font-bold text-ink-charcoal leading-snug">{itemName(l.item)}</p>
+                        <p className={`text-[11px] break-all ${over ? "text-brand-red font-bold" : "text-ink-muted"}`}>
+                          {l.item.sku} · {l.item.stockQuantity} in stock
+                        </p>
+                      </div>
+                      <button type="button" onClick={() => setLines((prev) => prev.filter((x) => x.item.key !== l.item.key))} aria-label={`Remove ${itemName(l.item)}`} className="p-1.5 text-ink-muted hover:text-brand-red shrink-0">
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      <label className="block">
+                        <span className="block text-[10px] font-bold uppercase text-ink-muted mb-0.5">Qty</span>
+                        <input type="number" min={1} max={l.item.stockQuantity} required inputMode="numeric" aria-label={`Quantity of ${itemName(l.item)}`} value={l.quantity} onChange={(e) => update(l.item.key, { quantity: e.target.value })} className={inputClass} />
+                      </label>
+                      <label className="block">
+                        <span className="block text-[10px] font-bold uppercase text-ink-muted mb-0.5">Unit price</span>
+                        <input type="number" min={0} step="0.01" required inputMode="decimal" aria-label={`Unit price of ${itemName(l.item)}`} value={l.unitPrice} onChange={(e) => update(l.item.key, { unitPrice: e.target.value })} className={inputClass} />
+                      </label>
+                    </div>
+                    <p className="flex justify-between text-xs">
+                      <span className="text-ink-muted">{price !== listPrice ? `List ${formatKes(listPrice)}` : ""}</span>
+                      <span className="font-bold text-ink-charcoal">{formatKes(qty * price)}</span>
+                    </p>
+                  </li>
+                );
+              })}
+            </ul>
+            <div className="hidden md:block overflow-x-auto">
               <table className="w-full text-xs">
                 <thead className="text-left text-[10px] uppercase tracking-wide text-ink-muted">
                   <tr>
@@ -242,6 +281,7 @@ export function RecordSalePage() {
                 </tbody>
               </table>
             </div>
+            </>
           )}
         </Card>
 

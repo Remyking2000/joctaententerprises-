@@ -138,7 +138,7 @@ export function UserNavMenu({ isHeroOverlay = false }: UserNavMenuProps) {
           aria-expanded={dropdownOpen}
           aria-haspopup="menu"
           aria-label={`User menu for ${user.name || user.email}`}
-          className={`h-10 w-10 p-0.5 rounded-full cursor-pointer inline-flex items-center justify-center transition-all border ${
+          className={`h-9 w-9 sm:h-10 sm:w-10 p-0.5 rounded-full cursor-pointer inline-flex items-center justify-center transition-all border ${
             dropdownOpen
               ? "ring-2 ring-brand-red border-brand-red"
               : isHeroOverlay
@@ -264,7 +264,7 @@ export function UserNavMenu({ isHeroOverlay = false }: UserNavMenuProps) {
         onClick={() => setLoginModalOpen(true)}
         aria-label="Sign In with Google"
         title="Sign In with Google"
-        className={`h-10 px-2.5 sm:px-3 text-xs sm:text-sm font-semibold cursor-pointer rounded-neo-sm inline-flex items-center justify-center gap-1.5 transition-colors border ${
+        className={`h-9 sm:h-10 px-2 sm:px-3 text-xs sm:text-sm font-semibold cursor-pointer rounded-neo-sm inline-flex items-center justify-center gap-1.5 transition-colors border ${
           isHeroOverlay
             ? "bg-black/35 text-white border-white/25 hover:bg-black/55"
             : "border-surface-border bg-surface-white text-ink-secondary hover:text-brand-red hover:border-brand-red"

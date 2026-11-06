@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { Download, RefreshCw } from "lucide-react";
 import type { SalesReport } from "@jocta/shared";
-import { inventoryApi } from "../../lib/api";
-import { formatKes } from "../../lib/format";
+import { inventoryApi } from "../lib/api";
+import { formatKes } from "../lib/format";
 import {
   Bar,
   CHANNEL_LABELS,

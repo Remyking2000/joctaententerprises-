@@ -133,7 +133,11 @@ export function Layout() {
               className="shrink-0"
               aria-label="Jocta Enterprises Home"
             >
-              <JoctaLogo size="sm" inverted={isHeroOverlay} />
+              <JoctaLogo
+                size="sm"
+                inverted={isHeroOverlay}
+                textClassName="hidden min-[380px]:flex"
+              />
             </Link>
 
             {/* Primary Navigation Links (Desktop) */}
@@ -191,7 +195,7 @@ export function Layout() {
             </nav>
 
             {/* Right Controls: Search Toggle Icon, Cart & Hamburger Menu */}
-            <div className="flex items-center gap-1.5 sm:gap-2.5">
+            <div className="flex items-center gap-1 sm:gap-2.5">
               {/* Search Toggle Button (Opens search bar only when clicked) */}
               <button
                 type="button"
@@ -202,7 +206,7 @@ export function Layout() {
                 aria-label={searchOpen ? "Close search bar" : "Open search bar"}
                 aria-expanded={searchOpen}
                 title="Search products"
-                className={`h-10 w-10 p-0 cursor-pointer rounded-neo-sm inline-flex items-center justify-center transition-colors border ${
+                className={`h-9 w-9 sm:h-10 sm:w-10 p-0 cursor-pointer rounded-neo-sm inline-flex items-center justify-center transition-colors border ${
                   isHeroOverlay
                     ? "bg-black/35 text-white border-white/25 hover:bg-black/55"
                     : `border-surface-border bg-surface-white text-ink-secondary hover:text-brand-red hover:border-brand-red ${
@@ -225,7 +229,7 @@ export function Layout() {
                 type="button"
                 onClick={openCart}
                 aria-label={`Cart (${totalCount} items)`}
-                className={`h-10 px-2.5 sm:px-3.5 text-xs sm:text-sm font-semibold cursor-pointer rounded-neo-sm inline-flex items-center justify-center gap-2 transition-colors border ${
+                className={`h-9 sm:h-10 px-2 sm:px-3.5 text-xs sm:text-sm font-semibold cursor-pointer rounded-neo-sm inline-flex items-center justify-center gap-2 transition-colors border ${
                   isHeroOverlay
                     ? "bg-black/35 text-white border-white/25 hover:bg-black/55"
                     : "border-surface-border bg-surface-white text-ink-charcoal hover:border-brand-red hover:text-brand-red"
@@ -252,7 +256,7 @@ export function Layout() {
                 }}
                 aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
                 aria-expanded={mobileMenuOpen}
-                className={`md:hidden h-10 w-10 p-0 cursor-pointer rounded-neo-sm inline-flex items-center justify-center transition-colors border ${
+                className={`md:hidden h-9 w-9 sm:h-10 sm:w-10 p-0 cursor-pointer rounded-neo-sm inline-flex items-center justify-center transition-colors border ${
                   isHeroOverlay
                     ? "bg-black/35 text-white border-white/25 hover:bg-black/55"
                     : "border-surface-border bg-surface-white text-ink-secondary hover:border-brand-red hover:text-brand-red"

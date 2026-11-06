@@ -2,8 +2,8 @@ import { useEffect, useState, type FormEvent } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Download, RefreshCw, Search, X } from "lucide-react";
 import { STOCK_REASONS, type StockMovement, type StockReason } from "@jocta/shared";
-import { inventoryApi } from "../../lib/api";
-import { formatKes } from "../../lib/format";
+import { inventoryApi } from "../lib/api";
+import { formatKes } from "../lib/format";
 import {
   Card,
   DeltaText,
@@ -146,7 +146,52 @@ export function MovementsPage() {
 
       {error && <Notice kind="error">{error}</Notice>}
 
-      <Card className="overflow-hidden">
+      {/* Phones: one card per movement */}
+      <div className="md:hidden space-y-2.5">
+        {loading && rows.length === 0 ? (
+          <Card className="p-8 text-center text-sm text-ink-muted">Loading history…</Card>
+        ) : rows.length === 0 ? (
+          <Card className="p-8 text-center text-sm text-ink-muted">No stock movements match.</Card>
+        ) : (
+          rows.map((m) => (
+            <Card key={m.id} className="p-3.5">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-sm font-bold text-ink-charcoal leading-snug">{itemName(m)}</p>
+                  <p className="mt-0.5 text-xs text-ink-secondary">
+                    {REASON_LABELS[m.reason]} · {formatDateTime(m.createdAt)}
+                  </p>
+                </div>
+                <div className="text-right shrink-0 text-base">
+                  <DeltaText delta={m.delta} />
+                  <p className="text-[11px] text-ink-muted">balance {m.balanceAfter}</p>
+                </div>
+              </div>
+              {(m.note || m.reference || m.unitCostKes || m.userEmail) && (
+                <div className="mt-2 border-t border-surface-border pt-2 text-xs text-ink-secondary space-y-0.5">
+                  {m.note && <p>{m.note}</p>}
+                  <p className="text-[11px] text-ink-muted break-all">
+                    {m.reference && (
+                      <button type="button" onClick={() => setParam("reference", m.reference)} className="font-mono underline mr-2">
+                        {m.reference}
+                      </button>
+                    )}
+                    {m.unitCostKes && <span className="mr-2">@ {formatKes(m.unitCostKes)}</span>}
+                    {m.userEmail}
+                  </p>
+                </div>
+              )}
+            </Card>
+          ))
+        )}
+        {rows.length === 500 && (
+          <p className="text-center text-[11px] text-ink-muted">
+            Showing the latest 500 movements. Narrow the filters to see older ones.
+          </p>
+        )}
+      </div>
+
+      <Card className="overflow-hidden hidden md:block">
         <div className="overflow-x-auto">
           <table className="w-full text-xs">
             <thead className="bg-canvas-ivory text-left text-[10px] uppercase tracking-wide text-ink-muted">

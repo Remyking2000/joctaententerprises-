@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { ClipboardCheck, Search } from "lucide-react";
 import type { BulkStockResult } from "@jocta/shared";
-import { inventoryApi } from "../../lib/api";
+import { inventoryApi } from "../lib/api";
 import {
   Card,
   Modal,
@@ -109,7 +109,7 @@ export function StockTakePage() {
         <Notice kind="success" onClose={() => setDone(null)}>
           Stock take {done.reference} saved: {done.applied} item{done.applied === 1 ? "" : "s"} corrected,{" "}
           {done.unchanged} matched.{" "}
-          <Link to={`/admin/inventory/movements?reference=${done.reference}`} className="underline">
+          <Link to={`/inventory/movements?reference=${done.reference}`} className="underline">
             View changes
           </Link>
         </Notice>
@@ -149,7 +149,59 @@ export function StockTakePage() {
         </Card>
       </div>
 
-      <Card className="overflow-hidden">
+      {/* Phones: one card per item */}
+      <div className="md:hidden space-y-2">
+        {loading && items.length === 0 ? (
+          <Card className="p-8 text-center text-sm text-ink-muted">Loading items…</Card>
+        ) : visible.length === 0 ? (
+          <Card className="p-8 text-center text-sm text-ink-muted">No items to show.</Card>
+        ) : (
+          visible.map((item) => {
+            const raw = counts[item.key] ?? "";
+            const diff = raw === "" ? null : (parseInt(raw, 10) || 0) - item.stockQuantity;
+            return (
+              <Card key={item.key} className={`p-3 ${diff ? "ring-1 ring-amber-300" : ""}`}>
+                <p className="text-sm font-bold text-ink-charcoal leading-snug">{itemName(item)}</p>
+                <p className="font-mono text-[11px] text-ink-muted break-all">{item.sku}</p>
+                <div className="mt-2 grid grid-cols-3 items-end gap-2 text-xs">
+                  <div>
+                    <p className="text-[10px] font-bold uppercase text-ink-muted">System</p>
+                    <p className="text-base font-black text-ink-charcoal">{item.stockQuantity}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-bold uppercase text-ink-muted">Counted</p>
+                    <input
+                      type="number"
+                      min={0}
+                      inputMode="numeric"
+                      aria-label={`Counted quantity of ${itemName(item)}`}
+                      value={raw}
+                      onChange={(e) => setCounts((prev) => ({ ...prev, [item.key]: e.target.value }))}
+                      className={inputClass}
+                    />
+                  </div>
+                  <div className="text-right">
+                    <p className="text-[10px] font-bold uppercase text-ink-muted">Difference</p>
+                    <p className="text-base font-black">
+                      {diff === null ? (
+                        <span className="text-ink-muted font-normal">—</span>
+                      ) : diff === 0 ? (
+                        <span className="text-emerald-700 text-sm">Matches</span>
+                      ) : (
+                        <span className={diff > 0 ? "text-emerald-700" : "text-brand-red"}>
+                          {diff > 0 ? `+${diff}` : diff}
+                        </span>
+                      )}
+                    </p>
+                  </div>
+                </div>
+              </Card>
+            );
+          })
+        )}
+      </div>
+
+      <Card className="overflow-hidden hidden md:block">
         <div className="overflow-x-auto">
           <table className="w-full text-xs">
             <thead className="bg-canvas-ivory text-left text-[10px] uppercase tracking-wide text-ink-muted">

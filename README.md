@@ -72,7 +72,7 @@ frontend/public/logo.png
 
 ## Inventory
 
-The admin portal includes an inventory system at `/admin/inventory` (admin sign-in required). It reads and writes the same `stock_quantity` columns the storefront uses, so there is no second copy of stock to drift.
+The inventory system is a separate workspace at `/inventory`, apart from the catalogue admin panel at `/admin`. Both use the same admin Google sign-in and link to each other. It reads and writes the same `stock_quantity` columns the storefront uses, so there is no second copy of stock to drift.
 
 - **Stock items** — every product without variants, and every variant (e.g. Original vs Compatible) of products that have them, is counted separately. A product with variants shows the total of its active variants on the storefront.
 - **Stock ledger** — every change writes a row to `stock_movements` with the reason, the resulting balance, the staff email and an optional reference, so the latest balance always matches the quantity on hand. Stock edited on the product form is recorded too (as an opening balance or a correction).

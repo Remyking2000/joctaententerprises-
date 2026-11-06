@@ -2,8 +2,8 @@ import { useMemo, useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { PackagePlus, Trash2 } from "lucide-react";
 import type { BulkStockResult, StockItem } from "@jocta/shared";
-import { inventoryApi } from "../../lib/api";
-import { formatKes } from "../../lib/format";
+import { inventoryApi } from "../lib/api";
+import { formatKes } from "../lib/format";
 import {
   Card,
   ItemPicker,
@@ -82,7 +82,7 @@ export function ReceiveStockPage() {
       {done && (
         <Notice kind="success" onClose={() => setDone(null)}>
           Delivery {done.reference} recorded: {done.applied} item{done.applied === 1 ? "" : "s"} updated.{" "}
-          <Link to={`/admin/inventory/movements?reference=${done.reference}`} className="underline">
+          <Link to={`/inventory/movements?reference=${done.reference}`} className="underline">
             View in history
           </Link>
         </Notice>
@@ -115,7 +115,44 @@ export function ReceiveStockPage() {
               Search above to add the items in this delivery.
             </p>
           ) : (
-            <div className="overflow-x-auto">
+            <>
+            {/* Phones: one card per line */}
+            <ul className="md:hidden divide-y divide-surface-border">
+              {lines.map((l) => {
+                const qty = parseInt(l.quantity, 10) || 0;
+                return (
+                  <li key={l.item.key} className="py-3 space-y-2">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <p className="text-sm font-bold text-ink-charcoal leading-snug">{itemName(l.item)}</p>
+                        <p className="font-mono text-[11px] text-ink-muted break-all">
+                          {l.item.sku} · {l.item.stockQuantity} → {l.item.stockQuantity + qty}
+                        </p>
+                      </div>
+                      <button type="button" onClick={() => setLines((prev) => prev.filter((x) => x.item.key !== l.item.key))} aria-label={`Remove ${itemName(l.item)}`} className="p-1.5 text-ink-muted hover:text-brand-red shrink-0">
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      <label className="block">
+                        <span className="block text-[10px] font-bold uppercase text-ink-muted mb-0.5">Qty</span>
+                        <input type="number" min={1} required inputMode="numeric" aria-label={`Quantity of ${itemName(l.item)}`} value={l.quantity} onChange={(e) => update(l.item.key, { quantity: e.target.value })} className={inputClass} />
+                      </label>
+                      <label className="block">
+                        <span className="block text-[10px] font-bold uppercase text-ink-muted mb-0.5">Unit cost (KES)</span>
+                        <input type="number" min={0} step="0.01" inputMode="decimal" aria-label={`Unit cost of ${itemName(l.item)}`} value={l.unitCost} onChange={(e) => update(l.item.key, { unitCost: e.target.value })} placeholder="Optional" className={inputClass} />
+                      </label>
+                    </div>
+                    {l.unitCost && (
+                      <p className="text-right text-xs font-bold text-ink-charcoal">
+                        Line cost {formatKes(qty * (parseFloat(l.unitCost) || 0))}
+                      </p>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+            <div className="hidden md:block overflow-x-auto">
               <table className="w-full text-xs">
                 <thead className="text-left text-[10px] uppercase tracking-wide text-ink-muted">
                   <tr>
@@ -157,6 +194,7 @@ export function ReceiveStockPage() {
                 </tbody>
               </table>
             </div>
+            </>
           )}
         </Card>
 

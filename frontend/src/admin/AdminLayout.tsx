@@ -8,14 +8,8 @@ import {
   useNavigate,
 } from "react-router-dom";
 import {
-  BarChart3,
   Bookmark,
-  Boxes,
-  ClipboardCheck,
   ExternalLink,
-  History,
-  PackagePlus,
-  Receipt,
   Warehouse,
   Layers,
   LayoutDashboard,
@@ -63,47 +57,11 @@ const ADMIN_NAV_LINKS = [
     icon: Printer,
   },
   {
-    to: "/admin/inventory",
-    end: true,
-    label: "Overview",
+    to: "/inventory",
+    end: false,
+    label: "Inventory System",
     icon: Warehouse,
-    group: "Inventory",
-  },
-  {
-    to: "/admin/inventory/stock",
-    end: false,
-    label: "Stock Levels",
-    icon: Boxes,
-  },
-  {
-    to: "/admin/inventory/receive",
-    end: false,
-    label: "Receive Stock",
-    icon: PackagePlus,
-  },
-  {
-    to: "/admin/inventory/stock-take",
-    end: false,
-    label: "Stock Take",
-    icon: ClipboardCheck,
-  },
-  {
-    to: "/admin/inventory/movements",
-    end: false,
-    label: "Stock History",
-    icon: History,
-  },
-  {
-    to: "/admin/inventory/sales",
-    end: false,
-    label: "Sales",
-    icon: Receipt,
-  },
-  {
-    to: "/admin/inventory/reports",
-    end: false,
-    label: "Sales Report",
-    icon: BarChart3,
+    group: "Workspaces",
   },
 ] as const;
 
@@ -233,7 +191,7 @@ export function AdminLayout() {
               aria-label="Jocta Admin Home"
             >
               <JoctaLogo size="sm" showText={false} />
-              <div className="flex flex-col">
+              <div className="hidden min-[400px]:flex flex-col whitespace-nowrap">
                 <span className="text-xs font-extrabold uppercase tracking-wider text-brand-red leading-none">
                   Admin Portal
                 </span>
