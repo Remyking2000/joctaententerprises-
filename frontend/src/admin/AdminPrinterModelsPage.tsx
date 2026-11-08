@@ -269,6 +269,40 @@ export function AdminPrinterModelsPage() {
         </div>
       )}
 
+      {/* Company Category Filter Tabs */}
+      {brands.length > 0 && (
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setSelectedBrand("")}
+            className={`rounded-neo-pill px-3.5 py-1.5 text-xs font-bold transition-colors cursor-pointer ${
+              selectedBrand === ""
+                ? "bg-brand-red text-white shadow-neo-sm"
+                : "bg-surface-white border border-surface-border text-ink-charcoal hover:border-brand-red"
+            }`}
+          >
+            All Companies
+          </button>
+          {brands.map((b) => {
+            const isActive = selectedBrand === b.id;
+            return (
+              <button
+                key={b.id}
+                type="button"
+                onClick={() => setSelectedBrand(isActive ? "" : b.id)}
+                className={`rounded-neo-pill px-3.5 py-1.5 text-xs font-bold transition-colors cursor-pointer ${
+                  isActive
+                    ? "bg-brand-red text-white shadow-neo-sm"
+                    : "bg-surface-white border border-surface-border text-ink-charcoal hover:border-brand-red"
+                }`}
+              >
+                {b.name}
+              </button>
+            );
+          })}
+        </div>
+      )}
+
       {/* Filter and Search Bar */}
       <div className="rounded-neo border border-surface-border bg-surface-white p-3.5 sm:p-4 shadow-neo flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
         <div className="flex-1 flex flex-col sm:flex-row gap-2.5">

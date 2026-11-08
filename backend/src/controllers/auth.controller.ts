@@ -42,6 +42,7 @@ export const AuthController = {
         success: true,
         data: {
           user,
+          token: sessionToken,
         },
       });
     } catch (err) {
@@ -59,10 +60,14 @@ export const AuthController = {
         throw new AppError(401, "UNAUTHENTICATED", "No active session.");
       }
 
+      const sessionToken = AuthService.generateSessionToken(user);
+      res.cookie(SESSION_COOKIE_NAME, sessionToken, getSessionCookieOptions());
+
       res.json({
         success: true,
         data: {
           user,
+          token: sessionToken,
         },
       });
     } catch (err) {

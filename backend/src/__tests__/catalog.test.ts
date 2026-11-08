@@ -437,25 +437,34 @@ describe("Storefront Catalogue & Printer Compatibility API", () => {
   });
 });
 
-describe("Development Seed Data Labelling Integrity", () => {
-  it("clearly labels all demonstration records with [DEMO] and demo-/DEMO- prefixes", () => {
+describe("Official Company & Catalogue Seed Data Integrity", () => {
+  it("contains only the 5 official companies (HP, Konica Minolta, Brother, Canon, Kyocera) and no [DEMO] records", () => {
+    const officialNames = [
+      "HP",
+      "Konica Minolta",
+      "Brother",
+      "Canon",
+      "Kyocera",
+    ];
+    expect(DEMO_BRANDS.map((b) => b.name)).toEqual(officialNames);
+    expect(DEMO_PRINTER_MODELS.map((pm) => pm.name)).toEqual(officialNames);
+
     for (const cat of DEMO_CATEGORIES) {
-      expect(cat.slug.startsWith("demo-")).toBe(true);
-      expect(cat.name.includes("[DEMO]")).toBe(true);
+      expect(cat.slug.startsWith("demo-")).toBe(false);
+      expect(cat.name.includes("[DEMO]")).toBe(false);
     }
     for (const brand of DEMO_BRANDS) {
-      expect(brand.slug.startsWith("demo-")).toBe(true);
-      expect(brand.name.includes("[DEMO]")).toBe(true);
+      expect(brand.slug.startsWith("demo-")).toBe(false);
+      expect(brand.name.includes("[DEMO]")).toBe(false);
     }
     for (const pm of DEMO_PRINTER_MODELS) {
-      expect(pm.slug.startsWith("demo-")).toBe(true);
-      expect(pm.name.includes("[DEMO]")).toBe(true);
+      expect(pm.slug.startsWith("demo-")).toBe(false);
+      expect(pm.name.includes("[DEMO]")).toBe(false);
     }
     for (const prod of DEMO_PRODUCTS) {
-      expect(prod.slug.startsWith("demo-")).toBe(true);
-      expect(prod.sku.startsWith("DEMO-")).toBe(true);
-      expect(prod.name.includes("[DEMO]")).toBe(true);
-      expect(prod.description.includes("[DEMO")).toBe(true);
+      expect(prod.slug.startsWith("demo-")).toBe(false);
+      expect(prod.sku.startsWith("DEMO-")).toBe(false);
+      expect(prod.name.includes("[DEMO]")).toBe(false);
     }
   });
 });

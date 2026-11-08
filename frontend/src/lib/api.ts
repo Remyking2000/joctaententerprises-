@@ -41,9 +41,56 @@ import type {
   VoidSaleInput,
 } from "@jocta/shared";
 
-const API_BASE = (
+const rawApiBase = (
   (import.meta.env.VITE_API_URL as string | undefined) ?? ""
 ).replace(/\/$/, "");
+
+// In local Vite dev mode, use the built-in same-origin /api proxy when pointing at localhost:4000
+// so HTTP-only session cookies are always first-party on the dev server origin.
+const API_BASE =
+  import.meta.env.DEV && rawApiBase === "http://localhost:4000"
+    ? ""
+    : rawApiBase;
+
+export const AUTH_TOKEN_STORAGE_KEY = "jocta_admin_session_token";
+
+let memoryAuthToken: string | null = null;
+let unauthorizedHandler: (() => void) | null = null;
+
+export function getStoredAuthToken(): string | null {
+  if (memoryAuthToken) return memoryAuthToken;
+  try {
+    if (typeof window !== "undefined" && window.localStorage) {
+      const stored = window.localStorage.getItem(AUTH_TOKEN_STORAGE_KEY);
+      if (stored) {
+        memoryAuthToken = stored;
+        return stored;
+      }
+    }
+  } catch {
+    // Ignore storage access errors
+  }
+  return null;
+}
+
+export function setStoredAuthToken(token: string | null): void {
+  memoryAuthToken = token;
+  try {
+    if (typeof window !== "undefined" && window.localStorage) {
+      if (token) {
+        window.localStorage.setItem(AUTH_TOKEN_STORAGE_KEY, token);
+      } else {
+        window.localStorage.removeItem(AUTH_TOKEN_STORAGE_KEY);
+      }
+    }
+  } catch {
+    // Ignore storage access errors
+  }
+}
+
+export function setUnauthorizedHandler(handler: (() => void) | null): void {
+  unauthorizedHandler = handler;
+}
 
 export class ApiClientError extends Error {
   public readonly statusCode: number;
@@ -80,6 +127,10 @@ async function fetchJson<T>(
     const headers: Record<string, string> = {
       Accept: "application/json",
     };
+    const token = getStoredAuthToken();
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
     if (options?.body !== undefined) {
       headers["Content-Type"] = "application/json";
     }
@@ -113,6 +164,10 @@ async function fetchJson<T>(
   }
 
   if (!response.ok || !payload || !payload.success) {
+    if (response.status === 401 && !path.endsWith("/auth/google")) {
+      setStoredAuthToken(null);
+      unauthorizedHandler?.();
+    }
     const errPayload = payload as ApiErrorResponse | null;
     throw new ApiClientError(
       response.status,
@@ -331,23 +386,43 @@ export const adminApi = {
     });
   },
 
-  loginWithGoogle(credential: string): Promise<{ user: AdminUser }> {
-    return fetchJson<{ user: AdminUser }>("/api/auth/google", {
-      method: "POST",
-      body: { credential },
-    });
+  async loginWithGoogle(
+    credential: string,
+  ): Promise<{ user: AdminUser; token?: string }> {
+    const data = await fetchJson<{ user: AdminUser; token?: string }>(
+      "/api/auth/google",
+      {
+        method: "POST",
+        body: { credential },
+      },
+    );
+    if (data.token) {
+      setStoredAuthToken(data.token);
+    }
+    return data;
   },
 
-  getMe(): Promise<{ user: AdminUser }> {
-    return fetchJson<{ user: AdminUser }>("/api/auth/me", {
-      method: "GET",
-    });
+  async getMe(): Promise<{ user: AdminUser; token?: string }> {
+    const data = await fetchJson<{ user: AdminUser; token?: string }>(
+      "/api/auth/me",
+      {
+        method: "GET",
+      },
+    );
+    if (data.token) {
+      setStoredAuthToken(data.token);
+    }
+    return data;
   },
 
-  logout(): Promise<{ message: string }> {
-    return fetchJson<{ message: string }>("/api/auth/logout", {
-      method: "POST",
-    });
+  async logout(): Promise<{ message: string }> {
+    try {
+      return await fetchJson<{ message: string }>("/api/auth/logout", {
+        method: "POST",
+      });
+    } finally {
+      setStoredAuthToken(null);
+    }
   },
 };
 

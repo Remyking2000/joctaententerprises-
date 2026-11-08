@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Link,
   NavLink,
@@ -75,11 +75,25 @@ function NavGroupHeading({ label }: { label: string }) {
 }
 
 export function AdminLayout() {
-  const { user, loading, logout } = useAdminAuth();
+  const { user, loading, checkAuth, logout } = useAdminAuth();
+  const [verifying, setVerifying] = useState(true);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    let active = true;
+    setVerifying(true);
+    checkAuth()
+      .catch(() => null)
+      .finally(() => {
+        if (active) setVerifying(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [checkAuth]);
 
   async function handleLogout() {
     setIsLoggingOut(true);
@@ -92,7 +106,7 @@ export function AdminLayout() {
   }
 
   // 1. Loading state while checking session
-  if (loading) {
+  if (loading || verifying) {
     return (
       <div className="min-h-screen bg-canvas-ivory text-ink-charcoal flex flex-col items-center justify-center p-4">
         <div className="flex flex-col items-center gap-3">

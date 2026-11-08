@@ -8,8 +8,10 @@ import {
   X,
   Info,
   MessageCircle,
+  Package,
 } from "lucide-react";
 import { useCart } from "../context/CartContext";
+import { useCustomer } from "../context/CustomerContext";
 import { formatKes, PRODUCT_AUTHENTICITY_LABELS } from "../lib/format";
 import {
   buildWhatsAppOrderMessage,
@@ -30,6 +32,7 @@ export function CartDrawer() {
     removeItem,
     clearCart,
   } = useCart();
+  const { recordOrder } = useCustomer();
 
   useEffect(() => {
     if (!isOpen) return;
@@ -51,6 +54,12 @@ export function CartDrawer() {
           buildWhatsAppOrderMessage(items, window.location.origin),
         )
       : null;
+
+  function handleWhatsAppOrderClick() {
+    if (items.length > 0) {
+      recordOrder(items, { status: "sent_whatsapp" });
+    }
+  }
 
   return (
     <div
@@ -120,13 +129,23 @@ export function CartDrawer() {
                 Browse printer toners, drum units, spare parts, or use the
                 compatibility finder to shortlist items.
               </p>
-              <Link
-                to="/shop"
-                onClick={closeCart}
-                className="neo-button-primary mt-5 px-5 py-2.5 text-sm"
-              >
-                Browse Catalogue
-              </Link>
+              <div className="mt-5 flex flex-wrap justify-center gap-2.5">
+                <Link
+                  to="/shop"
+                  onClick={closeCart}
+                  className="neo-button-primary px-5 py-2.5 text-sm"
+                >
+                  Browse Catalogue
+                </Link>
+                <Link
+                  to="/orders"
+                  onClick={closeCart}
+                  className="neo-button-secondary px-4 py-2.5 text-sm"
+                >
+                  <Package className="h-4 w-4 text-brand-red" />
+                  <span>My Orders</span>
+                </Link>
+              </div>
             </div>
           ) : (
             items.map((item) => (
@@ -227,6 +246,7 @@ export function CartDrawer() {
                 href={whatsAppOrderUrl}
                 target="_blank"
                 rel="noopener noreferrer"
+                onClick={handleWhatsAppOrderClick}
                 className="neo-button-primary w-full py-3 text-sm"
               >
                 <MessageCircle className="h-4 w-4" aria-hidden="true" />
@@ -241,15 +261,13 @@ export function CartDrawer() {
               >
                 Clear List
               </button>
-              <button
-                type="button"
+              <Link
+                to="/orders"
                 onClick={closeCart}
-                className={`${
-                  whatsAppOrderUrl ? "neo-button-secondary" : "neo-button-primary"
-                } flex-1 py-2.5 text-xs`}
+                className="neo-button-secondary flex-1 py-2.5 text-xs text-center"
               >
-                Continue Browsing
-              </button>
+                View My Orders
+              </Link>
             </div>
           </div>
         )}

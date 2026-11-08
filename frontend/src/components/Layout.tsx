@@ -403,6 +403,48 @@ export function Layout() {
                 Find Toner by Printer
               </NavLink>
 
+              <div className="pt-2 border-t border-surface-border grid grid-cols-3 gap-2">
+                <NavLink
+                  to="/account"
+                  onClick={handleMobileNav}
+                  className={({ isActive }) =>
+                    `rounded-neo-sm px-2.5 py-2 text-xs font-semibold text-center ${
+                      isActive
+                        ? "bg-brand-red text-white"
+                        : "neo-button-secondary justify-center"
+                    }`
+                  }
+                >
+                  My Account
+                </NavLink>
+                <NavLink
+                  to="/orders"
+                  onClick={handleMobileNav}
+                  className={({ isActive }) =>
+                    `rounded-neo-sm px-2.5 py-2 text-xs font-semibold text-center ${
+                      isActive
+                        ? "bg-brand-red text-white"
+                        : "neo-button-secondary justify-center"
+                    }`
+                  }
+                >
+                  My Orders
+                </NavLink>
+                <NavLink
+                  to="/wishlist"
+                  onClick={handleMobileNav}
+                  className={({ isActive }) =>
+                    `rounded-neo-sm px-2.5 py-2 text-xs font-semibold text-center ${
+                      isActive
+                        ? "bg-brand-red text-white"
+                        : "neo-button-secondary justify-center"
+                    }`
+                  }
+                >
+                  Wishlist
+                </NavLink>
+              </div>
+
               {user?.isAdmin && (
                 <div className="pt-2 border-t border-surface-border">
                   <Link

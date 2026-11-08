@@ -4,6 +4,7 @@ import {
   AlertCircle,
   ArrowLeft,
   CheckCircle2,
+  Heart,
   Minus,
   Package,
   Plus,
@@ -25,11 +26,13 @@ import {
   VARIANT_AUTHENTICITY_LABELS,
 } from "../lib/format";
 import { useCart } from "../context/CartContext";
+import { useCustomer } from "../context/CustomerContext";
 import { ProductCard } from "../components/ProductCard";
 
 export function ProductPage() {
   const { slug } = useParams<{ slug: string }>();
   const { addItem } = useCart();
+  const { isWishlisted, toggleWishlist } = useCustomer();
 
   const [product, setProduct] = useState<ProductDetail | null>(null);
   const [selectedVariantId, setSelectedVariantId] = useState<string>("");
@@ -529,6 +532,32 @@ export function ProductPage() {
                 ) : (
                   "Out of Stock"
                 )}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => toggleWishlist(product)}
+                aria-pressed={isWishlisted(product.slug)}
+                title={
+                  isWishlisted(product.slug)
+                    ? "Remove from Wishlist"
+                    : "Save to Wishlist"
+                }
+                className={`py-3 px-4 text-sm font-semibold rounded-neo-sm border inline-flex items-center justify-center gap-2 transition-colors cursor-pointer ${
+                  isWishlisted(product.slug)
+                    ? "bg-brand-red-tint border-brand-red text-brand-red"
+                    : "neo-button-secondary"
+                }`}
+              >
+                <Heart
+                  className={`h-4 w-4 shrink-0 ${
+                    isWishlisted(product.slug) ? "fill-current text-brand-red" : ""
+                  }`}
+                  aria-hidden="true"
+                />
+                <span className="hidden sm:inline">
+                  {isWishlisted(product.slug) ? "Saved" : "Wishlist"}
+                </span>
               </button>
             </div>
           </div>

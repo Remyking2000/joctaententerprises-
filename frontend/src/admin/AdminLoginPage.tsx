@@ -3,9 +3,8 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   AlertCircle,
   ArrowLeft,
-  CheckCircle2,
-  Lock,
   Loader2,
+  LogOut,
   ShieldAlert,
   ShieldCheck,
 } from "lucide-react";
@@ -45,7 +44,7 @@ declare global {
 }
 
 export function AdminLoginPage() {
-  const { user, loading: authLoading, loginWithGoogle } = useAdminAuth();
+  const { user, loading: authLoading, loginWithGoogle, logout } = useAdminAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -59,16 +58,28 @@ export function AdminLoginPage() {
   const googleClientId =
     (import.meta.env.VITE_GOOGLE_CLIENT_ID as string | undefined)?.trim() || "";
 
-  const fromLocation =
-    (location.state as { from?: { pathname: string } } | undefined)?.from
-      ?.pathname || "/admin";
+  const locationState = location.state as
+    | { from?: { pathname: string }; unauthorizedEmail?: string }
+    | undefined;
 
-  // Redirect if already authenticated
+  const fromLocation = locationState?.from?.pathname || "/admin";
+
+  // Redirect ONLY if already authenticated as an authorized administrator
   useEffect(() => {
-    if (!authLoading && user) {
+    if (!authLoading && user?.isAdmin) {
       navigate(fromLocation, { replace: true });
     }
   }, [user, authLoading, navigate, fromLocation]);
+
+  // Show forbidden notice if a signed-in non-admin user was redirected from /admin
+  useEffect(() => {
+    if (!authLoading && user && !user.isAdmin) {
+      setIsForbiddenError(true);
+      setErrorMessage(
+        `Access denied. You are currently signed in as "${user.email}", which is not authorized as an administrator.`,
+      );
+    }
+  }, [authLoading, user]);
 
   // Check when Google Identity Services is available on window
   useEffect(() => {
@@ -107,7 +118,14 @@ export function AdminLoginPage() {
           setIsForbiddenError(false);
 
           try {
-            await loginWithGoogle(response.credential);
+            const loggedInUser = await loginWithGoogle(response.credential);
+            if (!loggedInUser.isAdmin) {
+              setIsForbiddenError(true);
+              setErrorMessage(
+                `Access denied. Google account "${loggedInUser.email}" is not on the administrator allowlist.`,
+              );
+              return;
+            }
             navigate(fromLocation, { replace: true });
           } catch (err) {
             if (err instanceof ApiClientError) {
@@ -150,6 +168,12 @@ export function AdminLoginPage() {
     }
   }, [gsiLoaded, googleClientId, loginWithGoogle, navigate, fromLocation]);
 
+  async function handleSwitchAccount() {
+    await logout();
+    setErrorMessage(null);
+    setIsForbiddenError(false);
+  }
+
   return (
     <div className="min-h-screen bg-canvas-ivory text-ink-charcoal flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 selection:bg-brand-red selection:text-white">
       <div className="sm:mx-auto sm:w-full sm:max-w-lg">
@@ -186,8 +210,8 @@ export function AdminLoginPage() {
           <div className="mb-6 flex items-center gap-2.5 rounded-neo-sm bg-emerald-50 border border-emerald-200 p-3.5 text-sm text-emerald-900">
             <ShieldCheck className="h-4 w-4 text-emerald-700 shrink-0" />
             <span>
-              Secure server-verified authentication enabled with Google
-              Identity Services.
+              Protected route: Administrator authorization is required to access{" "}
+              <code className="font-mono font-bold">/admin</code>.
             </span>
           </div>
 
@@ -195,7 +219,7 @@ export function AdminLoginPage() {
           {errorMessage && (
             <div
               role="alert"
-              className={`mb-6 rounded-neo-sm border p-4 text-sm font-medium space-y-1 ${
+              className={`mb-6 rounded-neo-sm border p-4 text-sm font-medium space-y-2 ${
                 isForbiddenError
                   ? "bg-amber-50 border-amber-300 text-amber-950"
                   : "bg-red-50 border-red-300 text-red-900"
@@ -209,16 +233,28 @@ export function AdminLoginPage() {
                 )}
                 <span>
                   {isForbiddenError
-                    ? "Unauthorized Google Account"
+                    ? "Unauthorized Google Account (403)"
                     : "Sign-In Failed"}
                 </span>
               </div>
               <p className="pl-6 leading-relaxed">{errorMessage}</p>
               {isForbiddenError && (
-                <p className="pl-6 text-sm text-amber-800 pt-1">
-                  If you require administrator access, request that your Google
-                  email be added to the server's administrator allowlist.
-                </p>
+                <div className="pl-6 pt-1 space-y-2">
+                  <p className="text-xs text-amber-800">
+                    Sign in below with an authorized administrator Google
+                    account, or sign out of your current customer session.
+                  </p>
+                  {user && !user.isAdmin && (
+                    <button
+                      type="button"
+                      onClick={() => void handleSwitchAccount()}
+                      className="neo-button-secondary px-3 py-1.5 text-xs cursor-pointer"
+                    >
+                      <LogOut className="h-3.5 w-3.5" />
+                      <span>Sign Out ({user.email})</span>
+                    </button>
+                  )}
+                </div>
               )}
             </div>
           )}
@@ -242,9 +278,19 @@ export function AdminLoginPage() {
                   Google Client ID Required
                 </p>
                 <p className="text-sm leading-relaxed">
-                  Configure <code className="font-mono font-bold bg-amber-100 px-1 py-0.5 rounded">VITE_GOOGLE_CLIENT_ID</code> and{" "}
-                  <code className="font-mono font-bold bg-amber-100 px-1 py-0.5 rounded">GOOGLE_CLIENT_ID</code> in your{" "}
-                  <code className="font-mono font-bold bg-amber-100 px-1 py-0.5 rounded">.env</code> configuration to render Google Sign-In.
+                  Configure{" "}
+                  <code className="font-mono font-bold bg-amber-100 px-1 py-0.5 rounded">
+                    VITE_GOOGLE_CLIENT_ID
+                  </code>{" "}
+                  and{" "}
+                  <code className="font-mono font-bold bg-amber-100 px-1 py-0.5 rounded">
+                    GOOGLE_CLIENT_ID
+                  </code>{" "}
+                  in your{" "}
+                  <code className="font-mono font-bold bg-amber-100 px-1 py-0.5 rounded">
+                    .env
+                  </code>{" "}
+                  configuration to render Google Sign-In.
                 </p>
               </div>
             ) : (
@@ -266,11 +312,8 @@ export function AdminLoginPage() {
           {/* Access Policy Note */}
           <div className="mt-6 pt-5 border-t border-surface-border text-center">
             <p className="text-sm text-ink-muted">
-              Only authorized email accounts (including{" "}
-              <span className="font-mono font-semibold text-ink-charcoal">
-                ycremy2000@gmail.com
-              </span>
-              ) are granted administrative privileges.
+              Only authorized administrator email accounts are granted access to
+              the Administration Portal.
             </p>
           </div>
         </div>

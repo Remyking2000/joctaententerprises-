@@ -12,43 +12,43 @@ export interface PartnerCompany {
 
 /**
  * Official featured printer and supplies brand partners.
- * Only the 5 official manufacturers: Canon, Kyocera, HP, Konica Minolta, and Brother.
+ * Only the 5 official manufacturers: HP, Konica Minolta, Brother, Canon, and Kyocera.
  */
 export const PARTNER_COMPANIES: PartnerCompany[] = [
-  {
-    id: "canon",
-    name: "Canon",
-    tagline: "i-SENSYS & imageRUNNER",
-    logoUrl: "/brands/canon.png",
-    href: "/shop?search=Canon",
-  },
-  {
-    id: "kyocera",
-    name: "Kyocera",
-    tagline: "ECOSYS & TASKalfa",
-    logoUrl: "/brands/kyocera.png",
-    href: "/shop?search=Kyocera",
-  },
   {
     id: "hp",
     name: "HP",
     tagline: "LaserJet & OfficeJet",
     logoUrl: "/brands/hp.png",
-    href: "/shop?search=HP",
+    href: "/shop?brand=hp",
   },
   {
     id: "konica-minolta",
     name: "Konica Minolta",
     tagline: "bizhub & PagePro",
     logoUrl: "/brands/konica-minolta.png",
-    href: "/shop?search=Konica",
+    href: "/shop?brand=konica-minolta",
   },
   {
     id: "brother",
     name: "Brother",
     tagline: "HL & MFC Series",
     logoUrl: "/brands/brother.png",
-    href: "/shop?search=Brother",
+    href: "/shop?brand=brother",
+  },
+  {
+    id: "canon",
+    name: "Canon",
+    tagline: "i-SENSYS & imageRUNNER",
+    logoUrl: "/brands/canon.png",
+    href: "/shop?brand=canon",
+  },
+  {
+    id: "kyocera",
+    name: "Kyocera",
+    tagline: "ECOSYS & TASKalfa",
+    logoUrl: "/brands/kyocera.png",
+    href: "/shop?brand=kyocera",
   },
 ];
 

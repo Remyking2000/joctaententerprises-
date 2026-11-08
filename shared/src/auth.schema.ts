@@ -18,4 +18,5 @@ export interface AdminUser {
 
 export interface AdminAuthSession {
   user: AdminUser;
+  token?: string;
 }

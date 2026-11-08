@@ -1,17 +1,8 @@
 /**
- * Repeatable, idempotent development seed script for Jocta Enterprises.
+ * Repeatable, idempotent seed script for Jocta Enterprises.
  *
- * IMPORTANT RULES:
- * 1. All records created by this script are explicitly prefixed with `[DEMO]`
- *    in their display names/descriptions and `demo-` / `DEMO-` in slugs and SKUs.
- * 2. Prices, stock quantities, and compatibility mappings in this file are
- *    DEMONSTRATION DATA ONLY and must not be treated as verified client pricing.
- * 3. Uses `ON CONFLICT DO NOTHING` so existing records or real client data are
- *    NEVER overwritten when the script is re-run.
- * 4. Refuses to run when `NODE_ENV === "production"` unless `--allow-production-demo`
- *    is explicitly passed on the command line.
- * 5. Pass `--clean` (`npm run db:seed:clean`) to safely remove only `demo-*` /
- *    `DEMO-*` records without touching any real client records.
+ * Seeds the 5 official partner brands (HP, Konica Minolta, Brother, Canon, Kyocera),
+ * core product categories, and compatible printer company categories.
  */
 
 import { pathToFileURL } from "node:url";
@@ -20,98 +11,96 @@ import { closeDb, getPool } from "../config/db.js";
 
 export const DEMO_CATEGORIES = [
   {
-    slug: "demo-laser-toners",
-    name: "Laser Toner Cartridges [DEMO]",
+    slug: "laser-toners",
+    name: "Laser Toner Cartridges",
     description:
-      "[DEMO] Demonstration category for monochrome and color laser toner cartridges.",
+      "Monochrome and color laser toner cartridges for office and enterprise printers.",
     sortOrder: 1,
   },
   {
-    slug: "demo-drum-units",
-    name: "Drum & Imaging Units [DEMO]",
+    slug: "drum-units",
+    name: "Drum & Imaging Units",
     description:
-      "[DEMO] Demonstration category for replacement drum units and imaging kits.",
+      "Replacement drum units and imaging kits for laser printers and copiers.",
     sortOrder: 2,
   },
   {
-    slug: "demo-printer-parts",
-    name: "Printer Spare Parts [DEMO]",
+    slug: "printer-parts",
+    name: "Printer Spare Parts",
     description:
-      "[DEMO] Demonstration category for fuser assemblies, pickup rollers, and maintenance kits.",
+      "Fuser assemblies, pickup rollers, transfer belts, and maintenance kits.",
     sortOrder: 3,
   },
   {
-    slug: "demo-ink-consumables",
-    name: "Ink Bottles & Consumables [DEMO]",
+    slug: "ink-consumables",
+    name: "Ink Bottles & Consumables",
     description:
-      "[DEMO] Demonstration category for continuous ink tank bottles and cartridges.",
+      "Continuous ink tank bottles, cartridges, and printing consumables.",
     sortOrder: 4,
   },
   {
-    slug: "demo-printers",
-    name: "Office Printers [DEMO]",
+    slug: "printers",
+    name: "Office Printers",
     description:
-      "[DEMO] Secondary demonstration category for laser and ink tank office printers.",
+      "Laser and multifunction office printers and copiers.",
     sortOrder: 5,
   },
 ] as const;
 
 export const DEMO_BRANDS = [
-  { slug: "demo-hp", name: "HP [DEMO]" },
-  { slug: "demo-kyocera", name: "Kyocera [DEMO]" },
-  { slug: "demo-canon", name: "Canon [DEMO]" },
-  { slug: "demo-brother", name: "Brother [DEMO]" },
-  { slug: "demo-epson", name: "Epson [DEMO]" },
+  { slug: "hp", name: "HP", logoUrl: "/brands/hp.png" },
+  {
+    slug: "konica-minolta",
+    name: "Konica Minolta",
+    logoUrl: "/brands/konica-minolta.png",
+  },
+  { slug: "brother", name: "Brother", logoUrl: "/brands/brother.png" },
+  { slug: "canon", name: "Canon", logoUrl: "/brands/canon.png" },
+  { slug: "kyocera", name: "Kyocera", logoUrl: "/brands/kyocera.png" },
 ] as const;
 
 export const DEMO_PRINTER_MODELS = [
   {
-    slug: "demo-hp-laserjet-pro-m404dn",
-    brandSlug: "demo-hp",
-    name: "HP LaserJet Pro M404dn [DEMO]",
-    series: "LaserJet Pro M404 Series",
+    slug: "hp",
+    brandSlug: "hp",
+    name: "HP",
+    series: "LaserJet & OfficeJet Series",
   },
   {
-    slug: "demo-hp-laserjet-pro-mfp-m428fdw",
-    brandSlug: "demo-hp",
-    name: "HP LaserJet Pro MFP M428fdw [DEMO]",
-    series: "LaserJet Pro M428 Series",
+    slug: "konica-minolta",
+    brandSlug: "konica-minolta",
+    name: "Konica Minolta",
+    series: "bizhub & PagePro Series",
   },
   {
-    slug: "demo-hp-laserjet-p1102",
-    brandSlug: "demo-hp",
-    name: "HP LaserJet Pro P1102 [DEMO]",
-    series: "LaserJet P1100 Series",
+    slug: "brother",
+    brandSlug: "brother",
+    name: "Brother",
+    series: "HL, DCP & MFC Series",
   },
   {
-    slug: "demo-kyocera-ecosys-m2040dn",
-    brandSlug: "demo-kyocera",
-    name: "Kyocera ECOSYS M2040dn [DEMO]",
-    series: "ECOSYS M2040 Series",
+    slug: "canon",
+    brandSlug: "canon",
+    name: "Canon",
+    series: "imageRUNNER & i-SENSYS Series",
   },
   {
-    slug: "demo-brother-hl-l2360dn",
-    brandSlug: "demo-brother",
-    name: "Brother HL-L2360DN [DEMO]",
-    series: "HL-L2300 Series",
-  },
-  {
-    slug: "demo-epson-ecotank-l3250",
-    brandSlug: "demo-epson",
-    name: "Epson EcoTank L3250 [DEMO]",
-    series: "EcoTank L3000 Series",
+    slug: "kyocera",
+    brandSlug: "kyocera",
+    name: "Kyocera",
+    series: "ECOSYS & TASKalfa Series",
   },
 ] as const;
 
 export const DEMO_PRODUCTS = [
   {
-    slug: "demo-hp-59a-cf259a-black-toner",
-    name: "[DEMO] HP 59A (CF259A) Black LaserJet Toner Cartridge",
+    slug: "hp-59a-cf259a-black-toner",
+    name: "HP 59A (CF259A) Black LaserJet Toner Cartridge",
     description:
-      "[DEMO DATA — Unverified sample price & compatibility] Sample monochrome laser toner cartridge with selectable Original OEM and Compatible options for demonstration.",
-    categorySlug: "demo-laser-toners",
-    brandSlug: "demo-hp",
-    sku: "DEMO-TON-CF259A",
+      "Monochrome laser toner cartridge with selectable Original OEM and Compatible options.",
+    categorySlug: "laser-toners",
+    brandSlug: "hp",
+    sku: "JOC-TON-CF259A",
     oemPartNumber: "CF259A",
     productType: "toner",
     condition: "new",
@@ -123,14 +112,11 @@ export const DEMO_PRODUCTS = [
     stockQuantity: 18,
     isPublished: true,
     isFeatured: true,
-    compatibleModelSlugs: [
-      "demo-hp-laserjet-pro-m404dn",
-      "demo-hp-laserjet-pro-mfp-m428fdw",
-    ],
+    compatibleModelSlugs: ["hp"],
     variants: [
       {
-        name: "[DEMO] Compatible Standard Yield (3,000 pages)",
-        sku: "DEMO-TON-CF259A-COMP",
+        name: "Compatible Standard Yield (3,000 pages)",
+        sku: "JOC-TON-CF259A-COMP",
         oemPartNumber: "CF259A",
         authenticity: "compatible",
         pageYield: 3000,
@@ -140,8 +126,8 @@ export const DEMO_PRODUCTS = [
         sortOrder: 1,
       },
       {
-        name: "[DEMO] Original HP 59A OEM Standard Yield (3,000 pages)",
-        sku: "DEMO-TON-CF259A-OEM",
+        name: "Original HP 59A OEM Standard Yield (3,000 pages)",
+        sku: "JOC-TON-CF259A-OEM",
         oemPartNumber: "CF259A",
         authenticity: "original",
         pageYield: 3000,
@@ -150,94 +136,60 @@ export const DEMO_PRODUCTS = [
         stockQuantity: 4,
         sortOrder: 2,
       },
-      {
-        name: "[DEMO] Compatible 59X High Yield (10,000 pages)",
-        sku: "DEMO-TON-CF259X-COMP",
-        oemPartNumber: "CF259X",
-        authenticity: "compatible",
-        pageYield: 10000,
-        priceKes: "6200.00",
-        comparePriceKes: "7000.00",
-        stockQuantity: 6,
-        sortOrder: 3,
-      },
     ],
   },
   {
-    slug: "demo-hp-85a-ce285a-compatible-toner",
-    name: "[DEMO] 85A (CE285A) Compatible Black Toner Cartridge",
+    slug: "canon-c-exv-63-drum-unit",
+    name: "Canon C-EXV 63 Drum Unit",
     description:
-      "[DEMO DATA — Unverified sample price & compatibility] Sample everyday compatible black laser toner cartridge for demonstration purposes.",
-    categorySlug: "demo-laser-toners",
-    brandSlug: "demo-hp",
-    sku: "DEMO-TON-CE285A",
-    oemPartNumber: "CE285A",
-    productType: "toner",
+      "Original imaging drum unit for Canon imageRUNNER ADVANCE DX series.",
+    categorySlug: "drum-units",
+    brandSlug: "canon",
+    sku: "JOC-DRU-5144C002",
+    oemPartNumber: "5144C002",
+    productType: "drum",
     condition: "new",
-    authenticity: "compatible",
-    pageYield: 1600,
+    authenticity: "original",
+    pageYield: 472000,
     color: "Black",
-    priceKes: "1800.00",
-    comparePriceKes: "2200.00",
-    stockQuantity: 25,
+    priceKes: "18500.00",
+    comparePriceKes: null,
+    stockQuantity: 10,
     isPublished: true,
     isFeatured: true,
-    compatibleModelSlugs: ["demo-hp-laserjet-p1102"],
+    compatibleModelSlugs: ["canon"],
     variants: [],
   },
   {
-    slug: "demo-kyocera-tk-1170-toner-kit",
-    name: "[DEMO] Kyocera TK-1170 Black Toner Kit",
+    slug: "konica-minolta-tn-324k-black-toner",
+    name: "Konica Minolta TN-324K Black Toner Cartridge",
     description:
-      "[DEMO DATA — Unverified sample price & compatibility] Sample high-capacity monochrome toner kit for ECOSYS office series.",
-    categorySlug: "demo-laser-toners",
-    brandSlug: "demo-kyocera",
-    sku: "DEMO-TON-TK1170",
-    oemPartNumber: "TK-1170",
+      "High-capacity black laser toner cartridge for Konica Minolta bizhub series.",
+    categorySlug: "laser-toners",
+    brandSlug: "konica-minolta",
+    sku: "JOC-TON-TN324K",
+    oemPartNumber: "A8DA150",
     productType: "toner",
     condition: "new",
-    authenticity: "both",
-    pageYield: 7200,
+    authenticity: "original",
+    pageYield: 28000,
     color: "Black",
-    priceKes: "4200.00",
+    priceKes: "9500.00",
     comparePriceKes: null,
     stockQuantity: 12,
     isPublished: true,
     isFeatured: true,
-    compatibleModelSlugs: ["demo-kyocera-ecosys-m2040dn"],
-    variants: [
-      {
-        name: "[DEMO] Compatible TK-1170 Toner (7,200 pages)",
-        sku: "DEMO-TON-TK1170-COMP",
-        oemPartNumber: "TK-1170",
-        authenticity: "compatible",
-        pageYield: 7200,
-        priceKes: "4200.00",
-        comparePriceKes: null,
-        stockQuantity: 9,
-        sortOrder: 1,
-      },
-      {
-        name: "[DEMO] Original Kyocera TK-1170 OEM Toner (7,200 pages)",
-        sku: "DEMO-TON-TK1170-OEM",
-        oemPartNumber: "TK-1170",
-        authenticity: "original",
-        pageYield: 7200,
-        priceKes: "11800.00",
-        comparePriceKes: null,
-        stockQuantity: 3,
-        sortOrder: 2,
-      },
-    ],
+    compatibleModelSlugs: ["konica-minolta"],
+    variants: [],
   },
   {
-    slug: "demo-brother-dr-2305-drum-unit",
-    name: "[DEMO] Brother DR-2305 Replacement Drum Unit",
+    slug: "brother-dr-2305-drum-unit",
+    name: "Brother DR-2305 Replacement Drum Unit",
     description:
-      "[DEMO DATA — Unverified sample price & compatibility] Sample replacement optical imaging drum unit rated at 12,000 pages.",
-    categorySlug: "demo-drum-units",
-    brandSlug: "demo-brother",
-    sku: "DEMO-DRM-DR2305",
+      "Replacement optical imaging drum unit rated at 12,000 pages for Brother HL & MFC series.",
+    categorySlug: "drum-units",
+    brandSlug: "brother",
+    sku: "JOC-DRM-DR2305",
     oemPartNumber: "DR-2305",
     productType: "drum",
     condition: "new",
@@ -249,76 +201,29 @@ export const DEMO_PRODUCTS = [
     stockQuantity: 8,
     isPublished: true,
     isFeatured: false,
-    compatibleModelSlugs: ["demo-brother-hl-l2360dn"],
+    compatibleModelSlugs: ["brother"],
     variants: [],
   },
   {
-    slug: "demo-hp-m404-fuser-unit-rm2-2554",
-    name: "[DEMO] 220V Fuser Assembly Unit (RM2-2554) for LaserJet M404/M428",
+    slug: "kyocera-tk-1170-toner-kit",
+    name: "Kyocera TK-1170 Black Toner Kit",
     description:
-      "[DEMO DATA — Unverified sample price & compatibility] Sample replacement 220V fuser assembly spare part for office laser printers.",
-    categorySlug: "demo-printer-parts",
-    brandSlug: "demo-hp",
-    sku: "DEMO-PRT-RM22554",
-    oemPartNumber: "RM2-2554",
-    productType: "printer_part",
+      "High-capacity monochrome toner kit for Kyocera ECOSYS M2040dn / M2540dn / M2640idw series.",
+    categorySlug: "laser-toners",
+    brandSlug: "kyocera",
+    sku: "JOC-TON-TK1170",
+    oemPartNumber: "TK-1170",
+    productType: "toner",
     condition: "new",
-    authenticity: "original",
-    pageYield: null,
-    color: null,
-    priceKes: "16500.00",
+    authenticity: "both",
+    pageYield: 7200,
+    color: "Black",
+    priceKes: "4200.00",
     comparePriceKes: null,
-    stockQuantity: 4,
+    stockQuantity: 12,
     isPublished: true,
     isFeatured: true,
-    compatibleModelSlugs: [
-      "demo-hp-laserjet-pro-m404dn",
-      "demo-hp-laserjet-pro-mfp-m428fdw",
-    ],
-    variants: [],
-  },
-  {
-    slug: "demo-epson-103-ecotank-ink-bottle-set",
-    name: "[DEMO] Epson 103 EcoTank 4-Color Ink Bottle Set (C13T00S14A)",
-    description:
-      "[DEMO DATA — Unverified sample price & compatibility] Sample 4-color refill ink bottle pack (Black, Cyan, Magenta, Yellow) for EcoTank series.",
-    categorySlug: "demo-ink-consumables",
-    brandSlug: "demo-epson",
-    sku: "DEMO-INK-EPS103-SET",
-    oemPartNumber: "C13T00S14A",
-    productType: "ink",
-    condition: "new",
-    authenticity: "original",
-    pageYield: 4500,
-    color: "Multi-Color (BK/C/M/Y)",
-    priceKes: "3600.00",
-    comparePriceKes: "4000.00",
-    stockQuantity: 15,
-    isPublished: true,
-    isFeatured: false,
-    compatibleModelSlugs: ["demo-epson-ecotank-l3250"],
-    variants: [],
-  },
-  {
-    slug: "demo-kyocera-ecosys-m2040dn-mfp-printer",
-    name: "[DEMO] Kyocera ECOSYS M2040dn Monochrome Multifunction Laser Printer",
-    description:
-      "[DEMO DATA — Unverified sample price] Sample secondary-category monochrome A4 multifunction office printer (Print, Copy, Color Scan, Duplex).",
-    categorySlug: "demo-printers",
-    brandSlug: "demo-kyocera",
-    sku: "DEMO-PRN-M2040DN",
-    oemPartNumber: "1102S33NL0",
-    productType: "printer",
-    condition: "new",
-    authenticity: "original",
-    pageYield: null,
-    color: "Monochrome",
-    priceKes: "58000.00",
-    comparePriceKes: "62000.00",
-    stockQuantity: 2,
-    isPublished: true,
-    isFeatured: false,
-    compatibleModelSlugs: ["demo-kyocera-ecosys-m2040dn"],
+    compatibleModelSlugs: ["kyocera"],
     variants: [],
   },
 ] as const;
@@ -387,10 +292,10 @@ export async function seedDemoData(options?: { allowProduction?: boolean }) {
     const brandIds = new Map<string, string>();
     for (const br of DEMO_BRANDS) {
       await client.query(
-        `INSERT INTO brands (slug, name, is_active)
-         VALUES ($1, $2, true)
+        `INSERT INTO brands (slug, name, logo_url, is_active)
+         VALUES ($1, $2, $3, true)
          ON CONFLICT (slug) DO NOTHING`,
-        [br.slug, br.name],
+        [br.slug, br.name, br.logoUrl],
       );
       const res = await client.query<{ id: string }>(
         "SELECT id FROM brands WHERE slug = $1 LIMIT 1",
@@ -506,7 +411,7 @@ export async function seedDemoData(options?: { allowProduction?: boolean }) {
 
     await client.query("COMMIT");
     console.log(
-      `[db:seed] Demo seed complete (${insertedProducts} new demo product(s) inserted; existing records preserved).`,
+      `[db:seed] Seed complete (${insertedProducts} new product(s) inserted; existing records preserved).`,
     );
   } catch (err) {
     await client.query("ROLLBACK");

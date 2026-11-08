@@ -36,6 +36,7 @@ import {
 import { AppError } from "../middleware/error.middleware.js";
 import { InventoryService } from "./inventory.service.js";
 import {
+  compareOfficialCompanyOrder,
   getActiveInMemoryDataset,
   getDemoStateFilePath,
   isTestingDatasetActive,
@@ -1430,7 +1431,7 @@ export const AdminService = {
         );
       }
 
-      models.sort((a, b) => a.name.localeCompare(b.name));
+      models.sort(compareOfficialCompanyOrder);
       return models.slice(0, query.limit ?? 100);
     }
 
@@ -1476,7 +1477,7 @@ export const AdminService = {
       .orderBy(asc(printerModels.name))
       .limit(query.limit ?? 100);
 
-    return rows;
+    return rows.sort(compareOfficialCompanyOrder);
   },
 
   /**

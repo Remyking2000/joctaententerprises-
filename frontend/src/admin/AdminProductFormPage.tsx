@@ -103,6 +103,7 @@ export function AdminProductFormPage() {
   // Variants and Compatibility state
   const [selectedModelIds, setSelectedModelIds] = useState<string[]>([]);
   const [modelSearchQuery, setModelSearchQuery] = useState("");
+  const [selectedModelBrandId, setSelectedModelBrandId] = useState("");
   const [variantsList, setVariantsList] = useState<ProductVariantInput[]>([]);
 
   // Inline Quick-Add states (Category, Brand, Printer Model)
@@ -117,6 +118,7 @@ export function AdminProductFormPage() {
   const [quickModelOpen, setQuickModelOpen] = useState(false);
   const [quickModelName, setQuickModelName] = useState("");
   const [quickModelSeries, setQuickModelSeries] = useState("");
+  const [quickModelBrandId, setQuickModelBrandId] = useState("");
   const [quickModelSaving, setQuickModelSaving] = useState(false);
 
   useEffect(() => {
@@ -269,15 +271,16 @@ export function AdminProductFormPage() {
       const created = await adminApi.createPrinterModel({
         name: trimmed,
         slug: generateSlug(trimmed),
-        brandId: brandId || null,
+        brandId: quickModelBrandId || brandId || null,
         series: quickModelSeries.trim() || null,
       });
-      setAllPrinterModels((prev) => [created, ...prev]);
+      setAllPrinterModels((prev) => [...prev, created]);
       setSelectedModelIds((prev) =>
         prev.includes(created.id) ? prev : [...prev, created.id],
       );
       setQuickModelName("");
       setQuickModelSeries("");
+      setQuickModelBrandId("");
       setQuickModelOpen(false);
     } catch (err) {
       setGeneralError(
@@ -1147,7 +1150,19 @@ export function AdminProductFormPage() {
                   <X className="h-4 w-4" />
                 </button>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-4 gap-2">
+                <select
+                  value={quickModelBrandId || brandId}
+                  onChange={(e) => setQuickModelBrandId(e.target.value)}
+                  className="rounded border border-surface-border bg-surface-white px-2.5 py-1.5 font-semibold text-ink-charcoal"
+                >
+                  <option value="">Select Company...</option>
+                  {brands.map((b) => (
+                    <option key={b.id} value={b.id}>
+                      {b.name}
+                    </option>
+                  ))}
+                </select>
                 <input
                   type="text"
                   value={quickModelName}
@@ -1197,6 +1212,42 @@ export function AdminProductFormPage() {
             </div>
           )}
 
+          {/* Company Category Filter Tabs (HP, Konica Minolta, Brother, Canon, Kyocera) */}
+          {brands.length > 0 && (
+            <div className="flex flex-wrap items-center gap-1.5">
+              <button
+                type="button"
+                onClick={() => setSelectedModelBrandId("")}
+                className={`rounded-neo-pill px-3 py-1 text-[11px] font-bold transition-colors cursor-pointer ${
+                  selectedModelBrandId === ""
+                    ? "bg-brand-red text-white shadow-neo-sm"
+                    : "bg-canvas-ivory border border-surface-border text-ink-secondary hover:border-brand-red hover:text-ink-charcoal"
+                }`}
+              >
+                All Companies
+              </button>
+              {brands.map((brand) => {
+                const isActive = selectedModelBrandId === brand.id;
+                return (
+                  <button
+                    key={brand.id}
+                    type="button"
+                    onClick={() =>
+                      setSelectedModelBrandId(isActive ? "" : brand.id)
+                    }
+                    className={`rounded-neo-pill px-3 py-1 text-[11px] font-bold transition-colors cursor-pointer ${
+                      isActive
+                        ? "bg-brand-red text-white shadow-neo-sm"
+                        : "bg-canvas-ivory border border-surface-border text-ink-secondary hover:border-brand-red hover:text-ink-charcoal"
+                    }`}
+                  >
+                    {brand.name}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
           {/* Model Search and Quick Select */}
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
             <div className="relative flex-1">
@@ -1217,9 +1268,11 @@ export function AdminProductFormPage() {
                   const query = modelSearchQuery.toLowerCase();
                   const filtered = allPrinterModels.filter(
                     (m) =>
-                      m.name.toLowerCase().includes(query) ||
-                      (m.brandName &&
-                        m.brandName.toLowerCase().includes(query)),
+                      (!selectedModelBrandId ||
+                        m.brandId === selectedModelBrandId) &&
+                      (m.name.toLowerCase().includes(query) ||
+                        (m.brandName &&
+                          m.brandName.toLowerCase().includes(query))),
                   );
                   const filteredIds = filtered.map((m) => m.id);
                   setSelectedModelIds((prev) =>
@@ -1242,6 +1295,12 @@ export function AdminProductFormPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 max-h-60 overflow-y-auto p-1 border border-surface-border rounded-neo-sm bg-canvas-ivory/50">
               {allPrinterModels
                 .filter((m) => {
+                  if (
+                    selectedModelBrandId &&
+                    m.brandId !== selectedModelBrandId
+                  ) {
+                    return false;
+                  }
                   if (!modelSearchQuery.trim()) return true;
                   const query = modelSearchQuery.toLowerCase();
                   return (

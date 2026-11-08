@@ -7,7 +7,12 @@ import {
   type ReactNode,
 } from "react";
 import type { AdminUser } from "@jocta/shared";
-import { adminApi, ApiClientError } from "../lib/api";
+import {
+  adminApi,
+  ApiClientError,
+  AUTH_TOKEN_STORAGE_KEY,
+  setUnauthorizedHandler,
+} from "../lib/api";
 
 interface AdminAuthContextType {
   user: AdminUser | null;
@@ -44,6 +49,23 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     void checkAuth();
   }, [checkAuth]);
+
+  useEffect(() => {
+    setUnauthorizedHandler(() => {
+      setUser(null);
+    });
+    return () => setUnauthorizedHandler(null);
+  }, []);
+
+  useEffect(() => {
+    function handleStorage(e: StorageEvent) {
+      if (e.key === AUTH_TOKEN_STORAGE_KEY && !e.newValue) {
+        setUser(null);
+      }
+    }
+    window.addEventListener("storage", handleStorage);
+    return () => window.removeEventListener("storage", handleStorage);
+  }, []);
 
   const loginWithGoogle = useCallback(
     async (credential: string): Promise<AdminUser> => {

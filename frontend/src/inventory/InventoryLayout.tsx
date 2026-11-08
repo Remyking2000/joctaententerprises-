@@ -43,13 +43,27 @@ function navClass(isActive: boolean) {
 }
 
 export function InventoryLayout() {
-  const { user, loading, logout } = useAdminAuth();
+  const { user, loading, checkAuth, logout } = useAdminAuth();
+  const [verifying, setVerifying] = useState(true);
   const [menuOpen, setMenuOpen] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
 
   useEffect(() => setMenuOpen(false), [location.pathname]);
+
+  useEffect(() => {
+    let active = true;
+    setVerifying(true);
+    checkAuth()
+      .catch(() => null)
+      .finally(() => {
+        if (active) setVerifying(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [checkAuth]);
 
   async function handleLogout() {
     setSigningOut(true);
@@ -61,7 +75,7 @@ export function InventoryLayout() {
     }
   }
 
-  if (loading) {
+  if (loading || verifying) {
     return (
       <div className="min-h-screen bg-canvas-ivory flex items-center justify-center p-4">
         <div className="flex flex-col items-center gap-3">

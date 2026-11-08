@@ -31,6 +31,28 @@ import {
   DEMO_PRODUCTS,
 } from "../db/seed.js";
 
+export const OFFICIAL_COMPANY_SLUGS = [
+  "hp",
+  "konica-minolta",
+  "brother",
+  "canon",
+  "kyocera",
+] as const;
+
+export function compareOfficialCompanyOrder(
+  a: { slug: string; name: string },
+  b: { slug: string; name: string },
+): number {
+  const idxA = (OFFICIAL_COMPANY_SLUGS as readonly string[]).indexOf(a.slug);
+  const idxB = (OFFICIAL_COMPANY_SLUGS as readonly string[]).indexOf(b.slug);
+  if (idxA !== -1 && idxB !== -1) {
+    return idxA - idxB;
+  }
+  if (idxA !== -1) return -1;
+  if (idxB !== -1) return 1;
+  return a.name.localeCompare(b.name);
+}
+
 export interface CatalogDataset {
   categories: (CategorySummary & { isActive: boolean })[];
   brands: (BrandSummary & { isActive: boolean })[];
@@ -106,7 +128,16 @@ function getDevDemoDataset(): CatalogDataset {
     if (fs.existsSync(DEMO_STATE_FILE)) {
       const raw = fs.readFileSync(DEMO_STATE_FILE, "utf8");
       const parsed = JSON.parse(raw) as CatalogDataset;
+      const hasLegacyDemoBrands =
+        Array.isArray(parsed?.brands) &&
+        parsed.brands.some(
+          (b) =>
+            b.slug.startsWith("demo-") ||
+            b.name.includes("[DEMO]") ||
+            b.slug === "epson",
+        );
       if (
+        !hasLegacyDemoBrands &&
         Array.isArray(parsed?.categories) &&
         Array.isArray(parsed?.brands) &&
         Array.isArray(parsed?.products)
@@ -133,7 +164,7 @@ function getDevDemoDataset(): CatalogDataset {
     id: `demo-brand-${idx + 1}`,
     slug: b.slug,
     name: b.name,
-    logoUrl: "",
+    logoUrl: b.logoUrl ?? "",
     isActive: true,
   }));
 
@@ -238,7 +269,7 @@ function executeInMemoryCatalog(dataset: CatalogDataset) {
 
   const activeBrands = dataset.brands
     .filter((b) => b.isActive)
-    .sort((a, b) => a.name.localeCompare(b.name));
+    .sort(compareOfficialCompanyOrder);
 
   const categoryById = new Map(activeCategories.map((c) => [c.id, c]));
   const brandById = new Map(activeBrands.map((b) => [b.id, b]));
@@ -300,7 +331,7 @@ function executeInMemoryCatalog(dataset: CatalogDataset) {
       }
 
       return models
-        .sort((a, b) => a.name.localeCompare(b.name))
+        .sort(compareOfficialCompanyOrder)
         .slice(0, query.limit);
     },
 
@@ -516,7 +547,7 @@ export const CatalogService = {
     }
 
     const db = getDb();
-    return db
+    const rows = await db
       .select({
         id: brands.id,
         slug: brands.slug,
@@ -526,6 +557,7 @@ export const CatalogService = {
       .from(brands)
       .where(eq(brands.isActive, true))
       .orderBy(asc(brands.name));
+    return rows.sort(compareOfficialCompanyOrder);
   },
 
   async listPrinterModels(
@@ -580,7 +612,7 @@ export const CatalogService = {
       .orderBy(asc(printerModels.name))
       .limit(query.limit);
 
-    return rows;
+    return rows.sort(compareOfficialCompanyOrder);
   },
 
   async getCompatibleProductsForPrinterModel(
