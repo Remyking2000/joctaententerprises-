@@ -40,6 +40,7 @@ import type {
   StockTakePayload,
   VoidSaleInput,
 } from "@jocta/shared";
+import { notifyCatalogChanged } from "./sync";
 
 const rawApiBase = (
   (import.meta.env.VITE_API_URL as string | undefined) ?? ""
@@ -177,6 +178,13 @@ async function fetchJson<T>(
     );
   }
 
+  // A successful change to products, categories, stock or sales: let every
+  // open admin and inventory screen reload so both systems stay in step.
+  const method = (options?.method ?? "GET").toUpperCase();
+  if (method !== "GET" && path.startsWith("/api/admin/") && !path.includes("/auth/")) {
+    notifyCatalogChanged();
+  }
+
   return payload.data;
 }
 
@@ -223,12 +231,6 @@ export const catalogApi = {
 export const adminApi = {
   getStats(): Promise<AdminStatsSummary> {
     return fetchJson<AdminStatsSummary>("/api/admin/stats");
-  },
-
-  resetDemoData(): Promise<AdminStatsSummary> {
-    return fetchJson<AdminStatsSummary>("/api/admin/demo/reset", {
-      method: "POST",
-    });
   },
 
   getProducts(

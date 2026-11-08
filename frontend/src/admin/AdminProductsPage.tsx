@@ -21,6 +21,7 @@ import type {
 } from "@jocta/shared";
 import { adminApi, catalogApi, ApiClientError } from "../lib/api";
 import { formatKes } from "../lib/format";
+import { useCatalogRefresh } from "../lib/sync";
 
 export function AdminProductsPage() {
   const [products, setProducts] = useState<ProductSummary[]>([]);
@@ -86,6 +87,9 @@ export function AdminProductsPage() {
       setLoading(false);
     }
   }
+
+  // Reload when products, stock or sales change in admin or inventory
+  useCatalogRefresh(() => void loadProducts());
 
   useEffect(() => {
     void loadInitialMetadata();
@@ -160,6 +164,12 @@ export function AdminProductsPage() {
       setProducts((prev) =>
         prev.map((p) => (p.id === updated.id ? updated : p)),
       );
+      if (updated.stockQuantity !== nextStock) {
+        // Products with options keep their total equal to the options' stock.
+        setError(
+          `"${product.name}" is stocked per option, so its total can't be changed here. Edit the product or use Inventory → Stock Levels to change each option.`,
+        );
+      }
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Failed to update stock.",

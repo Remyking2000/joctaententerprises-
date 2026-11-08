@@ -12,15 +12,6 @@ export const AdminController = {
     }
   },
 
-  async resetDemoData(_req: Request, res: Response, next: NextFunction) {
-    try {
-      const stats = await AdminService.resetDemoData();
-      res.json({ success: true, data: stats });
-    } catch (err) {
-      next(err);
-    }
-  },
-
   async listProducts(_req: Request, res: Response, next: NextFunction) {
     try {
       const validatedQuery = res.locals.validated?.query ?? {};

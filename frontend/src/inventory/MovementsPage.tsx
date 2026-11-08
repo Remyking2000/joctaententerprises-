@@ -17,6 +17,7 @@ import {
   itemName,
   todayInNairobi,
 } from "./ui";
+import { useCatalogRefresh } from "../lib/sync";
 
 /** The stock ledger: every change to every quantity, newest first. */
 export function MovementsPage() {
@@ -45,6 +46,9 @@ export function MovementsPage() {
       setLoading(false);
     }
   }
+
+  // Reload when products, stock or sales change in admin or inventory
+  useCatalogRefresh(() => void load());
 
   useEffect(() => {
     void load();

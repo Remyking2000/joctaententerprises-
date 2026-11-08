@@ -45,9 +45,8 @@ router.get("/auth/me", requireAdminAuth, AuthController.getMe);
 // =============================================================================
 router.use(requireAdminAuth);
 
-// Stats & Demo Maintenance
+// Stats
 router.get("/stats", AdminController.getStats);
-router.post("/demo/reset", AdminController.resetDemoData);
 
 // Inventory: stock levels, ledger, receiving, stock takes, sales & reports
 router.use("/inventory", inventoryRoutes);

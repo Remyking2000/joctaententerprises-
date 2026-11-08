@@ -23,7 +23,6 @@ import type {
   UploadedImageResponse,
   UploadImageInput,
 } from "@jocta/shared";
-import { env } from "../config/env.js";
 import { getDb } from "../config/db.js";
 import {
   brands,
@@ -38,10 +37,7 @@ import { InventoryService } from "./inventory.service.js";
 import {
   compareOfficialCompanyOrder,
   getActiveInMemoryDataset,
-  getDemoStateFilePath,
-  isTestingDatasetActive,
-  resetDevDemoDataset,
-  saveDevDemoDataset,
+  saveInMemoryDataset,
   type CatalogDataset,
 } from "./catalog.service.js";
 
@@ -85,9 +81,6 @@ export const AdminService = {
         totalBrands,
         totalPrinterModels,
         storageMode: "memory",
-        persistedPath: isTestingDatasetActive()
-          ? undefined
-          : getDemoStateFilePath(),
       };
     }
 
@@ -121,25 +114,6 @@ export const AdminService = {
       totalPrinterModels: Number(modelStats?.total ?? 0),
       storageMode: "postgresql",
     };
-  },
-
-  /**
-   * Resets the local demo dataset to the factory initial seed.
-   * Disabled in production and when operating against PostgreSQL.
-   */
-  async resetDemoData(): Promise<AdminStatsSummary> {
-    if (
-      env.NODE_ENV === "production" ||
-      (env.DATABASE_URL && !isTestingDatasetActive())
-    ) {
-      throw new AppError(
-        403,
-        "FORBIDDEN",
-        "Demonstration dataset reset is disabled in production and when connected to a PostgreSQL database.",
-      );
-    }
-    resetDevDemoDataset();
-    return this.getStats();
   },
 
   /**
@@ -541,6 +515,8 @@ export const AdminService = {
   ): Promise<ProductSummary> {
     await InventoryService.prepare();
     const created = await this.createProductRecord(input);
+    const createdTotal = await InventoryService.syncProductTotal(created.id);
+    if (createdTotal !== null) created.stockQuantity = createdTotal;
     await InventoryService.recordProductFormChanges(
       new Map(),
       await InventoryService.snapshotProductStock(created.id),
@@ -643,7 +619,7 @@ export const AdminService = {
         });
       }
 
-      saveDevDemoDataset(inMemory);
+      saveInMemoryDataset(inMemory);
       return enrichInMemoryProduct(newProduct, inMemory);
     }
 
@@ -771,6 +747,8 @@ export const AdminService = {
     await InventoryService.prepare();
     const before = await InventoryService.snapshotProductStock(id);
     const updated = await this.updateProductRecord(id, input);
+    const updatedTotal = await InventoryService.syncProductTotal(id);
+    if (updatedTotal !== null) updated.stockQuantity = updatedTotal;
     await InventoryService.recordProductFormChanges(
       before,
       await InventoryService.snapshotProductStock(id),
@@ -880,7 +858,7 @@ export const AdminService = {
       };
 
       inMemory.products[idx] = updated;
-      saveDevDemoDataset(inMemory);
+      saveInMemoryDataset(inMemory);
       return enrichInMemoryProduct(updated, inMemory);
     }
 
@@ -1061,7 +1039,7 @@ export const AdminService = {
       };
 
       inMemory.categories.push(newCat);
-      saveDevDemoDataset(inMemory);
+      saveInMemoryDataset(inMemory);
       return {
         id: newCat.id,
         slug: newCat.slug,
@@ -1142,7 +1120,7 @@ export const AdminService = {
       };
 
       inMemory.categories[idx] = updated;
-      saveDevDemoDataset(inMemory);
+      saveInMemoryDataset(inMemory);
       return {
         id: updated.id,
         slug: updated.slug,
@@ -1229,7 +1207,7 @@ export const AdminService = {
       };
 
       inMemory.brands.push(newBrand);
-      saveDevDemoDataset(inMemory);
+      saveInMemoryDataset(inMemory);
       return {
         id: newBrand.id,
         slug: newBrand.slug,
@@ -1319,7 +1297,7 @@ export const AdminService = {
       };
 
       inMemory.brands[idx] = updated;
-      saveDevDemoDataset(inMemory);
+      saveInMemoryDataset(inMemory);
       return {
         id: updated.id,
         slug: updated.slug,
@@ -1523,7 +1501,7 @@ export const AdminService = {
       };
 
       inMemory.printerModels.push(newModel);
-      saveDevDemoDataset(inMemory);
+      saveInMemoryDataset(inMemory);
       return newModel;
     }
 
@@ -1653,7 +1631,7 @@ export const AdminService = {
       };
 
       inMemory.printerModels[idx] = updated;
-      saveDevDemoDataset(inMemory);
+      saveInMemoryDataset(inMemory);
       return updated;
     }
 
@@ -1766,7 +1744,7 @@ export const AdminService = {
       inMemory.compatibilityLinks = inMemory.compatibilityLinks.filter(
         (l) => l.productId !== id,
       );
-      saveDevDemoDataset(inMemory);
+      saveInMemoryDataset(inMemory);
       return { id };
     }
 
@@ -1804,7 +1782,7 @@ export const AdminService = {
         );
       }
       inMemory.categories.splice(idx, 1);
-      saveDevDemoDataset(inMemory);
+      saveInMemoryDataset(inMemory);
       return { id };
     }
 
@@ -1856,7 +1834,7 @@ export const AdminService = {
           ? { ...m, brandId: null, brandName: null, brandSlug: null }
           : m,
       );
-      saveDevDemoDataset(inMemory);
+      saveInMemoryDataset(inMemory);
       return { id };
     }
 
@@ -1887,7 +1865,7 @@ export const AdminService = {
       inMemory.compatibilityLinks = inMemory.compatibilityLinks.filter(
         (l) => l.printerModelId !== id,
       );
-      saveDevDemoDataset(inMemory);
+      saveInMemoryDataset(inMemory);
       return { id };
     }
 

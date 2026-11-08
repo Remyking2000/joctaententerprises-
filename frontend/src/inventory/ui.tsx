@@ -8,6 +8,7 @@ import type {
   StockStatus,
 } from "@jocta/shared";
 import { ApiClientError, inventoryApi } from "../lib/api";
+import { useCatalogRefresh } from "../lib/sync";
 
 // ── Labels ───────────────────────────────────────────────────────────────────
 
@@ -128,6 +129,9 @@ export function useStockItems() {
   useEffect(() => {
     void reload();
   }, [reload]);
+
+  // Stay in step with product and stock changes made anywhere
+  useCatalogRefresh(() => void reload());
 
   return { items, setItems, loading, error, reload };
 }

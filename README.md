@@ -45,15 +45,18 @@ frontend/public/logo.png
    npm run db:migrate
    ```
 
-5. **Optional — Seed or remove demonstration catalogue data:**
-   All demonstration records are explicitly prefixed with `[DEMO]` / `demo-` / `DEMO-` and use `ON CONFLICT DO NOTHING` so real client data is never overwritten.
+5. **Optional — load the starter catalogue into a new database:**
+   Inserts the core categories, the five official brands (HP, Konica Minolta, Brother, Canon, Kyocera) and starter products. It uses `ON CONFLICT DO NOTHING`, so existing records are never overwritten.
    ```bash
-   # Insert demonstration categories, brands, printer models, and products
    npm run db:seed
+   ```
 
-   # Safely remove ONLY demonstration records (slug LIKE 'demo-%' / sku LIKE 'DEMO-%')
+   If the database still has placeholder records from early development (slugs starting `demo-`), remove them once with:
+   ```bash
    npm run db:seed:clean
    ```
+
+A `DATABASE_URL` is required: the API serves every catalogue, admin and inventory request from PostgreSQL.
 
 ## Available Scripts
 
@@ -66,8 +69,8 @@ frontend/public/logo.png
 | `npm test` | Run automated unit and API tests via Vitest |
 | `npm run db:migrate` | Apply pending SQL migrations in `backend/src/db/migrations/` |
 | `npm run db:verify` | Verify PostgreSQL connection and list applied migrations |
-| `npm run db:seed` | Insert idempotent `[DEMO]` catalogue records for local development |
-| `npm run db:seed:clean` | Remove all `[DEMO]` catalogue records safely |
+| `npm run db:seed` | Load the starter catalogue (categories, brands, starter products) into a new database |
+| `npm run db:seed:clean` | Remove leftover placeholder records from early development |
 | `npm run db:generate` | Generate Drizzle SQL migrations from `backend/src/db/schema.ts` |
 
 ## Inventory

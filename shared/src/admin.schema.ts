@@ -14,8 +14,8 @@ export interface AdminStatsSummary {
   totalCategories: number;
   totalBrands: number;
   totalPrinterModels: number;
+  /** "memory" only while automated tests run; production is always PostgreSQL. */
   storageMode: "memory" | "postgresql";
-  persistedPath?: string;
 }
 
 export const productVariantInputSchema = z.object({

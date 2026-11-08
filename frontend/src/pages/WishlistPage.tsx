@@ -11,7 +11,6 @@ import { AccountNavBar } from "../components/AccountNavBar";
 import { useCart } from "../context/CartContext";
 import { useCustomer, type WishlistItem } from "../context/CustomerContext";
 import {
-  DUMMY_HARDWARE_IMAGES,
   formatKes,
   getStockStatus,
   LOCAL_PRODUCT_PLACEHOLDERS,
@@ -176,7 +175,7 @@ export function WishlistPage() {
                   ? item.images[0]
                   : "");
               const primaryImage =
-                uploadedImage || DUMMY_HARDWARE_IMAGES[item.productType];
+                uploadedImage || LOCAL_PRODUCT_PLACEHOLDERS[item.productType];
               const fallbackSvg = LOCAL_PRODUCT_PLACEHOLDERS[item.productType];
               const hasErr = Boolean(imgErrors[item.slug]);
               const displayImage = !hasErr ? primaryImage : fallbackSvg;

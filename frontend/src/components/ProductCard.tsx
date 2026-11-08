@@ -4,9 +4,7 @@ import { Heart } from "lucide-react";
 import type { ProductSummary } from "@jocta/shared";
 import { useCustomer } from "../context/CustomerContext";
 import {
-  DUMMY_HARDWARE_IMAGES,
   formatKes,
-  isDemoRecord,
   LOCAL_PRODUCT_PLACEHOLDERS,
   PRODUCT_AUTHENTICITY_LABELS,
   PRODUCT_TYPE_LABELS,
@@ -25,10 +23,9 @@ export function ProductCard({ product }: { product: ProductSummary }) {
       : "");
 
   const primaryImage =
-    uploadedImage || DUMMY_HARDWARE_IMAGES[product.productType];
+    uploadedImage || LOCAL_PRODUCT_PLACEHOLDERS[product.productType];
   const fallbackSvg = LOCAL_PRODUCT_PLACEHOLDERS[product.productType];
   const displayImage = !imgError ? primaryImage : fallbackSvg;
-  const isDemo = isDemoRecord(product);
 
   return (
     <article className="neo-card-interactive group flex flex-col justify-between p-2.5 sm:p-4">
@@ -74,22 +71,14 @@ export function ProductCard({ product }: { product: ProductSummary }) {
           </button>
         </div>
 
-        {/* Original / Compatible Designation & Demo Safeguard Badge */}
+        {/* Original / Compatible designation */}
         <div className="mt-2.5 sm:mt-3 flex flex-wrap items-center gap-1 sm:gap-1.5">
           <span className="rounded-neo-sm bg-canvas-ivory border border-surface-border px-2 py-0.5 text-[10px] sm:text-[11px] font-semibold text-ink-secondary">
             {PRODUCT_AUTHENTICITY_LABELS[product.authenticity]}
           </span>
-          {isDemo && (
-            <span
-              title="Development seed record — not verified client inventory"
-              className="rounded-neo-sm bg-brand-red-tint border border-brand-red px-1.5 sm:px-2 py-0.5 text-[10px] sm:text-[11px] font-bold uppercase text-brand-red"
-            >
-              Demo
-            </span>
-          )}
         </div>
 
-        {/* Product Name (Preserves [DEMO] designation intact) */}
+        {/* Product name */}
         <h3 className="mt-1.5 sm:mt-2 text-xs sm:text-base font-bold leading-snug text-ink-charcoal line-clamp-2">
           <Link
             to={`/shop/${product.slug}`}
@@ -106,11 +95,6 @@ export function ProductCard({ product }: { product: ProductSummary }) {
           <span className="text-sm sm:text-base font-extrabold text-ink-charcoal">
             {formatKes(product.priceKes)}
           </span>
-          {isDemo && (
-            <span className="block text-[9px] sm:text-[10px] font-semibold text-ink-muted">
-              Demo price
-            </span>
-          )}
         </div>
 
         <Link

@@ -7,8 +7,8 @@
  * this module guarantees is that no quantity changes without a matching
  * ledger row saying who changed it, why, and to what balance.
  *
- * Storage follows the rest of the backend: an in-memory dataset for local
- * demo mode and tests, PostgreSQL otherwise. Both sit behind the small
+ * Storage follows the rest of the backend: PostgreSQL, or an in-memory
+ * dataset when automated tests install one. Both sit behind the small
  * `InventoryStore` interface below so every business rule is written once.
  * Each write runs as one transaction — in PostgreSQL with row locks, in
  * memory against a copy that is only kept if the whole operation succeeds.
@@ -42,7 +42,7 @@ import { getPool } from "../config/db.js";
 import { AppError } from "../middleware/error.middleware.js";
 import {
   getActiveInMemoryDataset,
-  saveDevDemoDataset,
+  saveInMemoryDataset,
   type CatalogDataset,
 } from "./catalog.service.js";
 import {
@@ -244,7 +244,7 @@ function matchesSearch(m: StockMovement, search: string): boolean {
     .some((field) => field.toLowerCase().includes(q));
 }
 
-// ── In-memory store (local demo mode and tests) ──────────────────────────────
+// ── In-memory store (automated tests) ──────────────────────────────
 
 interface InventoryState {
   settings: Record<string, SettingsRow>;
@@ -449,7 +449,7 @@ class MemoryInventoryStore implements InventoryStore {
     const draft = structuredClone(this.ds) as InventoryDataset;
     const result = await fn(new MemoryStockTx(draft));
     Object.assign(this.ds, draft);
-    saveDevDemoDataset(this.ds);
+    saveInMemoryDataset(this.ds);
     return result;
   }
 
@@ -1294,6 +1294,46 @@ export const InventoryService = {
   // ── Hooks for the product form (admin.service.ts) ──────────────────────────
 
   /**
+   * Keeps a product's own stock figure equal to the total of its active
+   * variants. Stock for products with variants is counted per variant, so a
+   * total typed on the product form (or nudged with quick +/- buttons) would
+   * otherwise drift from what is actually on the shelf. Returns the product's
+   * stock after syncing, or null when it has no variants (its own figure is
+   * then the real count and is left alone).
+   */
+  async syncProductTotal(productId: string): Promise<number | null> {
+    const inMemory = getActiveInMemoryDataset();
+    if (inMemory) {
+      const variants = inMemory.variants.filter((v) => v.productId === productId);
+      if (variants.length === 0) return null;
+      const product = inMemory.products.find((p) => p.id === productId);
+      if (!product) return null;
+      const total = variants
+        .filter((v) => v.isActive)
+        .reduce((sum, v) => sum + v.stockQuantity, 0);
+      if (product.stockQuantity !== total) {
+        product.stockQuantity = total;
+        saveInMemoryDataset(inMemory);
+      }
+      return total;
+    }
+
+    if (!isUuid(productId)) return null;
+    const { rows } = await getPool().query(
+      `UPDATE products p
+          SET stock_quantity = (
+                SELECT COALESCE(SUM(v.stock_quantity), 0)
+                  FROM product_variants v
+                 WHERE v.product_id = p.id AND v.is_active = true)
+        WHERE p.id = $1
+          AND EXISTS (SELECT 1 FROM product_variants v WHERE v.product_id = p.id)
+        RETURNING p.stock_quantity`,
+      [productId],
+    );
+    return rows[0] ? Number(rows[0].stock_quantity) : null;
+  },
+
+  /**
    * Makes sure the in-memory ledger exists before the catalogue is changed,
    * so its opening balances describe stock as it was before the change.
    */
@@ -1359,7 +1399,7 @@ export const InventoryService = {
       const state = ensureInventoryState(inMemory);
       const createdAt = new Date().toISOString();
       for (const m of movements) state.movements.push({ ...m, id: randomUUID(), createdAt });
-      saveDevDemoDataset(inMemory);
+      saveInMemoryDataset(inMemory);
       return;
     }
 

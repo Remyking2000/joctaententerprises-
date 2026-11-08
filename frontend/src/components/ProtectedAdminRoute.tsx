@@ -28,9 +28,11 @@ export function ProtectedAdminRoute({ children }: ProtectedAdminRouteProps) {
     return () => {
       active = false;
     };
-  }, [checkAuth, location.pathname]);
+    // Verify once when the protected area is entered. Re-checking on every
+    // navigation flashed a full-page spinner and remounted the whole panel.
+  }, [checkAuth]);
 
-  if (loading || verifying) {
+  if ((loading || verifying) && !user) {
     return (
       <div
         role="status"

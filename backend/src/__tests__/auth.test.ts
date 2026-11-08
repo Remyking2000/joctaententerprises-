@@ -297,10 +297,10 @@ describe("Google Authentication & Administrator Access Control", () => {
       expect(res.body.error.code).toBe("UNAUTHENTICATED");
     });
 
-    it("returns 401 Unauthorized when unauthenticated request attempts to access POST /api/admin/demo/reset", async () => {
+    it("returns 401 Unauthorized when unauthenticated request attempts to adjust inventory", async () => {
       const res = await invokeApp(app, {
         method: "POST",
-        url: "/api/admin/demo/reset",
+        url: "/api/admin/inventory/adjust",
       });
 
       expect(res.status).toBe(401);

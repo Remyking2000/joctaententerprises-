@@ -1,6 +1,6 @@
 import { useMemo, useState, type FormEvent } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { Download, History, PackagePlus, RefreshCw, Search, Settings2, SlidersHorizontal } from "lucide-react";
+import { Download, History, PackagePlus, Pencil, Plus, RefreshCw, Search, Settings2, SlidersHorizontal } from "lucide-react";
 import {
   MANUAL_ADJUST_REASONS,
   type ManualAdjustReason,
@@ -45,7 +45,7 @@ export function StockLevelsPage() {
   const filter = (FILTERS.some((f) => f.id === params.get("filter"))
     ? params.get("filter")
     : "all") as Filter;
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState(() => params.get("q") ?? "");
   const [category, setCategory] = useState("");
   const [sort, setSort] = useState<SortKey>("name");
   const [adjusting, setAdjusting] = useState<StockItem | null>(null);
@@ -124,6 +124,10 @@ export function StockLevelsPage() {
               <Download className="h-3.5 w-3.5" />
               Export CSV
             </button>
+            <Link to="/inventory/products/new" className="neo-button-secondary text-xs py-2 px-3">
+              <Plus className="h-3.5 w-3.5" />
+              Add Product
+            </Link>
             <Link to="/inventory/receive" className="neo-button-primary text-xs py-2 px-3.5">
               <PackagePlus className="h-4 w-4" />
               Receive Stock
@@ -229,7 +233,7 @@ export function StockLevelsPage() {
                   Price <span className="font-bold text-ink-charcoal">{formatKes(item.priceKes)}</span>
                 </span>
               </div>
-              <div className="mt-3 grid grid-cols-3 gap-2">
+              <div className="mt-3 grid grid-cols-2 gap-2">
                 <button type="button" onClick={() => setAdjusting(item)} className="neo-button-secondary text-xs py-2">
                   <SlidersHorizontal className="h-3.5 w-3.5" />
                   Adjust
@@ -244,6 +248,10 @@ export function StockLevelsPage() {
                 >
                   <History className="h-3.5 w-3.5" />
                   History
+                </Link>
+                <Link to={`/inventory/products/${item.productId}/edit`} className="neo-button-secondary text-xs py-2">
+                  <Pencil className="h-3.5 w-3.5" />
+                  Edit product
                 </Link>
               </div>
             </Card>
@@ -324,6 +332,14 @@ export function StockLevelsPage() {
                           aria-label={`History for ${itemName(item)}`}
                         >
                           <History className="h-3 w-3" />
+                        </Link>
+                        <Link
+                          to={`/inventory/products/${item.productId}/edit`}
+                          className="neo-button-secondary text-[11px] py-1.5 px-2"
+                          title="Edit product details"
+                          aria-label={`Edit ${item.productName}`}
+                        >
+                          <Pencil className="h-3 w-3" />
                         </Link>
                       </div>
                     </td>

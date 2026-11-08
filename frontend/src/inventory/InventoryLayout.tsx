@@ -75,7 +75,7 @@ export function InventoryLayout() {
     }
   }
 
-  if (loading || verifying) {
+  if ((loading || verifying) && !user) {
     return (
       <div className="min-h-screen bg-canvas-ivory flex items-center justify-center p-4">
         <div className="flex flex-col items-center gap-3">

@@ -374,3 +374,72 @@ describe("Inventory API", () => {
     expect(JSON.stringify(res.body)).not.toMatch(/cost/i);
   });
 });
+
+describe("Admin and inventory stay in step", () => {
+  let app: express.Express;
+  let dataset: CatalogDataset;
+
+  beforeEach(() => {
+    dataset = fixture();
+    setCatalogDatasetForTesting(dataset);
+    app = createApp();
+  });
+
+  afterEach(() => {
+    setCatalogDatasetForTesting(null);
+  });
+
+  it("keeps a product's total equal to its options when the admin form sends a different total", async () => {
+    const res = await invokeApp(app, {
+      method: "PUT",
+      url: "/api/admin/products/p-85a",
+      body: { stockQuantity: 999 },
+    });
+    expect(res.status).toBe(200);
+    // 5 Original + 8 Compatible, not the 999 typed on the form
+    expect(res.body.data.stockQuantity).toBe(13);
+    expect(dataset.products.find((p) => p.id === "p-85a")?.stockQuantity).toBe(13);
+  });
+
+  it("shows stock changed on the admin form in inventory, and inventory changes on the admin product", async () => {
+    await invokeApp(app, {
+      method: "PUT",
+      url: "/api/admin/products/p-26a",
+      body: { stockQuantity: 4 },
+    });
+    const items = await invokeApp(app, { url: `${API}/items` });
+    expect(items.body.data.find((i: StockItem) => i.key === "p-26a").stockQuantity).toBe(4);
+
+    await invokeApp(app, {
+      method: "POST",
+      url: `${API}/adjust`,
+      body: { ...P26A, reason: "receive", delta: 6 },
+    });
+    const product = await invokeApp(app, { url: "/api/admin/products/p-26a" });
+    expect(product.body.data.stockQuantity).toBe(10);
+  });
+
+  it("lists a product created in admin as a stock item, and drops it when deleted", async () => {
+    const created = await invokeApp(app, {
+      method: "POST",
+      url: "/api/admin/products",
+      body: {
+        name: "Canon 052 Toner",
+        slug: "canon-052-toner",
+        sku: "JOC-TON-052",
+        categoryId: "cat-toners",
+        priceKes: "9500",
+        stockQuantity: 3,
+      },
+    });
+    expect(created.status).toBe(201);
+    const id = created.body.data.id;
+
+    let items = await invokeApp(app, { url: `${API}/items` });
+    expect(items.body.data.some((i: StockItem) => i.productId === id && i.stockQuantity === 3)).toBe(true);
+
+    await invokeApp(app, { method: "DELETE", url: `/api/admin/products/${id}` });
+    items = await invokeApp(app, { url: `${API}/items` });
+    expect(items.body.data.some((i: StockItem) => i.productId === id)).toBe(false);
+  });
+});

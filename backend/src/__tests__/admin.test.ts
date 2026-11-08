@@ -1,4 +1,3 @@
-import fs from "node:fs";
 import { IncomingMessage, ServerResponse } from "node:http";
 import { Socket } from "node:net";
 import express from "express";
@@ -6,8 +5,6 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { createApp } from "../app.js";
 import { env } from "../config/env.js";
 import {
-  clearDevDemoMemoryCache,
-  getDemoStateFilePath,
   setCatalogDatasetForTesting,
   type CatalogDataset,
 } from "../services/catalog.service.js";
@@ -481,18 +478,6 @@ describe("Admin API Foundation (Phase 1)", () => {
         "/brands/epson-updated.png",
       );
     });
-
-    it("resets demo data cleanly via POST /api/admin/demo/reset", async () => {
-      const resetRes = await invokeApp(app, {
-        method: "POST",
-        url: "/api/admin/demo/reset",
-      });
-
-      expect(resetRes.status).toBe(200);
-      expect(resetRes.body.success).toBe(true);
-      expect(resetRes.body.data.totalProducts).toBe(2);
-      expect(resetRes.body.data.publishedProducts).toBe(1);
-    });
   });
 
   describe("Printer Models & Compatibility End-to-End Workflow", () => {
@@ -710,79 +695,6 @@ describe("Admin API Foundation (Phase 1)", () => {
       });
       expect(invalidVariantRes.status).toBe(400);
       expect(invalidVariantRes.body.error.code).toBe("VALIDATION_ERROR");
-    });
-  });
-
-  describe("JSON Demonstration Storage Persistence Across Backend Restart", () => {
-    it("persists printer model and product compatibility updates to backend/.demo-state.json and reloads them after memory cache clear", async () => {
-      const stateFilePath = getDemoStateFilePath();
-      const backupExists = fs.existsSync(stateFilePath);
-      const backupRaw = backupExists
-        ? fs.readFileSync(stateFilePath, "utf8")
-        : null;
-      const savedDbUrl = env.DATABASE_URL;
-
-      try {
-        // Temporarily disable DATABASE_URL and testDatasetOverride to test real JSON file persistence
-        env.DATABASE_URL = undefined;
-        setCatalogDatasetForTesting(null);
-        clearDevDemoMemoryCache();
-
-        // Create a printer model in real JSON demo state
-        const createModelRes = await invokeApp(app, {
-          method: "POST",
-          url: "/api/admin/printer-models",
-          body: {
-            name: "Persistence Check Printer [DEMO]",
-            slug: "demo-persistence-check-printer",
-            brandId: "demo-brand-1",
-            series: "Persistence Series",
-          },
-        });
-        expect(createModelRes.status).toBe(201);
-        const newModelId = createModelRes.body.data.id;
-
-        // Assign it to demo-prod-1
-        const prodDetailBefore = await invokeApp(app, {
-          method: "GET",
-          url: "/api/admin/products/demo-prod-1",
-        });
-        expect(prodDetailBefore.status).toBe(200);
-        const existingModelIds =
-          prodDetailBefore.body.data.compatiblePrinterModels.map(
-            (m: { id: string }) => m.id,
-          );
-
-        const assignRes = await invokeApp(app, {
-          method: "PUT",
-          url: "/api/admin/products/demo-prod-1",
-          body: {
-            compatibleModelIds: [...existingModelIds, newModelId],
-          },
-        });
-        expect(assignRes.status).toBe(200);
-
-        // Simulate backend process restart by clearing in-memory cache
-        clearDevDemoMemoryCache();
-
-        // Verify relationship and printer model survived restart from disk
-        const compatAfterRestartRes = await invokeApp(app, {
-          method: "GET",
-          url: "/api/printer-models/demo-persistence-check-printer/compatible-products",
-        });
-        expect(compatAfterRestartRes.status).toBe(200);
-        expect(compatAfterRestartRes.body.data.items).toHaveLength(1);
-        expect(compatAfterRestartRes.body.data.items[0].id).toBe("demo-prod-1");
-      } finally {
-        env.DATABASE_URL = savedDbUrl;
-        // Restore original .demo-state.json untouched
-        if (backupExists && backupRaw !== null) {
-          fs.writeFileSync(stateFilePath, backupRaw, "utf8");
-        } else {
-          fs.rmSync(stateFilePath, { force: true });
-        }
-        clearDevDemoMemoryCache();
-      }
     });
   });
 });

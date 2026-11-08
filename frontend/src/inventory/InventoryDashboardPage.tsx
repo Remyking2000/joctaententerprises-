@@ -17,6 +17,7 @@ import {
   formatDay,
   itemName,
 } from "./ui";
+import { useCatalogRefresh } from "../lib/sync";
 
 export function InventoryDashboardPage() {
   const [data, setData] = useState<InventoryDashboard | null>(null);
@@ -34,6 +35,9 @@ export function InventoryDashboardPage() {
       setLoading(false);
     }
   }
+
+  // Reload when products, stock or sales change in admin or inventory
+  useCatalogRefresh(() => void load());
 
   useEffect(() => {
     void load();

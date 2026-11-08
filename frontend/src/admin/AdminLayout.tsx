@@ -106,7 +106,7 @@ export function AdminLayout() {
   }
 
   // 1. Loading state while checking session
-  if (loading || verifying) {
+  if ((loading || verifying) && !user) {
     return (
       <div className="min-h-screen bg-canvas-ivory text-ink-charcoal flex flex-col items-center justify-center p-4">
         <div className="flex flex-col items-center gap-3">

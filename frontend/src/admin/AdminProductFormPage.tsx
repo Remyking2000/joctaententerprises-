@@ -1,5 +1,6 @@
 import { useEffect, useState, type FormEvent } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
+import { ProductInventoryPanel } from "../inventory/ProductInventoryPanel";
 import {
   AlertCircle,
   ArrowLeft,
@@ -68,6 +69,12 @@ export function AdminProductFormPage() {
   const { id } = useParams<{ id?: string }>();
   const isEditing = Boolean(id);
   const navigate = useNavigate();
+  // The same form serves the admin panel and the inventory system; return to
+  // whichever one it was opened from.
+  const inInventory = useLocation().pathname.startsWith("/inventory");
+  const listPath = inInventory ? "/inventory/stock" : "/admin/products";
+  const editPath = (productId: string) =>
+    inInventory ? `/inventory/products/${productId}/edit` : `/admin/products/${productId}/edit`;
 
   const [categories, setCategories] = useState<CategorySummary[]>([]);
   const [brands, setBrands] = useState<BrandSummary[]>([]);
@@ -373,7 +380,7 @@ export function AdminProductFormPage() {
     setDeleting(true);
     try {
       await adminApi.deleteProduct(id);
-      navigate("/admin/products");
+      navigate(listPath);
     } catch (err) {
       setGeneralError(
         err instanceof Error ? err.message : "Failed to delete product.",
@@ -495,7 +502,7 @@ export function AdminProductFormPage() {
         const created = await adminApi.createProduct(payload);
         setSuccessMessage("Product created successfully.");
         setTimeout(() => {
-          navigate(`/admin/products/${created.id}/edit`);
+          navigate(editPath(created.id));
         }, 800);
       }
     } catch (err) {
@@ -528,7 +535,7 @@ export function AdminProductFormPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="flex items-center gap-2.5">
           <Link
-            to="/admin/products"
+            to={listPath}
             className="neo-button-secondary p-2 shrink-0"
             aria-label="Back to products list"
           >
@@ -600,6 +607,8 @@ export function AdminProductFormPage() {
       )}
 
       {/* Main Form */}
+      {isEditing && id && <ProductInventoryPanel productId={id} />}
+
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Section 1: Drag & Drop Product Photos */}
         <div className="rounded-neo-base border border-surface-border bg-surface-white p-5 shadow-neo space-y-3">
@@ -923,16 +932,33 @@ export function AdminProductFormPage() {
                   ))}
                 </div>
               </div>
-              <input
-                type="number"
-                required
-                min="0"
-                step="1"
-                value={stockQuantity}
-                onChange={(e) => setStockQuantity(e.target.value)}
-                placeholder="e.g. 10"
-                className="w-full rounded-neo-sm border border-surface-border bg-canvas-ivory px-3 py-2 font-mono font-bold text-ink-charcoal focus:border-brand-red focus:outline-hidden"
-              />
+              {variantsList.length > 0 ? (
+                <>
+                  <input
+                    type="number"
+                    readOnly
+                    aria-readonly="true"
+                    value={variantsList
+                      .filter((v) => v.isActive !== false)
+                      .reduce((sum, v) => sum + (Number(v.stockQuantity) || 0), 0)}
+                    className="w-full rounded-neo-sm border border-surface-border bg-surface-raised px-3 py-2 font-mono font-bold text-ink-muted cursor-not-allowed"
+                  />
+                  <p className="mt-1 text-[11px] text-ink-muted">
+                    Total of the options below — set stock on each option.
+                  </p>
+                </>
+              ) : (
+                <input
+                  type="number"
+                  required
+                  min="0"
+                  step="1"
+                  value={stockQuantity}
+                  onChange={(e) => setStockQuantity(e.target.value)}
+                  placeholder="e.g. 10"
+                  className="w-full rounded-neo-sm border border-surface-border bg-canvas-ivory px-3 py-2 font-mono font-bold text-ink-charcoal focus:border-brand-red focus:outline-hidden"
+                />
+              )}
             </div>
           </div>
         </div>
@@ -1499,7 +1525,7 @@ export function AdminProductFormPage() {
         {/* Submit Bar */}
         <div className="flex items-center justify-end gap-3 pt-2">
           <Link
-            to="/admin/products"
+            to={listPath}
             className="neo-button-secondary text-xs py-2.5 px-4"
           >
             Cancel

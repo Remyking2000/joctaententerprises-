@@ -11,7 +11,6 @@ import {
 } from "lucide-react";
 import type { ProductSummary } from "@jocta/shared";
 import { catalogApi } from "../lib/api";
-import { isDemoRecord } from "../lib/format";
 import { ProductCard } from "../components/ProductCard";
 import { PartnerLogosCarousel } from "../components/PartnerLogosCarousel";
 
@@ -139,8 +138,6 @@ export function HomePage() {
       navigate("/compatibility");
     }
   }
-
-  const hasDemoItems = featuredProducts.some(isDemoRecord);
 
   return (
     <main className="w-full">
@@ -374,20 +371,6 @@ export function HomePage() {
             <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
           </Link>
         </div>
-
-        {hasDemoItems && !loading && !error && (
-          <div className="neo-surface-inset px-4 py-3 text-xs text-ink-secondary flex items-start gap-2.5">
-            <Info
-              className="h-4 w-4 text-brand-red shrink-0 mt-0.5"
-              aria-hidden="true"
-            />
-            <span>
-              <strong>Development Seed Notice:</strong> Items marked with{" "}
-              <strong>[DEMO]</strong> are sample development records and do not
-              represent verified Jocta Enterprises inventory or pricing.
-            </span>
-          </div>
-        )}
 
         {loading ? (
           <div

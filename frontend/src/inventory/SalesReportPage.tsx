@@ -17,6 +17,7 @@ import {
   inputClass,
   todayInNairobi,
 } from "./ui";
+import { useCatalogRefresh } from "../lib/sync";
 
 export function SalesReportPage() {
   const [month, setMonth] = useState(todayInNairobi().slice(0, 7));
@@ -35,6 +36,9 @@ export function SalesReportPage() {
       setLoading(false);
     }
   }
+
+  // Reload when products, stock or sales change in admin or inventory
+  useCatalogRefresh(() => void load());
 
   useEffect(() => {
     void load();

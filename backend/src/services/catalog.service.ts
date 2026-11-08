@@ -1,5 +1,3 @@
-import fs from "node:fs";
-import path from "node:path";
 import { and, asc, desc, eq, ilike, inArray, ne, or, sql } from "drizzle-orm";
 import type {
   BrandSummary,
@@ -24,12 +22,6 @@ import {
   products,
   productVariants,
 } from "../db/schema.js";
-import {
-  DEMO_BRANDS,
-  DEMO_CATEGORIES,
-  DEMO_PRINTER_MODELS,
-  DEMO_PRODUCTS,
-} from "../db/seed.js";
 
 export const OFFICIAL_COMPANY_SLUGS = [
   "hp",
@@ -63,12 +55,11 @@ export interface CatalogDataset {
 }
 
 let testDatasetOverride: CatalogDataset | null = null;
-let cachedDevDemoDataset: CatalogDataset | null = null;
 
 /**
- * Allows automated tests to inject an in-memory dataset to verify catalog
- * filtering, sorting, unpublished-record exclusion, and strict printer
- * compatibility rules without requiring a live PostgreSQL socket.
+ * Lets automated tests run the catalogue, admin and inventory services
+ * against an in-memory dataset instead of PostgreSQL. Outside tests every
+ * request reads and writes the real database.
  */
 export function setCatalogDatasetForTesting(dataset: CatalogDataset | null) {
   testDatasetOverride = dataset;
@@ -78,188 +69,14 @@ export function isTestingDatasetActive(): boolean {
   return testDatasetOverride !== null;
 }
 
-const DEMO_STATE_FILE = path.resolve(process.cwd(), "backend/.demo-state.json");
-
-export function getDemoStateFilePath(): string {
-  return DEMO_STATE_FILE;
+/** Stores a changed in-memory test dataset. */
+export function saveInMemoryDataset(dataset: CatalogDataset): void {
+  if (testDatasetOverride) testDatasetOverride = dataset;
 }
 
-export function saveDevDemoDataset(dataset: CatalogDataset): void {
-  if (testDatasetOverride) {
-    testDatasetOverride = dataset;
-    return;
-  }
-  try {
-    cachedDevDemoDataset = dataset;
-    fs.writeFileSync(DEMO_STATE_FILE, JSON.stringify(dataset, null, 2), "utf8");
-  } catch (err) {
-    console.error("[demo-state] Failed to persist demo state to disk:", err);
-  }
-}
-
-export function clearDevDemoMemoryCache(): void {
-  cachedDevDemoDataset = null;
-}
-
-export function resetDevDemoDataset(): CatalogDataset {
-  if (testDatasetOverride) {
-    return testDatasetOverride;
-  }
-  try {
-    if (fs.existsSync(DEMO_STATE_FILE)) {
-      fs.unlinkSync(DEMO_STATE_FILE);
-    }
-  } catch (err) {
-    console.error("[demo-state] Failed to remove demo state file:", err);
-  }
-  cachedDevDemoDataset = null;
-  return getDevDemoDataset();
-}
-
-/**
- * Builds the clearly labeled `[DEMO]` dataset for local development preview
- * when `DATABASE_URL` has not been configured yet, persisted to disk.
- */
-function getDevDemoDataset(): CatalogDataset {
-  if (cachedDevDemoDataset) return cachedDevDemoDataset;
-
-  // Try reading persisted state from disk first
-  try {
-    if (fs.existsSync(DEMO_STATE_FILE)) {
-      const raw = fs.readFileSync(DEMO_STATE_FILE, "utf8");
-      const parsed = JSON.parse(raw) as CatalogDataset;
-      const hasLegacyDemoBrands =
-        Array.isArray(parsed?.brands) &&
-        parsed.brands.some(
-          (b) =>
-            b.slug.startsWith("demo-") ||
-            b.name.includes("[DEMO]") ||
-            b.slug === "epson",
-        );
-      if (
-        !hasLegacyDemoBrands &&
-        Array.isArray(parsed?.categories) &&
-        Array.isArray(parsed?.brands) &&
-        Array.isArray(parsed?.products)
-      ) {
-        cachedDevDemoDataset = parsed;
-        return cachedDevDemoDataset;
-      }
-    }
-  } catch (err) {
-    console.warn("[demo-state] Error reading saved state file, generating fresh seed:", err);
-  }
-
-  const catList = DEMO_CATEGORIES.map((c, idx) => ({
-    id: `demo-cat-${idx + 1}`,
-    slug: c.slug,
-    name: c.name,
-    description: c.description,
-    imageUrl: "",
-    sortOrder: c.sortOrder,
-    isActive: true,
-  }));
-
-  const brandList = DEMO_BRANDS.map((b, idx) => ({
-    id: `demo-brand-${idx + 1}`,
-    slug: b.slug,
-    name: b.name,
-    logoUrl: b.logoUrl ?? "",
-    isActive: true,
-  }));
-
-  const catIdBySlug = new Map(catList.map((c) => [c.slug, c.id]));
-  const brandIdBySlug = new Map(brandList.map((b) => [b.slug, b.id]));
-
-  const modelList: PrinterModelSummary[] = DEMO_PRINTER_MODELS.map((m, idx) => ({
-    id: `demo-pm-${idx + 1}`,
-    slug: m.slug,
-    name: m.name,
-    series: m.series,
-    brandId: brandIdBySlug.get(m.brandSlug) ?? null,
-  }));
-
-  const modelIdBySlug = new Map(modelList.map((m) => [m.slug, m.id]));
-
-  const productList: ProductSummary[] = [];
-  const variantList: ProductVariantSummary[] = [];
-  const compatibilityLinks: { productId: string; printerModelId: string }[] = [];
-
-  DEMO_PRODUCTS.forEach((p, idx) => {
-    const productId = `demo-prod-${idx + 1}`;
-    const categoryId = catIdBySlug.get(p.categorySlug) ?? catList[0].id;
-    const brandId = brandIdBySlug.get(p.brandSlug) ?? null;
-
-    productList.push({
-      id: productId,
-      slug: p.slug,
-      name: p.name,
-      description: p.description,
-      categoryId,
-      brandId,
-      sku: p.sku,
-      oemPartNumber: p.oemPartNumber,
-      productType: p.productType,
-      condition: p.condition,
-      authenticity: p.authenticity,
-      pageYield: p.pageYield,
-      color: p.color,
-      priceKes: p.priceKes,
-      comparePriceKes: p.comparePriceKes,
-      stockQuantity: p.stockQuantity,
-      images: [],
-      thumbnailUrl: "",
-      isPublished: p.isPublished,
-      isFeatured: p.isFeatured,
-      createdAt: new Date(Date.now() - idx * 3600_000).toISOString(),
-      updatedAt: new Date(Date.now() - idx * 3600_000).toISOString(),
-    });
-
-    p.variants.forEach((v, vIdx) => {
-      variantList.push({
-        id: `${productId}-var-${vIdx + 1}`,
-        productId,
-        name: v.name,
-        sku: v.sku,
-        oemPartNumber: v.oemPartNumber,
-        authenticity: v.authenticity,
-        pageYield: v.pageYield,
-        priceKes: v.priceKes,
-        comparePriceKes: v.comparePriceKes,
-        stockQuantity: v.stockQuantity,
-        isActive: true,
-        sortOrder: v.sortOrder,
-      });
-    });
-
-    p.compatibleModelSlugs.forEach((mSlug) => {
-      const pmId = modelIdBySlug.get(mSlug);
-      if (pmId) {
-        compatibilityLinks.push({ productId, printerModelId: pmId });
-      }
-    });
-  });
-
-  cachedDevDemoDataset = {
-    categories: catList,
-    brands: brandList,
-    printerModels: modelList,
-    products: productList,
-    variants: variantList,
-    compatibilityLinks,
-  };
-
-  saveDevDemoDataset(cachedDevDemoDataset);
-
-  return cachedDevDemoDataset;
-}
-
+/** The in-memory dataset when a test has installed one, otherwise null (use PostgreSQL). */
 export function getActiveInMemoryDataset(): CatalogDataset | null {
-  if (testDatasetOverride) return testDatasetOverride;
-  if (!env.DATABASE_URL && env.NODE_ENV !== "production") {
-    return getDevDemoDataset();
-  }
-  return null;
+  return testDatasetOverride;
 }
 
 function executeInMemoryCatalog(dataset: CatalogDataset) {

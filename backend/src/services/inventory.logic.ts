@@ -1,6 +1,6 @@
 /**
- * Pure inventory rules and calculations, shared by the in-memory (demo/test)
- * and PostgreSQL storage paths in inventory.service.ts. Nothing here touches
+ * Pure inventory rules and calculations, shared by the PostgreSQL and in-memory
+ * (test) storage paths in inventory.service.ts. Nothing here touches
  * storage, so every rule is unit-testable on its own.
  *
  * Money is handled in integer cents to avoid floating point drift, and

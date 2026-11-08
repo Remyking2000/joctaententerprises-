@@ -170,10 +170,34 @@ export function CustomerProvider({ children }: { children: ReactNode }) {
   const normalizedEmail = user?.email ? user.email.trim().toLowerCase() : null;
   const profileStorageKey = `${PROFILE_STORAGE_KEY_PREFIX}${normalizedEmail ?? "guest"}`;
 
-  const [wishlist, setWishlist] = useState<WishlistItem[]>(() => {
-    const parsed = readStorageJson<WishlistItem[]>(WISHLIST_STORAGE_KEY, []);
-    return Array.isArray(parsed) ? parsed : [];
-  });
+  // Each account (and the signed-out guest) keeps its own wishlist on this device.
+  const wishlistKey = `${WISHLIST_STORAGE_KEY}:${normalizedEmail ?? "guest"}`;
+  const readWishlist = (key: string): WishlistItem[] => {
+    const parsed = readStorageJson<WishlistItem[] | null>(key, null);
+    if (Array.isArray(parsed)) return parsed;
+    // Wishlists saved before they were per-account belong to the guest.
+    if (key.endsWith(":guest")) {
+      const legacy = readStorageJson<WishlistItem[]>(WISHLIST_STORAGE_KEY, []);
+      return Array.isArray(legacy) ? legacy : [];
+    }
+    return [];
+  };
+  const [wishlistState, setWishlistState] = useState(() => ({
+    key: wishlistKey,
+    items: readWishlist(wishlistKey),
+  }));
+  if (wishlistState.key !== wishlistKey) {
+    setWishlistState({ key: wishlistKey, items: readWishlist(wishlistKey) });
+  }
+  const wishlist = wishlistState.items;
+  const setWishlist = useCallback(
+    (next: WishlistItem[] | ((prev: WishlistItem[]) => WishlistItem[])) =>
+      setWishlistState((s) => ({
+        key: s.key,
+        items: typeof next === "function" ? next(s.items) : next,
+      })),
+    [],
+  );
 
   const [allOrders, setAllOrders] = useState<CustomerOrder[]>(() => {
     const parsed = readStorageJson<CustomerOrder[]>(ORDERS_STORAGE_KEY, []);
@@ -207,10 +231,10 @@ export function CustomerProvider({ children }: { children: ReactNode }) {
     });
   }, [profileStorageKey, user?.name]);
 
-  // Persist wishlist
+  // Persist wishlist under the account it belongs to
   useEffect(() => {
-    writeStorageJson(WISHLIST_STORAGE_KEY, wishlist);
-  }, [wishlist]);
+    writeStorageJson(wishlistState.key, wishlistState.items);
+  }, [wishlistState]);
 
   // Persist orders
   useEffect(() => {
@@ -235,21 +259,26 @@ export function CustomerProvider({ children }: { children: ReactNode }) {
         return true;
       }
     },
-    [wishlist],
+    [wishlist, setWishlist],
   );
 
-  const removeFromWishlist = useCallback((slug: string) => {
-    setWishlist((prev) => prev.filter((w) => w.slug !== slug));
-  }, []);
+  const removeFromWishlist = useCallback(
+    (slug: string) => {
+      setWishlist((prev) => prev.filter((w) => w.slug !== slug));
+    },
+    [setWishlist],
+  );
 
   const clearWishlist = useCallback(() => {
     setWishlist([]);
-  }, []);
+  }, [setWishlist]);
 
-  // Orders visible to current user (matches their email or guest orders placed on this device)
+  // Orders visible to current user: their own, plus guest orders placed on
+  // this device. Signed-out visitors only see guest orders — never another
+  // account's orders on a shared computer.
   const orders = useMemo(() => {
     if (!normalizedEmail) {
-      return allOrders;
+      return allOrders.filter((o) => !o.userEmail);
     }
     return allOrders.filter(
       (o) => !o.userEmail || o.userEmail.toLowerCase() === normalizedEmail,

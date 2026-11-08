@@ -18,6 +18,7 @@ import {
   itemName,
   todayInNairobi,
 } from "./ui";
+import { useCatalogRefresh } from "../lib/sync";
 
 export function SalesHistoryPage() {
   const today = todayInNairobi();
@@ -42,6 +43,9 @@ export function SalesHistoryPage() {
       setLoading(false);
     }
   }
+
+  // Reload when products, stock or sales change in admin or inventory
+  useCatalogRefresh(() => void load());
 
   useEffect(() => {
     void load();

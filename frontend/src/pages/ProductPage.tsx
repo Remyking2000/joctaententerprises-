@@ -15,10 +15,8 @@ import {
 import type { ProductDetail, ProductVariantSummary } from "@jocta/shared";
 import { ApiClientError, catalogApi } from "../lib/api";
 import {
-  DUMMY_HARDWARE_IMAGES,
   formatKes,
   getStockStatus,
-  isDemoRecord,
   LOCAL_PRODUCT_PLACEHOLDERS,
   PRODUCT_AUTHENTICITY_LABELS,
   PRODUCT_CONDITION_LABELS,
@@ -198,7 +196,6 @@ export function ProductPage() {
       [product.thumbnailUrl, ...(product.images ?? [])].filter(Boolean),
     ),
   );
-  const isDemo = isDemoRecord(product);
   const fallbackImage = LOCAL_PRODUCT_PLACEHOLDERS[product.productType];
 
   function handleAddToSelection() {
@@ -248,29 +245,16 @@ export function ProductPage() {
         <span className="text-ink-charcoal font-semibold">{product.name}</span>
       </nav>
 
-      {/* Demo Data Warning Banner */}
-      {isDemo && (
-        <div
-          role="note"
-          className="neo-surface-inset border-brand-red bg-brand-red-tint px-4 py-3 text-xs text-ink-charcoal"
-        >
-          <strong>Demonstration Record ([DEMO]):</strong> This item, its KSh
-          price, SKU, stock quantity, and compatibility mappings come from the
-          development seed script and are not verified Jocta Enterprises
-          catalogue data.
-        </div>
-      )}
-
       {/* Main Product Card */}
       <section className="neo-card p-6 sm:p-8 lg:p-10">
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
-          {/* Left: Product Image / Dummy Photo & Local SVG Fallback */}
+          {/* Left: product image, or a category illustration until one is uploaded */}
           <div className="lg:col-span-5 space-y-4">
             <div className="neo-surface-inset relative aspect-[4/3] w-full flex items-center justify-center overflow-hidden">
               {!imgError ? (
                 <img
                   src={
-                    selectedImage || DUMMY_HARDWARE_IMAGES[product.productType]
+                    selectedImage || fallbackImage
                   }
                   alt={product.name}
                   onError={() => setImgError(true)}
@@ -331,11 +315,6 @@ export function ProductPage() {
                   {PRODUCT_TYPE_LABELS[product.productType]} •{" "}
                   {PRODUCT_CONDITION_LABELS[product.condition]}
                 </span>
-                {isDemo && (
-                  <span className="rounded-neo-pill bg-surface-white border border-brand-red px-2.5 py-0.5 text-[11px] font-bold uppercase text-brand-red">
-                    Demonstration Record
-                  </span>
-                )}
               </div>
 
               <h1 className="text-2xl sm:text-3xl font-extrabold text-ink-charcoal leading-tight">

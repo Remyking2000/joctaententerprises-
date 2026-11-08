@@ -6,6 +6,11 @@ const server = app.listen(env.PORT, () => {
     `[jocta-api] Running in ${env.NODE_ENV} mode on http://localhost:${env.PORT}`,
   );
   console.log(`[jocta-api] Health endpoint: http://localhost:${env.PORT}/api/health`);
+  if (!env.DATABASE_URL) {
+    console.error(
+      "[jocta-api] DATABASE_URL is not set. Every catalogue, admin and inventory request will fail until it is added to .env (see .env.example).",
+    );
+  }
 });
 
 function shutdown(signal: string) {

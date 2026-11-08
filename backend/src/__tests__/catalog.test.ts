@@ -8,10 +8,10 @@ import {
   type CatalogDataset,
 } from "../services/catalog.service.js";
 import {
-  DEMO_BRANDS,
-  DEMO_CATEGORIES,
-  DEMO_PRINTER_MODELS,
-  DEMO_PRODUCTS,
+  CATALOG_BRANDS,
+  CATALOG_CATEGORIES,
+  CATALOG_PRINTER_MODELS,
+  CATALOG_PRODUCTS,
 } from "../db/seed.js";
 
 async function invokeApp(
@@ -438,7 +438,7 @@ describe("Storefront Catalogue & Printer Compatibility API", () => {
 });
 
 describe("Official Company & Catalogue Seed Data Integrity", () => {
-  it("contains only the 5 official companies (HP, Konica Minolta, Brother, Canon, Kyocera) and no [DEMO] records", () => {
+  it("contains only the 5 official companies (HP, Konica Minolta, Brother, Canon, Kyocera) and no placeholder records", () => {
     const officialNames = [
       "HP",
       "Konica Minolta",
@@ -446,22 +446,22 @@ describe("Official Company & Catalogue Seed Data Integrity", () => {
       "Canon",
       "Kyocera",
     ];
-    expect(DEMO_BRANDS.map((b) => b.name)).toEqual(officialNames);
-    expect(DEMO_PRINTER_MODELS.map((pm) => pm.name)).toEqual(officialNames);
+    expect(CATALOG_BRANDS.map((b) => b.name)).toEqual(officialNames);
+    expect(CATALOG_PRINTER_MODELS.map((pm) => pm.name)).toEqual(officialNames);
 
-    for (const cat of DEMO_CATEGORIES) {
+    for (const cat of CATALOG_CATEGORIES) {
       expect(cat.slug.startsWith("demo-")).toBe(false);
       expect(cat.name.includes("[DEMO]")).toBe(false);
     }
-    for (const brand of DEMO_BRANDS) {
+    for (const brand of CATALOG_BRANDS) {
       expect(brand.slug.startsWith("demo-")).toBe(false);
       expect(brand.name.includes("[DEMO]")).toBe(false);
     }
-    for (const pm of DEMO_PRINTER_MODELS) {
+    for (const pm of CATALOG_PRINTER_MODELS) {
       expect(pm.slug.startsWith("demo-")).toBe(false);
       expect(pm.name.includes("[DEMO]")).toBe(false);
     }
-    for (const prod of DEMO_PRODUCTS) {
+    for (const prod of CATALOG_PRODUCTS) {
       expect(prod.slug.startsWith("demo-")).toBe(false);
       expect(prod.sku.startsWith("DEMO-")).toBe(false);
       expect(prod.name.includes("[DEMO]")).toBe(false);

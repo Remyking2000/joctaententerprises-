@@ -80,6 +80,8 @@ export function App() {
               >
                 <Route index element={<InventoryDashboardPage />} />
                 <Route path="stock" element={<StockLevelsPage />} />
+                <Route path="products/new" element={<AdminProductFormPage />} />
+                <Route path="products/:id/edit" element={<AdminProductFormPage />} />
                 <Route path="receive" element={<ReceiveStockPage />} />
                 <Route path="stock-take" element={<StockTakePage />} />
                 <Route path="movements" element={<MovementsPage />} />

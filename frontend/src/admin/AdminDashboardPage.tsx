@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   AlertCircle,
+  Warehouse,
   ArrowRight,
   Bookmark,
   CheckCircle2,
@@ -12,7 +13,6 @@ import {
   Plus,
   Printer,
   RefreshCw,
-  RotateCcw,
   Sparkles,
   Trash2,
   XCircle,
@@ -20,12 +20,12 @@ import {
 import type { AdminStatsSummary, ProductSummary } from "@jocta/shared";
 import { adminApi, ApiClientError } from "../lib/api";
 import { formatKes } from "../lib/format";
+import { useCatalogRefresh } from "../lib/sync";
 
 export function AdminDashboardPage() {
   const [stats, setStats] = useState<AdminStatsSummary | null>(null);
   const [recentProducts, setRecentProducts] = useState<ProductSummary[]>([]);
   const [loading, setLoading] = useState(true);
-  const [resetting, setResetting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [togglingId, setTogglingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -75,31 +75,12 @@ export function AdminDashboardPage() {
     }
   }
 
+  // Reload when products, stock or sales change in admin or inventory
+  useCatalogRefresh(() => void loadDashboard());
+
   useEffect(() => {
     void loadDashboard();
   }, []);
-
-  async function handleResetDemo() {
-    const confirmed = window.confirm(
-      "Reset demonstration catalogue?\n\nThis will restore all products, categories, brands, variants, and printer compatibility mappings back to the clean seed dataset.",
-    );
-    if (!confirmed) return;
-
-    setResetting(true);
-    try {
-      await adminApi.resetDemoData();
-      await loadDashboard();
-      alert("Demonstration catalogue has been reset to seed records successfully.");
-    } catch (err) {
-      alert(
-        err instanceof Error
-          ? err.message
-          : "Failed to reset demonstration dataset.",
-      );
-    } finally {
-      setResetting(false);
-    }
-  }
 
   async function handleTogglePublish(product: ProductSummary) {
     const nextStatus = !product.isPublished;
@@ -151,21 +132,6 @@ export function AdminDashboardPage() {
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          {stats?.storageMode === "memory" && (
-            <button
-              type="button"
-              onClick={handleResetDemo}
-              disabled={loading || resetting}
-              className="neo-button-secondary inline-flex items-center gap-1.5 text-xs py-2 px-3 text-ink-secondary hover:text-brand-red"
-              title="Reset demonstration catalogue to seed defaults"
-            >
-              <RotateCcw
-                className={`h-3.5 w-3.5 ${resetting ? "animate-spin" : ""}`}
-              />
-              <span>{resetting ? "Resetting..." : "Reset Demo Data"}</span>
-            </button>
-          )}
-
           <button
             type="button"
             onClick={loadDashboard}
@@ -189,49 +155,38 @@ export function AdminDashboardPage() {
         </div>
       </div>
 
-      {/* Storage Mode Status Banner */}
-      <div className="rounded-neo-base border border-surface-border bg-surface-white p-3.5 sm:p-4 shadow-neo flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+      {/* Connected systems */}
+      <div className="rounded-neo border border-surface-border bg-surface-white p-3.5 sm:p-4 shadow-neo flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
         <div className="flex items-center gap-3">
-          <div className="h-8 w-8 rounded-full bg-canvas-ivory border border-surface-border flex items-center justify-center shrink-0">
-            <Database className="h-4 w-4 text-brand-red" />
+          <div className="h-8 w-8 rounded-full bg-emerald-50 border border-emerald-200 flex items-center justify-center shrink-0">
+            <Database className="h-4 w-4 text-emerald-700" />
           </div>
           <div>
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="font-bold text-ink-charcoal">Backend Storage Mode:</span>
-              <span
-                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-extrabold uppercase tracking-wider ${
-                  stats?.storageMode === "postgresql"
-                    ? "bg-emerald-100 text-emerald-800 border border-emerald-300"
-                    : "bg-blue-100 text-blue-800 border border-blue-300"
-                }`}
-              >
-                <span className="h-1.5 w-1.5 rounded-full bg-current" />
-                {stats?.storageMode === "postgresql"
-                  ? "PostgreSQL Live Database"
-                  : stats?.persistedPath
-                    ? "JSON Demonstration Storage (backend/.demo-state.json)"
-                    : "In-Memory Demonstration Mode"}
-              </span>
-            </div>
+            <p className="font-bold text-ink-charcoal">Live database</p>
             <p className="text-ink-secondary text-[11px] mt-0.5">
-              {stats?.storageMode === "postgresql"
-                ? "Changes are committed directly to your live PostgreSQL database connection."
-                : stats?.persistedPath
-                  ? "All edits, creations, and toggles are automatically serialized to local JSON storage (backend/.demo-state.json) and survive browser reloads and backend restarts."
-                  : "Operating in ephemeral memory mode for isolated testing."}
+              The admin panel and the inventory system share the same products and stock — a change in either shows up in the other straight away.
             </p>
           </div>
         </div>
 
-        <Link
-          to="/shop"
-          target="_blank"
-          rel="noreferrer"
-          className="neo-button-secondary inline-flex items-center gap-1 text-[11px] py-1.5 px-3 self-start sm:self-auto shrink-0"
-        >
-          <ExternalLink className="h-3 w-3 text-brand-red" />
-          <span>View Public Storefront</span>
-        </Link>
+        <div className="flex flex-wrap gap-2 shrink-0">
+          <Link
+            to="/inventory"
+            className="neo-button-secondary inline-flex items-center gap-1 text-[11px] py-1.5 px-3"
+          >
+            <Warehouse className="h-3 w-3 text-brand-red" />
+            <span>Open Inventory</span>
+          </Link>
+          <Link
+            to="/shop"
+            target="_blank"
+            rel="noreferrer"
+            className="neo-button-secondary inline-flex items-center gap-1 text-[11px] py-1.5 px-3"
+          >
+            <ExternalLink className="h-3 w-3 text-brand-red" />
+            <span>View Storefront</span>
+          </Link>
+        </div>
       </div>
 
       {/* Error state */}
