@@ -23,7 +23,7 @@ import type {
   PrinterModelSummary,
   ProductVariantInput,
 } from "@jocta/shared";
-import { adminApi, catalogApi, ApiClientError } from "../lib/api";
+import { adminApi, catalogApi, inventoryApi, ApiClientError } from "../lib/api";
 import { formatKes } from "../lib/format";
 import { ProductImageGalleryDropzone } from "./components/ImageUploadDropzone";
 
@@ -101,6 +101,8 @@ export function AdminProductFormPage() {
   const [color, setColor] = useState("Black");
   const [priceKes, setPriceKes] = useState("");
   const [comparePriceKes, setComparePriceKes] = useState("");
+  const [costPriceKes, setCostPriceKes] = useState("");
+  const [reorderLevel, setReorderLevel] = useState("3");
   const [stockQuantity, setStockQuantity] = useState("10");
   const [thumbnailUrl, setThumbnailUrl] = useState("");
   const [images, setImages] = useState<string[]>([]);
@@ -174,6 +176,13 @@ export function AdminProductFormPage() {
           setIsPublished(detail.isPublished);
           setIsFeatured(detail.isFeatured);
           setSelectedModelIds(detail.compatiblePrinterModels.map((m) => m.id));
+          const stockItems = await inventoryApi.getItems().catch(() => []);
+          const productStockItems = stockItems.filter((i) => i.productId === id);
+          const mainStockItem = productStockItems.find((i) => !i.variantId) ?? productStockItems[0];
+          if (mainStockItem) {
+            setCostPriceKes(mainStockItem.costPriceKes ?? "");
+            setReorderLevel(String(mainStockItem.reorderLevel ?? 3));
+          }
           setVariantsList(
             detail.variants.map((v, idx) => ({
               id: v.id,
@@ -185,6 +194,10 @@ export function AdminProductFormPage() {
               pageYield: v.pageYield ?? null,
               priceKes: v.priceKes,
               comparePriceKes: v.comparePriceKes ?? null,
+              costPriceKes:
+                productStockItems.find((si) => si.variantId === v.id)?.costPriceKes ?? null,
+              reorderLevel:
+                productStockItems.find((si) => si.variantId === v.id)?.reorderLevel ?? 3,
               stockQuantity: v.stockQuantity,
               isActive: v.isActive ?? true,
               sortOrder: v.sortOrder ?? idx,
@@ -469,6 +482,14 @@ export function AdminProductFormPage() {
           ? parseFloat(comparePriceKes.trim()).toFixed(2)
           : null,
         stockQuantity: parsedStock,
+        costPriceKes:
+          costPriceKes.trim() && !isNaN(parseFloat(costPriceKes.trim()))
+            ? parseFloat(costPriceKes.trim()).toFixed(2)
+            : null,
+        reorderLevel:
+          reorderLevel.trim() && !isNaN(parseInt(reorderLevel.trim(), 10))
+            ? Math.max(0, parseInt(reorderLevel.trim(), 10))
+            : 3,
         thumbnailUrl: primaryThumb,
         images: galleryImages,
         isPublished,
@@ -488,6 +509,11 @@ export function AdminProductFormPage() {
               ? parseFloat(String(v.comparePriceKes).trim()).toFixed(2)
               : null,
           stockQuantity: Number(v.stockQuantity) || 0,
+          costPriceKes:
+            v.costPriceKes && String(v.costPriceKes).trim() && !isNaN(parseFloat(String(v.costPriceKes).trim()))
+              ? parseFloat(String(v.costPriceKes).trim()).toFixed(2)
+              : null,
+          reorderLevel: v.reorderLevel !== undefined ? Number(v.reorderLevel) : undefined,
           isActive: v.isActive ?? true,
           sortOrder: v.sortOrder ?? idx,
         })),
@@ -607,7 +633,33 @@ export function AdminProductFormPage() {
       )}
 
       {/* Main Form */}
-      {isEditing && id && <ProductInventoryPanel productId={id} />}
+      {isEditing && id && (
+        <ProductInventoryPanel
+          productId={id}
+          onItemUpdated={(updated) => {
+            if (updated.variantId) {
+              setVariantsList((prev) =>
+                prev.map((v) =>
+                  v.id === updated.variantId
+                    ? {
+                        ...v,
+                        stockQuantity: updated.stockQuantity,
+                        priceKes: updated.priceKes,
+                        costPriceKes: updated.costPriceKes,
+                        reorderLevel: updated.reorderLevel,
+                      }
+                    : v,
+                ),
+              );
+            } else {
+              setStockQuantity(String(updated.stockQuantity));
+              setPriceKes(updated.priceKes);
+              setCostPriceKes(updated.costPriceKes ?? "");
+              setReorderLevel(String(updated.reorderLevel));
+            }
+          }}
+        />
+      )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Section 1: Drag & Drop Product Photos */}
@@ -962,6 +1014,91 @@ export function AdminProductFormPage() {
             </div>
           </div>
         </div>
+
+        <div className="rounded-neo-base border border-surface-border bg-surface-white p-5 shadow-neo grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
+            <div>
+              <label className="block font-bold text-ink-charcoal mb-1">
+                Unit Cost Price (KSh)
+              </label>
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                value={costPriceKes}
+                onChange={(e) => setCostPriceKes(e.target.value)}
+                placeholder="e.g. 18000"
+                className="w-full rounded-neo-sm border border-surface-border bg-canvas-ivory px-3 py-2 font-mono font-semibold text-ink-charcoal focus:border-brand-red focus:outline-hidden"
+              />
+              <p className="mt-1 text-[11px] text-ink-muted">
+                Powers Stock Value (Cost) &amp; Gross Profit in Inventory.
+              </p>
+            </div>
+
+            <div>
+              <label className="block font-bold text-ink-charcoal mb-1">
+                Low-Stock Reorder Level
+              </label>
+              <input
+                type="number"
+                min="0"
+                step="1"
+                value={reorderLevel}
+                onChange={(e) => setReorderLevel(e.target.value)}
+                placeholder="e.g. 3"
+                className="w-full rounded-neo-sm border border-surface-border bg-canvas-ivory px-3 py-2 font-mono font-semibold text-ink-charcoal focus:border-brand-red focus:outline-hidden"
+              />
+              <p className="mt-1 text-[11px] text-ink-muted">
+                Alerts when stock drops to or below this quantity.
+              </p>
+            </div>
+
+            <div className="rounded-neo-sm border border-surface-border bg-canvas-ivory p-3 flex flex-col justify-between">
+              <div className="flex items-center justify-between text-[11px]">
+                <span className="font-bold uppercase tracking-wide text-ink-muted">
+                  Stock Value (Retail)
+                </span>
+                <span className="font-black text-sm text-emerald-700">
+                  {formatKes(
+                    variantsList.length > 0
+                      ? variantsList
+                          .filter((v) => v.isActive !== false)
+                          .reduce(
+                            (sum, v) =>
+                              sum +
+                              Math.max(0, Number(v.stockQuantity) || 0) *
+                                (parseFloat(v.priceKes) || 0),
+                            0,
+                          )
+                      : Math.max(0, parseInt(stockQuantity, 10) || 0) *
+                          (parseFloat(priceKes) || 0),
+                  )}
+                </span>
+              </div>
+              <div className="mt-1.5 flex items-center justify-between text-[11px] border-t border-surface-border/60 pt-1.5">
+                <span className="font-bold uppercase tracking-wide text-ink-muted">
+                  Stock Value (Cost)
+                </span>
+                <span className="font-bold text-ink-charcoal">
+                  {costPriceKes.trim() && !isNaN(parseFloat(costPriceKes))
+                    ? formatKes(
+                        (variantsList.length > 0
+                          ? variantsList
+                              .filter((v) => v.isActive !== false)
+                              .reduce(
+                                (sum, v) => sum + Math.max(0, Number(v.stockQuantity) || 0),
+                                0,
+                              )
+                          : Math.max(0, parseInt(stockQuantity, 10) || 0)) *
+                          (parseFloat(costPriceKes) || 0),
+                      )
+                    : "Set cost price"}
+                </span>
+              </div>
+              <p className="mt-1 text-[10px] text-ink-muted">
+                Adjusts automatically with quantity &amp; unit price.
+              </p>
+            </div>
+          </div>
 
         {/* Section 4: Supply Classification & Quick Specs */}
         <div className="rounded-neo-base border border-surface-border bg-surface-white p-5 shadow-neo space-y-4">

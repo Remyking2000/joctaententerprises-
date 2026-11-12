@@ -12,6 +12,7 @@ import { useEffect, useRef } from "react";
  */
 
 const CHANNEL_NAME = "jocta-catalog-sync";
+const STORAGE_SYNC_KEY = "jocta_catalog_last_sync_at";
 const listeners = new Set<() => void>();
 
 let channel: BroadcastChannel | null = null;
@@ -24,14 +25,30 @@ try {
   channel = null;
 }
 
+if (typeof window !== "undefined") {
+  window.addEventListener("storage", (e) => {
+    if (e.key === STORAGE_SYNC_KEY) {
+      listeners.forEach((fn) => fn());
+    }
+  });
+}
+
 /** Tells every open screen (this tab and others) that catalogue data changed. */
 export function notifyCatalogChanged(): void {
+  const now = Date.now();
   // Let the current screen finish its own update before others reload.
   queueMicrotask(() => listeners.forEach((fn) => fn()));
   try {
-    channel?.postMessage({ type: "changed", at: Date.now() });
+    channel?.postMessage({ type: "changed", at: now });
   } catch {
-    // Messaging unavailable: other tabs refresh when they regain focus.
+    // Messaging unavailable: other tabs refresh via storage event or focus.
+  }
+  try {
+    if (typeof window !== "undefined" && window.localStorage) {
+      window.localStorage.setItem(STORAGE_SYNC_KEY, String(now));
+    }
+  } catch {
+    // Ignore storage quota / privacy errors
   }
 }
 
@@ -47,17 +64,20 @@ export function useCatalogRefresh(reload: () => void): void {
     let timer: ReturnType<typeof setTimeout> | null = null;
     const trigger = () => {
       if (timer) clearTimeout(timer);
-      timer = setTimeout(() => latest.current(), 150);
+      timer = setTimeout(() => latest.current(), 120);
     };
     const onVisible = () => {
       if (document.visibilityState === "visible") trigger();
     };
+    const onFocus = () => trigger();
 
     listeners.add(trigger);
     document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("focus", onFocus);
     return () => {
       listeners.delete(trigger);
       document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("focus", onFocus);
       if (timer) clearTimeout(timer);
     };
   }, []);

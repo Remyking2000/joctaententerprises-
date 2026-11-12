@@ -371,8 +371,7 @@ export function UserNavMenu({ isHeroOverlay = false }: UserNavMenuProps) {
                   Sign In to Your Account
                 </h2>
                 <p className="text-sm sm:text-xs text-ink-muted mt-1">
-                  Use your Google account to access your orders, account, or
-                  administrator dashboard.
+                  Sign in with your Google account to access your orders and saved items.
                 </p>
               </div>
 
@@ -425,10 +424,6 @@ export function UserNavMenu({ isHeroOverlay = false }: UserNavMenuProps) {
                     Wishlist
                   </Link>
                 </div>
-                <p className="text-xs sm:text-[11px] text-ink-muted text-center">
-                  Authorized administrators will automatically receive access to
-                  the Admin Dashboard upon signing in.
-                </p>
               </div>
             </div>
           </div>,

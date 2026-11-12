@@ -113,6 +113,7 @@ interface SalesFilter {
 interface StockTx {
   findItem(ref: ItemRef): Promise<LockedItem | null>;
   setQuantity(item: LockedItem, quantity: number): Promise<void>;
+  setPrice(item: LockedItem, priceKes: string): Promise<void>;
   saveSettings(
     item: LockedItem,
     patch: { reorderLevel?: number; costPriceKes?: string | null },
@@ -380,6 +381,20 @@ class MemoryStockTx implements StockTx {
     } else {
       product.stockQuantity = quantity;
     }
+    product.updatedAt = now;
+  }
+
+  async setPrice(item: LockedItem, priceKes: string): Promise<void> {
+    const now = new Date().toISOString();
+    const product = this.ds.products.find((p) => p.id === item.productId);
+    if (!product) return;
+    if (item.variantId) {
+      const variant = this.ds.variants.find((v) => v.id === item.variantId);
+      if (variant) variant.priceKes = priceKes;
+    } else {
+      product.priceKes = priceKes;
+    }
+    item.priceKes = priceKes;
     product.updatedAt = now;
   }
 
@@ -676,6 +691,21 @@ class PgStockTx implements StockTx {
         [item.productId, quantity],
       );
     }
+  }
+
+  async setPrice(item: LockedItem, priceKes: string): Promise<void> {
+    if (item.variantId) {
+      await this.client.query(
+        `UPDATE product_variants SET price_kes = $2, updated_at = now() WHERE id = $1`,
+        [item.variantId, priceKes],
+      );
+    } else {
+      await this.client.query(
+        `UPDATE products SET price_kes = $2, updated_at = now() WHERE id = $1`,
+        [item.productId, priceKes],
+      );
+    }
+    item.priceKes = priceKes;
   }
 
   async saveSettings(
@@ -997,6 +1027,7 @@ export interface ProductStockSnapshot {
   variantName: string | null;
   sku: string;
   quantity: number;
+  costPriceKes?: string | null;
 }
 
 export const InventoryService = {
@@ -1148,18 +1179,27 @@ export const InventoryService = {
     });
   },
 
-  /** Reorder level and cost price. Settings, not stock — no ledger row. */
+  /** Reorder level, cost price and retail price. Settings, not stock — no ledger row. */
   async updateSettings(input: StockSettingsInput): Promise<StockItem> {
     const store = getStore();
     await store.transaction(async (tx) => {
       const item = await requireItem(tx, input);
-      await tx.saveSettings(item, {
-        reorderLevel: input.reorderLevel,
-        costPriceKes: normalizeKes(input.costPriceKes),
-      });
+      if (input.priceKes !== undefined) {
+        const normalizedPrice = normalizeKes(input.priceKes);
+        if (normalizedPrice) {
+          await tx.setPrice(item, normalizedPrice);
+        }
+      }
+      if (input.reorderLevel !== undefined || input.costPriceKes !== undefined) {
+        await tx.saveSettings(item, {
+          reorderLevel: input.reorderLevel,
+          costPriceKes: normalizeKes(input.costPriceKes),
+        });
+      }
     });
     return findStockItem(store, input);
   },
+
 
   /** Records a sale made in the shop, by phone or on WhatsApp, and deducts the stock. */
   async createSale(input: CreateSaleInput, userEmail: string): Promise<Sale> {
@@ -1355,6 +1395,7 @@ export const InventoryService = {
           variantName: i.variantName,
           sku: i.sku,
           quantity: i.stockQuantity,
+          costPriceKes: i.costPriceKes,
         },
       ]),
     );
@@ -1387,7 +1428,7 @@ export const InventoryService = {
           previous === undefined
             ? "Opening stock entered on the product form"
             : "Stock edited on the product form",
-        unitCostKes: null,
+        unitCostKes: previous === undefined ? (now.costPriceKes ?? null) : null,
         reference: "",
         userEmail,
       });
@@ -1405,5 +1446,55 @@ export const InventoryService = {
 
     const pool = getPool();
     for (const m of movements) await insertMovement(pool, m);
+  },
+
+  /**
+   * Saves optional cost price and reorder level submitted directly from the
+   * product creation/edit form (top-level product or its variants).
+   */
+  async saveProductFormSettings(
+    productId: string,
+    input: {
+      costPriceKes?: string | null;
+      reorderLevel?: number;
+      variants?: Array<{
+        sku: string;
+        costPriceKes?: string | null;
+        reorderLevel?: number;
+      }>;
+    },
+  ): Promise<void> {
+    const store = getStore();
+    const items = (await store.listItems()).filter((i) => i.productId === productId);
+    if (items.length === 0) return;
+
+    await store.transaction(async (tx) => {
+      if (input.variants && input.variants.length > 0) {
+        for (const vInput of input.variants) {
+          if (vInput.costPriceKes === undefined && vInput.reorderLevel === undefined) continue;
+          const matching = items.find((i) => i.variantId && i.sku === vInput.sku);
+          if (!matching) continue;
+          const locked = await tx.findItem({
+            productId: matching.productId,
+            variantId: matching.variantId,
+          });
+          if (!locked) continue;
+          await tx.saveSettings(locked, {
+            reorderLevel: vInput.reorderLevel,
+            costPriceKes:
+              vInput.costPriceKes !== undefined ? normalizeKes(vInput.costPriceKes) : undefined,
+          });
+        }
+      } else if (input.costPriceKes !== undefined || input.reorderLevel !== undefined) {
+        const locked = await tx.findItem({ productId, variantId: null });
+        if (locked && !locked.requiresVariant) {
+          await tx.saveSettings(locked, {
+            reorderLevel: input.reorderLevel,
+            costPriceKes:
+              input.costPriceKes !== undefined ? normalizeKes(input.costPriceKes) : undefined,
+          });
+        }
+      }
+    });
   },
 };

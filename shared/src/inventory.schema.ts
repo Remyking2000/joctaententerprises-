@@ -62,6 +62,9 @@ export type StockStatus = "in_stock" | "low_stock" | "out_of_stock";
 /** Default reorder level for items that have never been configured. */
 export const DEFAULT_REORDER_LEVEL = 3;
 
+/** Minimum stock threshold: any quantity under 3 (< 3) is automatically low and needs restocking. */
+export const MIN_RESTOCK_THRESHOLD = 3;
+
 // ── Read models ──────────────────────────────────────────────────────────────
 
 /**
@@ -287,8 +290,9 @@ export const stockSettingsSchema = z
     reorderLevel: z.coerce.number().int().min(0).max(100000).optional(),
     /** `null` clears a cost recorded in error; omit to leave it unchanged. */
     costPriceKes: kesMoneySchema.nullable().optional(),
+    priceKes: kesMoneySchema.optional(),
   })
-  .refine((v) => v.reorderLevel !== undefined || v.costPriceKes !== undefined, {
+  .refine((v) => v.reorderLevel !== undefined || v.costPriceKes !== undefined || v.priceKes !== undefined, {
     message: "Nothing to update",
   });
 export type StockSettingsInput = z.infer<typeof stockSettingsSchema>;

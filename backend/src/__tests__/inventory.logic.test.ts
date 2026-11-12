@@ -7,6 +7,7 @@ import {
   fromCents,
   monthRange,
   nairobiDate,
+  needsRestock,
   resolveAdjustment,
   stockStatus,
   toCents,
@@ -50,6 +51,16 @@ describe("inventory rules", () => {
     expect(stockStatus(0, 3)).toBe("out_of_stock");
     expect(stockStatus(3, 3)).toBe("low_stock");
     expect(stockStatus(4, 3)).toBe("in_stock");
+  });
+
+  it("treats any quantity under 3 as low stock and needing restock regardless of custom level", () => {
+    expect(stockStatus(1, 0)).toBe("low_stock");
+    expect(stockStatus(2, 0)).toBe("low_stock");
+    expect(needsRestock(0)).toBe(true);
+    expect(needsRestock(1)).toBe(true);
+    expect(needsRestock(2)).toBe(true);
+    expect(needsRestock(3)).toBe(true);
+    expect(needsRestock(4)).toBe(false);
   });
 
   it("builds a daily in/out series with quiet days included", () => {

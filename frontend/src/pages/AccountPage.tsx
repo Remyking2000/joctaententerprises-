@@ -1,20 +1,16 @@
-import { useEffect, useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
 import {
-  Building2,
-  CheckCircle2,
   Heart,
   LayoutDashboard,
   LogOut,
   Mail,
-  MapPin,
+  MessageCircle,
   Package,
-  Phone,
   Printer,
-  RotateCcw,
-  Save,
   ShieldCheck,
   ShoppingBag,
+  Sparkles,
+  Truck,
   User,
   Warehouse,
 } from "lucide-react";
@@ -23,62 +19,18 @@ import { useAdminAuth } from "../context/AdminAuthContext";
 import { useCart } from "../context/CartContext";
 import { useCustomer } from "../context/CustomerContext";
 import { formatKes } from "../lib/format";
+import { getStoreWhatsAppNumber } from "../lib/whatsapp";
+
+const STORE_WHATSAPP = getStoreWhatsAppNumber() || "254723494623";
 
 export function AccountPage() {
   const { user, logout } = useAdminAuth();
   const { totalCount, subtotalKes, openCart } = useCart();
   const {
-    profile,
-    updateProfile,
-    resetProfile,
     orders,
     wishlistCount,
     openLoginModal,
   } = useCustomer();
-
-  const [fullName, setFullName] = useState(profile.fullName);
-  const [phone, setPhone] = useState(profile.phone);
-  const [company, setCompany] = useState(profile.company);
-  const [deliveryAddress, setDeliveryAddress] = useState(
-    profile.deliveryAddress,
-  );
-  const [city, setCity] = useState(profile.city);
-  const [preferredPrinterModel, setPreferredPrinterModel] = useState(
-    profile.preferredPrinterModel,
-  );
-  const [deliveryNotes, setDeliveryNotes] = useState(profile.deliveryNotes);
-  const [savedNotice, setSavedNotice] = useState(false);
-
-  // Sync form fields when profile updates (e.g. on user sign-in/sign-out)
-  useEffect(() => {
-    setFullName(profile.fullName);
-    setPhone(profile.phone);
-    setCompany(profile.company);
-    setDeliveryAddress(profile.deliveryAddress);
-    setCity(profile.city);
-    setPreferredPrinterModel(profile.preferredPrinterModel);
-    setDeliveryNotes(profile.deliveryNotes);
-  }, [profile]);
-
-  function handleSaveProfile(e: FormEvent) {
-    e.preventDefault();
-    updateProfile({
-      fullName: fullName.trim(),
-      phone: phone.trim(),
-      company: company.trim(),
-      deliveryAddress: deliveryAddress.trim(),
-      city: city.trim() || "Nairobi",
-      preferredPrinterModel: preferredPrinterModel.trim(),
-      deliveryNotes: deliveryNotes.trim(),
-    });
-    setSavedNotice(true);
-    setTimeout(() => setSavedNotice(false), 4000);
-  }
-
-  function handleReset() {
-    resetProfile();
-    setSavedNotice(false);
-  }
 
   return (
     <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 space-y-6">
@@ -168,206 +120,142 @@ export function AccountPage() {
       </section>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
-        {/* Left Column: Delivery & Contact Preferences Form */}
-        <section
-          aria-labelledby="delivery-profile-heading"
-          className="lg:col-span-8 neo-card p-6 sm:p-8 space-y-6"
-        >
-          <div className="flex flex-wrap items-start justify-between gap-2 border-b border-surface-border pb-4">
-            <div>
-              <h2
-                id="delivery-profile-heading"
-                className="text-lg font-extrabold text-ink-charcoal"
+        {/* Left Column: Direct WhatsApp Ordering & Quick Contact Info */}
+        <section className="lg:col-span-8 space-y-6">
+          {/* WhatsApp Direct Ordering Explainer */}
+          <div className="neo-card p-6 sm:p-7 space-y-4 border-l-4 border-l-emerald-600 bg-linear-to-r from-emerald-50/40 to-surface-white">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-neo-sm bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-sm">
+                  <MessageCircle className="h-5 w-5" />
+                </div>
+                <div>
+                  <h2 className="text-base sm:text-lg font-black text-ink-charcoal uppercase tracking-tight">
+                    WhatsApp Direct Ordering &amp; Delivery
+                  </h2>
+                  <p className="text-xs text-ink-secondary">
+                    Orders and deliveries are handled directly in WhatsApp chat — no long address forms required.
+                  </p>
+                </div>
+              </div>
+
+              <a
+                href={`https://wa.me/${STORE_WHATSAPP}?text=${encodeURIComponent(
+                  "Hello Jocta Enterprises, I would like to inquire about printing supplies.",
+                )}`}
+                target="_blank"
+                rel="noreferrer"
+                className="neo-button-primary inline-flex items-center gap-1.5 text-xs py-2 px-3.5 bg-emerald-700 hover:bg-emerald-800 text-white border-emerald-800"
               >
-                Delivery &amp; Contact Preferences
-              </h2>
-              <p className="text-xs text-ink-secondary mt-1">
-                Save your contact and office delivery details to speed up
-                WhatsApp orders and quotes with Jocta Enterprises.
-              </p>
+                <MessageCircle className="h-3.5 w-3.5" />
+                <span>Chat on WhatsApp</span>
+              </a>
             </div>
-            {profile.updatedAt && (
-              <span className="text-[11px] font-medium text-ink-muted">
-                Last updated:{" "}
-                {new Date(profile.updatedAt).toLocaleDateString("en-KE", {
-                  day: "numeric",
-                  month: "short",
-                  year: "numeric",
-                })}
-              </span>
-            )}
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 text-xs">
+              <div className="rounded-neo-sm border border-surface-border bg-surface-white p-3 space-y-1">
+                <p className="font-bold text-ink-charcoal flex items-center gap-1.5">
+                  <ShoppingBag className="h-3.5 w-3.5 text-brand-red" />
+                  1. Pick Your Supplies
+                </p>
+                <p className="text-[11px] text-ink-muted leading-relaxed">
+                  Browse toners, inks, drums, or printers and click &ldquo;Order via WhatsApp&rdquo; from the cart.
+                </p>
+              </div>
+
+              <div className="rounded-neo-sm border border-surface-border bg-surface-white p-3 space-y-1">
+                <p className="font-bold text-ink-charcoal flex items-center gap-1.5">
+                  <Truck className="h-3.5 w-3.5 text-emerald-700" />
+                  2. Share Address in Chat
+                </p>
+                <p className="text-[11px] text-ink-muted leading-relaxed">
+                  Discuss your building, floor, office number, or courier drop-off directly with the sales representative.
+                </p>
+              </div>
+
+              <div className="rounded-neo-sm border border-surface-border bg-surface-white p-3 space-y-1">
+                <p className="font-bold text-ink-charcoal flex items-center gap-1.5">
+                  <Sparkles className="h-3.5 w-3.5 text-amber-600" />
+                  3. Same-Day Dispatch
+                </p>
+                <p className="text-[11px] text-ink-muted leading-relaxed">
+                  Confirm payment via M-Pesa or bank transfer and receive fast delivery with an official receipt.
+                </p>
+              </div>
+            </div>
           </div>
 
-          {savedNotice && (
-            <div
-              role="status"
-              className="rounded-neo-sm border border-emerald-300 bg-emerald-50 px-4 py-3 text-xs font-semibold text-emerald-900 flex items-center gap-2.5"
-            >
-              <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
-              <span>
-                Your account preferences have been saved and will be included
-                with your orders.
-              </span>
-            </div>
-          )}
-
-          <form onSubmit={handleSaveProfile} className="space-y-4">
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div className="space-y-1.5">
-                <label
-                  htmlFor="account-full-name"
-                  className="flex items-center gap-1.5 text-xs font-bold text-ink-charcoal"
-                >
-                  <User className="h-3.5 w-3.5 text-brand-red" />
-                  <span>Full Name / Contact Person</span>
-                </label>
-                <input
-                  id="account-full-name"
-                  type="text"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  placeholder="e.g. Richard Remy"
-                  className="neo-input"
-                />
+          {/* Recent Orders Overview or Quick Shopping */}
+          <div className="neo-card p-6 space-y-4">
+            <div className="flex items-center justify-between border-b border-surface-border pb-3">
+              <div>
+                <h2 className="text-base font-extrabold text-ink-charcoal">
+                  Recent WhatsApp Orders
+                </h2>
+                <p className="text-xs text-ink-secondary mt-0.5">
+                  Your recent product inquiries sent to Jocta Enterprises.
+                </p>
               </div>
-
-              <div className="space-y-1.5">
-                <label
-                  htmlFor="account-phone"
-                  className="flex items-center gap-1.5 text-xs font-bold text-ink-charcoal"
-                >
-                  <Phone className="h-3.5 w-3.5 text-brand-red" />
-                  <span>Phone / WhatsApp Number</span>
-                </label>
-                <input
-                  id="account-phone"
-                  type="tel"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  placeholder="e.g. 0712 345 678"
-                  className="neo-input"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div className="space-y-1.5">
-                <label
-                  htmlFor="account-company"
-                  className="flex items-center gap-1.5 text-xs font-bold text-ink-charcoal"
-                >
-                  <Building2 className="h-3.5 w-3.5 text-brand-red" />
-                  <span>Company / Organization (Optional)</span>
-                </label>
-                <input
-                  id="account-company"
-                  type="text"
-                  value={company}
-                  onChange={(e) => setCompany(e.target.value)}
-                  placeholder="e.g. Acme Office Solutions Ltd"
-                  className="neo-input"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label
-                  htmlFor="account-city"
-                  className="flex items-center gap-1.5 text-xs font-bold text-ink-charcoal"
-                >
-                  <MapPin className="h-3.5 w-3.5 text-brand-red" />
-                  <span>City / Town</span>
-                </label>
-                <input
-                  id="account-city"
-                  type="text"
-                  value={city}
-                  onChange={(e) => setCity(e.target.value)}
-                  placeholder="e.g. Nairobi"
-                  className="neo-input"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-1.5">
-              <label
-                htmlFor="account-address"
-                className="flex items-center gap-1.5 text-xs font-bold text-ink-charcoal"
-              >
-                <MapPin className="h-3.5 w-3.5 text-brand-red" />
-                <span>Delivery Address / Building / Floor</span>
-              </label>
-              <input
-                id="account-address"
-                type="text"
-                value={deliveryAddress}
-                onChange={(e) => setDeliveryAddress(e.target.value)}
-                placeholder="e.g. Kimathi Street, Eagle House 4th Floor, Suite 402"
-                className="neo-input"
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <div className="flex items-center justify-between gap-2">
-                <label
-                  htmlFor="account-printer"
-                  className="flex items-center gap-1.5 text-xs font-bold text-ink-charcoal"
-                >
-                  <Printer className="h-3.5 w-3.5 text-brand-red" />
-                  <span>Primary Office Printer Model(s)</span>
-                </label>
+              {orders.length > 0 && (
                 <Link
-                  to="/compatibility"
-                  className="text-[11px] font-bold text-brand-red hover:underline"
+                  to="/orders"
+                  className="text-xs font-bold text-brand-red hover:underline"
                 >
-                  Find compatible toners &rarr;
+                  View All Orders &rarr;
+                </Link>
+              )}
+            </div>
+
+            {orders.length > 0 ? (
+              <div className="divide-y divide-surface-border">
+                {orders.slice(0, 3).map((order) => (
+                  <div
+                    key={order.id}
+                    className="py-3 flex flex-wrap items-center justify-between gap-3 text-xs"
+                  >
+                    <div>
+                      <p className="font-bold text-ink-charcoal">
+                        Ref: {order.reference}
+                      </p>
+                      <p className="text-[11px] text-ink-muted">
+                        {new Date(order.createdAt).toLocaleDateString("en-KE", {
+                          day: "numeric",
+                          month: "short",
+                          year: "numeric",
+                        })}{" "}
+                        • {order.totalItems} {order.totalItems === 1 ? "item" : "items"}
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      <span className="font-extrabold text-ink-charcoal">
+                        {formatKes(order.subtotalKes)}
+                      </span>
+                      <Link
+                        to="/orders"
+                        className="neo-button-secondary py-1 px-2.5 text-[11px]"
+                      >
+                        Details
+                      </Link>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="py-6 text-center space-y-3">
+                <p className="text-xs text-ink-secondary">
+                  You have not initiated any WhatsApp orders yet. Browse our catalogue to get started.
+                </p>
+                <Link
+                  to="/catalogue"
+                  className="neo-button-primary inline-flex items-center gap-1.5 text-xs py-2 px-4"
+                >
+                  <ShoppingBag className="h-3.5 w-3.5" />
+                  <span>Browse Products</span>
                 </Link>
               </div>
-              <input
-                id="account-printer"
-                type="text"
-                value={preferredPrinterModel}
-                onChange={(e) => setPreferredPrinterModel(e.target.value)}
-                placeholder="e.g. HP LaserJet Pro M404dn, Canon imageRUNNER 2425"
-                className="neo-input"
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <label
-                htmlFor="account-notes"
-                className="block text-xs font-bold text-ink-charcoal"
-              >
-                Default Delivery / Order Notes
-              </label>
-              <textarea
-                id="account-notes"
-                rows={3}
-                value={deliveryNotes}
-                onChange={(e) => setDeliveryNotes(e.target.value)}
-                placeholder="e.g. Call reception upon arrival, include ETR receipt..."
-                className="neo-input"
-              />
-            </div>
-
-            <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-surface-border">
-              <button
-                type="button"
-                onClick={handleReset}
-                className="neo-button-secondary px-4 py-2.5 text-xs cursor-pointer"
-              >
-                <RotateCcw className="h-3.5 w-3.5" />
-                <span>Reset Fields</span>
-              </button>
-
-              <button
-                type="submit"
-                className="neo-button-primary px-6 py-2.5 text-xs sm:text-sm cursor-pointer"
-              >
-                <Save className="h-4 w-4" />
-                <span>Save Account Preferences</span>
-              </button>
-            </div>
-          </form>
+            )}
+          </div>
         </section>
 
         {/* Right Column: Signed-in Account Status & Quick Links */}

@@ -88,6 +88,7 @@ export function App() {
                 <Route path="sales" element={<SalesHistoryPage />} />
                 <Route path="sales/new" element={<RecordSalePage />} />
                 <Route path="reports" element={<SalesReportPage />} />
+                <Route path="reports/*" element={<Navigate to="/inventory/reports" replace />} />
               </Route>
 
               {/* Storefront Layout & Public Pages */}

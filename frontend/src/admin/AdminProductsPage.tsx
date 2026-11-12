@@ -375,8 +375,28 @@ export function AdminProductsPage() {
 
       {/* Results Meta */}
       <div className="flex items-center justify-between text-xs text-ink-secondary font-semibold px-1">
-        <span>
-          Showing {products.length} of {total} products
+        <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
+          <span>
+            Showing {products.length} of {total} products •{" "}
+            <span className="text-ink-charcoal font-bold">
+              {products.reduce((s, p) => s + Math.max(0, p.stockQuantity), 0)} units on hand
+            </span>{" "}
+            • Stock value (retail):{" "}
+            <span className="text-emerald-700 font-black">
+              {formatKes(
+                products.reduce(
+                  (s, p) => s + Math.max(0, p.stockQuantity) * (parseFloat(p.priceKes) || 0),
+                  0,
+                ),
+              )}
+            </span>
+          </span>
+          {products.filter((p) => p.stockQuantity < 3).length > 0 && (
+            <span className="inline-flex items-center gap-1 rounded-neo-sm border border-amber-300 bg-amber-50 px-2 py-0.5 text-[10px] font-extrabold text-amber-900">
+              ⚠ {products.filter((p) => p.stockQuantity < 3).length}{" "}
+              {products.filter((p) => p.stockQuantity < 3).length === 1 ? "item needs" : "items need"} restock (&lt; 3 units)
+            </span>
+          )}
         </span>
         {totalPages > 1 && (
           <span>
@@ -487,7 +507,10 @@ export function AdminProductsPage() {
                       </td>
 
                       <td className="py-3 px-3 text-right font-black text-ink-charcoal">
-                        {formatKes(product.priceKes)}
+                        <div>{formatKes(product.priceKes)}</div>
+                        <div className="text-[10px] font-bold text-emerald-700">
+                          Stock val: {formatKes(Math.max(0, product.stockQuantity) * (parseFloat(product.priceKes) || 0))}
+                        </div>
                       </td>
 
                       <td className="py-3 px-3 text-center">
@@ -506,9 +529,11 @@ export function AdminProductsPage() {
                           </button>
                           <span
                             className={`min-w-7 text-center text-[11px] font-extrabold ${
-                              product.stockQuantity > 0
-                                ? "text-emerald-800"
-                                : "text-red-700"
+                              product.stockQuantity <= 0
+                                ? "text-red-700"
+                                : product.stockQuantity < 3
+                                  ? "text-amber-700"
+                                  : "text-emerald-800"
                             }`}
                           >
                             {product.stockQuantity}
@@ -523,6 +548,19 @@ export function AdminProductsPage() {
                             <Plus className="h-3 w-3" />
                           </button>
                         </div>
+                        {product.stockQuantity <= 0 ? (
+                          <div className="mt-1">
+                            <span className="inline-block rounded-neo-sm border border-red-300 bg-red-50 px-1.5 py-0.5 text-[9px] font-extrabold text-red-800 uppercase tracking-tight">
+                              Out of stock · Restock
+                            </span>
+                          </div>
+                        ) : product.stockQuantity < 3 ? (
+                          <div className="mt-1">
+                            <span className="inline-block rounded-neo-sm border border-amber-300 bg-amber-50 px-1.5 py-0.5 text-[9px] font-extrabold text-amber-800 uppercase tracking-tight">
+                              Low stock · Restock
+                            </span>
+                          </div>
+                        ) : null}
                       </td>
 
                       <td className="py-3 px-3 text-center">
@@ -619,10 +657,30 @@ export function AdminProductsPage() {
                   <div className="flex items-center justify-between text-xs pt-2 border-t border-surface-border">
                     <div>
                       <div className="font-black text-ink-charcoal">
-                        {formatKes(product.priceKes)}
+                        <div>{formatKes(product.priceKes)}</div>
+                        <div className="text-[10px] font-bold text-emerald-700">
+                          Stock val: {formatKes(Math.max(0, product.stockQuantity) * (parseFloat(product.priceKes) || 0))}
+                        </div>
                       </div>
-                      <div className="text-[11px] text-ink-secondary">
-                        Stock: {product.stockQuantity}
+                      <div className="text-[11px] flex items-center gap-1.5 mt-0.5">
+                        <span className={`font-bold ${
+                          product.stockQuantity <= 0
+                            ? "text-red-700"
+                            : product.stockQuantity < 3
+                              ? "text-amber-700"
+                              : "text-ink-secondary"
+                        }`}>
+                          Stock: {product.stockQuantity}
+                        </span>
+                        {product.stockQuantity <= 0 ? (
+                          <span className="rounded-neo-sm border border-red-300 bg-red-50 px-1.5 py-0.2 text-[9px] font-black text-red-800 uppercase">
+                            Restock
+                          </span>
+                        ) : product.stockQuantity < 3 ? (
+                          <span className="rounded-neo-sm border border-amber-300 bg-amber-50 px-1.5 py-0.2 text-[9px] font-black text-amber-800 uppercase">
+                            Low · Restock
+                          </span>
+                        ) : null}
                       </div>
                     </div>
 

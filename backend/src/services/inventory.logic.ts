@@ -87,10 +87,29 @@ export function makeReference(prefix: string, now: Date = new Date()): string {
 
 // ── Stock rules ──────────────────────────────────────────────────────────────
 
-export function stockStatus(quantity: number, reorderLevel: number): StockStatus {
+export const MIN_RESTOCK_THRESHOLD = 3;
+
+export function stockStatus(
+  quantity: number,
+  reorderLevel: number = MIN_RESTOCK_THRESHOLD,
+): StockStatus {
   if (quantity <= 0) return "out_of_stock";
-  if (quantity <= reorderLevel) return "low_stock";
+  if (quantity < MIN_RESTOCK_THRESHOLD || quantity <= reorderLevel) return "low_stock";
   return "in_stock";
+}
+
+export function isLowStock(
+  quantity: number,
+  reorderLevel: number = MIN_RESTOCK_THRESHOLD,
+): boolean {
+  return quantity > 0 && (quantity < MIN_RESTOCK_THRESHOLD || quantity <= reorderLevel);
+}
+
+export function needsRestock(
+  quantity: number,
+  reorderLevel: number = MIN_RESTOCK_THRESHOLD,
+): boolean {
+  return quantity < MIN_RESTOCK_THRESHOLD || quantity <= reorderLevel;
 }
 
 /**

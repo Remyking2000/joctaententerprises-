@@ -17,13 +17,14 @@ import {
   Trash2,
   XCircle,
 } from "lucide-react";
-import type { AdminStatsSummary, ProductSummary } from "@jocta/shared";
-import { adminApi, ApiClientError } from "../lib/api";
+import type { AdminStatsSummary, InventoryDashboard, ProductSummary } from "@jocta/shared";
+import { adminApi, inventoryApi, ApiClientError } from "../lib/api";
 import { formatKes } from "../lib/format";
 import { useCatalogRefresh } from "../lib/sync";
 
 export function AdminDashboardPage() {
   const [stats, setStats] = useState<AdminStatsSummary | null>(null);
+  const [inventory, setInventory] = useState<InventoryDashboard | null>(null);
   const [recentProducts, setRecentProducts] = useState<ProductSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -64,6 +65,8 @@ export function AdminDashboardPage() {
       ]);
       setStats(statsData);
       setRecentProducts(productsData.items);
+      const invData = await inventoryApi.getDashboard().catch(() => null);
+      setInventory(invData);
     } catch (err) {
       if (err instanceof ApiClientError) {
         setError(err.message);
@@ -217,6 +220,66 @@ export function AdminDashboardPage() {
         >
           <CheckCircle2 className="h-4 w-4 shrink-0 mt-0.5 text-emerald-600" />
           <p className="font-bold">{successMessage}</p>
+        </div>
+      )}
+
+      {/* Live Inventory Valuation Strip */}
+      {inventory && (
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+          <div className="rounded-neo-base border border-surface-border bg-surface-white p-4 shadow-neo">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-ink-muted">
+              Stock Value (Retail)
+            </span>
+            <div className="mt-1.5 text-lg sm:text-xl font-black text-emerald-700">
+              {formatKes(inventory.stats.stockRetailValueKes)}
+            </div>
+            <p className="mt-1 text-[11px] text-ink-secondary">
+              {inventory.stats.totalUnits} units across {inventory.stats.totalItems} items
+            </p>
+          </div>
+
+          <div className="rounded-neo-base border border-surface-border bg-surface-white p-4 shadow-neo">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-ink-muted">
+              Stock Value (Cost)
+            </span>
+            <div className="mt-1.5 text-lg sm:text-xl font-black text-ink-charcoal">
+              {formatKes(inventory.stats.stockCostValueKes)}
+            </div>
+            <p className="mt-1 text-[11px] text-ink-secondary">
+              {inventory.stats.uncosted > 0 ? (
+                <Link to="/inventory/stock?status=uncosted" className="text-amber-700 font-semibold underline">
+                  {inventory.stats.uncosted} item{inventory.stats.uncosted === 1 ? "" : "s"} missing a cost
+                </Link>
+              ) : (
+                `All ${inventory.stats.totalItems} items costed`
+              )}
+            </p>
+          </div>
+
+          <div className="rounded-neo-base border border-surface-border bg-surface-white p-4 shadow-neo">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-ink-muted">
+              Low Stock Alerts
+            </span>
+            <div className={`mt-1.5 text-lg sm:text-xl font-black ${inventory.stats.lowStock > 0 ? "text-amber-700" : "text-emerald-700"}`}>
+              {inventory.stats.lowStock}
+            </div>
+            <p className="text-[10px] text-ink-muted mt-0.5">Under 3 units or &le; reorder</p>
+            <Link to="/inventory/stock?status=low_stock" className="mt-1 inline-block text-[11px] text-ink-secondary underline">
+              View items
+            </Link>
+          </div>
+
+          <div className="rounded-neo-base border border-surface-border bg-surface-white p-4 shadow-neo">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-ink-muted">
+              Out of Stock
+            </span>
+            <div className={`mt-1.5 text-lg sm:text-xl font-black ${inventory.stats.outOfStock > 0 ? "text-brand-red" : "text-emerald-700"}`}>
+              {inventory.stats.outOfStock}
+            </div>
+            <Link to="/inventory/stock?status=out_of_stock" className="mt-1 inline-block text-[11px] text-ink-secondary underline">
+              View items
+            </Link>
+          </div>
         </div>
       )}
 
@@ -461,7 +524,13 @@ export function AdminDashboardPage() {
                       {product.category && (
                         <span>• {product.category.name}</span>
                       )}
-                      <span>• Stock: {product.stockQuantity}</span>
+                      {product.stockQuantity <= 0 ? (
+                        <span className="font-extrabold text-red-700">• Out of Stock (Restock needed)</span>
+                      ) : product.stockQuantity < 3 ? (
+                        <span className="font-extrabold text-amber-700">• Low Stock: {product.stockQuantity} (Restock needed)</span>
+                      ) : (
+                        <span>• Stock: {product.stockQuantity}</span>
+                      )}
                     </div>
                   </div>
                 </div>

@@ -61,16 +61,28 @@ export function getStockStatus(quantity: number): {
   label: string;
   available: boolean;
   lowStock: boolean;
+  needsRestock: boolean;
 } {
   if (quantity <= 0) {
-    return { label: "Out of Stock", available: false, lowStock: false };
-  }
-  if (quantity <= 3) {
     return {
-      label: `Low Stock (${quantity} left)`,
-      available: true,
+      label: "Out of Stock (Restock Needed)",
+      available: false,
       lowStock: true,
+      needsRestock: true,
     };
   }
-  return { label: "In Stock", available: true, lowStock: false };
+  if (quantity < 3) {
+    return {
+      label: `Low Stock (${quantity} left — Restock Needed)`,
+      available: true,
+      lowStock: true,
+      needsRestock: true,
+    };
+  }
+  return {
+    label: "In Stock",
+    available: true,
+    lowStock: false,
+    needsRestock: false,
+  };
 }

@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { ClipboardCheck, Search } from "lucide-react";
 import type { BulkStockResult } from "@jocta/shared";
 import { inventoryApi } from "../lib/api";
+import { formatKes } from "../lib/format";
 import {
   Card,
   Modal,
@@ -45,6 +46,10 @@ export function StockTakePage() {
   );
   const differences = counted.filter((c) => c.counted !== c.item.stockQuantity);
   const netChange = differences.reduce((s, c) => s + (c.counted - c.item.stockQuantity), 0);
+  const netRetailChange = differences.reduce(
+    (s, c) => s + (c.counted - c.item.stockQuantity) * (parseFloat(c.item.priceKes) || 0),
+    0,
+  );
 
   const visible = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -145,7 +150,9 @@ export function StockTakePage() {
           <p className={`text-lg font-black ${netChange < 0 ? "text-brand-red" : netChange > 0 ? "text-emerald-700" : "text-ink-charcoal"}`}>
             {netChange > 0 ? `+${netChange}` : netChange}
           </p>
-          <p className="text-[10px] font-bold uppercase text-ink-muted">Net units</p>
+          <p className="text-[10px] font-bold uppercase text-ink-muted">
+            Net units ({netRetailChange >= 0 ? `+${formatKes(netRetailChange)}` : `−${formatKes(Math.abs(netRetailChange))}`} retail)
+          </p>
         </Card>
       </div>
 

@@ -30,8 +30,8 @@ const INVENTORY_NAV = [
   { to: "/inventory/receive", end: false, label: "Receive Stock", icon: PackagePlus },
   { to: "/inventory/stock-take", end: false, label: "Stock Take", icon: ClipboardCheck },
   { to: "/inventory/movements", end: false, label: "Stock History", icon: History },
-  { to: "/inventory/sales", end: true, label: "Sales", icon: Receipt },
-  { to: "/inventory/reports", end: false, label: "Sales Report", icon: BarChart3 },
+  { to: "/inventory/sales", end: false, label: "Sales History", icon: Receipt },
+  { to: "/inventory/reports", end: false, label: "Monthly Report", icon: BarChart3 },
 ];
 
 function navClass(isActive: boolean) {
@@ -188,7 +188,7 @@ export function InventoryLayout() {
         )}
       </header>
 
-      <main className="flex-1 w-full max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
+      <main className="flex-1 w-full max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 print:p-0 print:max-w-none">
         <Outlet />
       </main>
     </div>

@@ -517,6 +517,7 @@ export const AdminService = {
     const created = await this.createProductRecord(input);
     const createdTotal = await InventoryService.syncProductTotal(created.id);
     if (createdTotal !== null) created.stockQuantity = createdTotal;
+    await InventoryService.saveProductFormSettings(created.id, input);
     await InventoryService.recordProductFormChanges(
       new Map(),
       await InventoryService.snapshotProductStock(created.id),
@@ -749,6 +750,7 @@ export const AdminService = {
     const updated = await this.updateProductRecord(id, input);
     const updatedTotal = await InventoryService.syncProductTotal(id);
     if (updatedTotal !== null) updated.stockQuantity = updatedTotal;
+    await InventoryService.saveProductFormSettings(id, input);
     await InventoryService.recordProductFormChanges(
       before,
       await InventoryService.snapshotProductStock(id),
@@ -848,7 +850,7 @@ export const AdminService = {
         });
       }
 
-      const { compatibleModelIds: _, variants: __, ...productFields } = input;
+      const { compatibleModelIds: _, variants: __, costPriceKes: ___, reorderLevel: ____, ...productFields } = input;
       const updated: ProductSummary = {
         ...current,
         ...productFields,
@@ -907,7 +909,7 @@ export const AdminService = {
       }
     }
 
-    const { compatibleModelIds, variants, ...productFields } = input;
+    const { compatibleModelIds, variants, costPriceKes: _cost, reorderLevel: _reorder, ...productFields } = input;
     const updateValues: Record<string, any> = {
       ...productFields,
       updatedAt: new Date(),

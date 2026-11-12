@@ -32,6 +32,10 @@ export function ReceiveStockPage() {
 
   const selectedKeys = useMemo(() => new Set(lines.map((l) => l.item.key)), [lines]);
   const totalUnits = lines.reduce((s, l) => s + (parseInt(l.quantity, 10) || 0), 0);
+  const totalRetail = lines.reduce(
+    (s, l) => s + (parseInt(l.quantity, 10) || 0) * (parseFloat(l.item.priceKes) || 0),
+    0,
+  );
   const totalCost = lines.reduce(
     (s, l) => s + (parseInt(l.quantity, 10) || 0) * (parseFloat(l.unitCost) || 0),
     0,
@@ -201,7 +205,8 @@ export function ReceiveStockPage() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <p className="text-xs text-ink-secondary">
             <span className="font-bold text-ink-charcoal">{totalUnits}</span> units ·{" "}
-            <span className="font-bold text-ink-charcoal">{formatKes(totalCost)}</span> total cost
+            <span className="font-bold text-ink-charcoal">{formatKes(totalCost)}</span> total cost ·{" "}
+            <span className="font-black text-emerald-700">+{formatKes(totalRetail)}</span> retail stock value
           </p>
           <button type="submit" disabled={!valid || saving} className="neo-button-primary text-xs py-2.5 px-5">
             <PackagePlus className="h-4 w-4" />

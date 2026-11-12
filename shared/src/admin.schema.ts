@@ -27,6 +27,8 @@ export const productVariantInputSchema = z.object({
   pageYield: z.coerce.number().int().positive().nullable().optional(),
   priceKes: kesMoneySchema,
   comparePriceKes: kesMoneySchema.nullable().optional(),
+  costPriceKes: kesMoneySchema.nullable().optional(),
+  reorderLevel: z.coerce.number().int().min(0).max(100000).optional(),
   stockQuantity: z.coerce.number().int().min(0).default(0),
   isActive: z.boolean().default(true),
   sortOrder: z.coerce.number().int().default(0),
@@ -88,6 +90,8 @@ export const createProductSchema = z.object({
   color: z.string().trim().max(50).nullable().optional(),
   priceKes: kesMoneySchema,
   comparePriceKes: kesMoneySchema.nullable().optional(),
+  costPriceKes: kesMoneySchema.nullable().optional(),
+  reorderLevel: z.coerce.number().int().min(0).max(100000).optional(),
   stockQuantity: z.coerce
     .number()
     .int()

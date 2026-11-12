@@ -442,4 +442,40 @@ describe("Admin and inventory stay in step", () => {
     items = await invokeApp(app, { url: `${API}/items` });
     expect(items.body.data.some((i: StockItem) => i.productId === id)).toBe(false);
   });
+
+  it("adjusts stock value (retail) and stock value (cost) when quantity, price or cost changes", async () => {
+    const settingsRes = await invokeApp(app, {
+      method: "PATCH",
+      url: `${API}/settings`,
+      body: { ...P26A, priceKes: "12000", costPriceKes: "8000", reorderLevel: 4 },
+    });
+    expect(settingsRes.status).toBe(200);
+    expect(settingsRes.body.data).toMatchObject({
+      priceKes: "12000.00",
+      costPriceKes: "8000.00",
+      reorderLevel: 4,
+      stockQuantity: 10,
+    });
+
+    const created = await invokeApp(app, {
+      method: "POST",
+      url: "/api/admin/products",
+      body: {
+        name: "Kyocera TK-1170 Toner",
+        slug: "kyocera-tk-1170-toner",
+        sku: "JOC-TON-TK1170",
+        categoryId: "cat-toners",
+        priceKes: "6500",
+        costPriceKes: "4000",
+        reorderLevel: 5,
+        stockQuantity: 4,
+      },
+    });
+    expect(created.status).toBe(201);
+
+    const dash = await invokeApp(app, { url: `${API}/dashboard` });
+    expect(dash.status).toBe(200);
+    expect(dash.body.data.stats.stockRetailValueKes).toBe("190400.00");
+    expect(dash.body.data.stats.stockCostValueKes).toBe("96000.00");
+  });
 });
