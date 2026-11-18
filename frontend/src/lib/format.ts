@@ -60,29 +60,21 @@ export const LOCAL_PRODUCT_PLACEHOLDERS: Record<ProductType, string> = {
 export function getStockStatus(quantity: number): {
   label: string;
   available: boolean;
-  lowStock: boolean;
-  needsRestock: boolean;
 } {
   if (quantity <= 0) {
     return {
       label: "Out of Stock (Restock Needed)",
       available: false,
-      lowStock: true,
-      needsRestock: true,
     };
   }
   if (quantity < 3) {
     return {
       label: `Low Stock (${quantity} left — Restock Needed)`,
       available: true,
-      lowStock: true,
-      needsRestock: true,
     };
   }
   return {
     label: "In Stock",
     available: true,
-    lowStock: false,
-    needsRestock: false,
   };
 }

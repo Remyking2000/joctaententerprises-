@@ -100,8 +100,6 @@ interface CustomerContextValue {
 
   // Profile Preferences
   profile: CustomerProfile;
-  updateProfile: (patch: Partial<CustomerProfile>) => void;
-  resetProfile: () => void;
 
   // Global Sign-In Modal control
   loginModalOpen: boolean;
@@ -343,31 +341,6 @@ export function CustomerProvider({ children }: { children: ReactNode }) {
     );
   }, [normalizedEmail]);
 
-  const updateProfile = useCallback(
-    (patch: Partial<CustomerProfile>) => {
-      setProfile((prev) => {
-        const next: CustomerProfile = {
-          ...prev,
-          ...patch,
-          updatedAt: new Date().toISOString(),
-        };
-        writeStorageJson(profileStorageKey, next);
-        return next;
-      });
-    },
-    [profileStorageKey],
-  );
-
-  const resetProfile = useCallback(() => {
-    const fresh: CustomerProfile = {
-      ...DEFAULT_PROFILE,
-      fullName: user?.name || "",
-      updatedAt: null,
-    };
-    writeStorageJson(profileStorageKey, fresh);
-    setProfile(fresh);
-  }, [profileStorageKey, user?.name]);
-
   return (
     <CustomerContext.Provider
       value={{
@@ -382,8 +355,6 @@ export function CustomerProvider({ children }: { children: ReactNode }) {
         removeOrder,
         clearOrders,
         profile,
-        updateProfile,
-        resetProfile,
         loginModalOpen,
         openLoginModal: () => setLoginModalOpen(true),
         closeLoginModal: () => setLoginModalOpen(false),

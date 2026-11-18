@@ -3,7 +3,6 @@ import { Link, useNavigate } from "react-router-dom";
 import {
   AlertCircle,
   ArrowRight,
-  Info,
   Package,
   Printer,
   RefreshCw,

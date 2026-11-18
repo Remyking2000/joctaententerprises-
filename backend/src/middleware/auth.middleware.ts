@@ -70,38 +70,3 @@ export function requireAdminAuth(
     next(err);
   }
 }
-
-/**
- * Middleware for general authenticated endpoints.
- */
-export function requireAuth(
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) {
-  try {
-    const cookieToken = req.cookies?.[SESSION_COOKIE_NAME];
-    const headerAuth = req.headers.authorization;
-    const bearerToken =
-      headerAuth && headerAuth.startsWith("Bearer ")
-        ? headerAuth.substring(7).trim()
-        : undefined;
-
-    const token = cookieToken || bearerToken;
-
-    if (!token) {
-      throw new AppError(
-        401,
-        "UNAUTHENTICATED",
-        "Authentication required. Please sign in.",
-      );
-    }
-
-    const user = AuthService.verifySessionToken(token);
-    res.locals.user = user;
-    (req as Request & { user?: typeof user }).user = user;
-    next();
-  } catch (err) {
-    next(err);
-  }
-}

@@ -12,7 +12,6 @@ import type {
   ProductSummary,
   ProductVariantSummary,
 } from "@jocta/shared";
-import { env } from "../config/env.js";
 import { getDb } from "../config/db.js";
 import {
   brands,
@@ -63,10 +62,6 @@ let testDatasetOverride: CatalogDataset | null = null;
  */
 export function setCatalogDatasetForTesting(dataset: CatalogDataset | null) {
   testDatasetOverride = dataset;
-}
-
-export function isTestingDatasetActive(): boolean {
-  return testDatasetOverride !== null;
 }
 
 /** Stores a changed in-memory test dataset. */

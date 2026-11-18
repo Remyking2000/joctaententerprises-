@@ -98,13 +98,6 @@ export function stockStatus(
   return "in_stock";
 }
 
-export function isLowStock(
-  quantity: number,
-  reorderLevel: number = MIN_RESTOCK_THRESHOLD,
-): boolean {
-  return quantity > 0 && (quantity < MIN_RESTOCK_THRESHOLD || quantity <= reorderLevel);
-}
-
 export function needsRestock(
   quantity: number,
   reorderLevel: number = MIN_RESTOCK_THRESHOLD,

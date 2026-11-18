@@ -13,7 +13,6 @@ import {
   Plus,
   Printer,
   RefreshCw,
-  Sparkles,
   Trash2,
   XCircle,
 } from "lucide-react";

@@ -15,7 +15,6 @@ import type {
   PrinterModelSummary,
   ProductDetail,
   ProductSummary,
-  ProductVariantSummary,
   UpdateBrandInput,
   UpdateCategoryInput,
   UpdatePrinterModelInput,

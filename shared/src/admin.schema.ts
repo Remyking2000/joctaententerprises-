@@ -112,7 +112,6 @@ export type UpdateProductInput = z.infer<typeof updateProductSchema>;
 export const togglePublishSchema = z.object({
   isPublished: z.boolean(),
 });
-export type TogglePublishInput = z.infer<typeof togglePublishSchema>;
 
 export const createCategorySchema = z.object({
   name: z

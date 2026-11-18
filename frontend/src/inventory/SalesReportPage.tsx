@@ -10,7 +10,6 @@ import {
   Printer,
   RefreshCw,
   ShoppingCart,
-  TrendingUp,
   Trophy,
 } from "lucide-react";
 import type { Sale } from "@jocta/shared";

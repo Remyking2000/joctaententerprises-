@@ -31,7 +31,6 @@ import type {
   ReceiveStockPayload,
   Sale,
   SalesQuery,
-  SalesReport,
   StockAdjustPayload,
   StockItem,
   StockMovement,
@@ -428,18 +427,6 @@ export const adminApi = {
   },
 };
 
-export const authApi = {
-  loginWithGoogle(credential: string): Promise<{ user: AdminUser }> {
-    return adminApi.loginWithGoogle(credential);
-  },
-  getMe(): Promise<{ user: AdminUser }> {
-    return adminApi.getMe();
-  },
-  logout(): Promise<{ message: string }> {
-    return adminApi.logout();
-  },
-};
-
 // ── Inventory (admin only) ───────────────────────────────────────────────────
 
 const INVENTORY = "/api/admin/inventory";
@@ -503,9 +490,4 @@ export const inventoryApi = {
     );
   },
 
-  getSalesReport(month?: string): Promise<SalesReport> {
-    return fetchJson<SalesReport>(
-      `${INVENTORY}/sales/report${buildQueryString({ month })}`,
-    );
-  },
 };

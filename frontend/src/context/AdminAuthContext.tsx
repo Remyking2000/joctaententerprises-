@@ -21,7 +21,6 @@ interface AdminAuthContextType {
   loginWithGoogle: (credential: string) => Promise<AdminUser>;
   logout: () => Promise<void>;
   checkAuth: () => Promise<AdminUser | null>;
-  clearError: () => void;
 }
 
 const AdminAuthContext = createContext<AdminAuthContextType | undefined>(undefined);
@@ -30,8 +29,6 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AdminUser | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-
-  const clearError = useCallback(() => setError(null), []);
 
   const checkAuth = useCallback(async (): Promise<AdminUser | null> => {
     try {
@@ -108,7 +105,6 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
         loginWithGoogle,
         logout,
         checkAuth,
-        clearError,
       }}
     >
       {children}

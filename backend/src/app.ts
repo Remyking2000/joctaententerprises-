@@ -51,7 +51,6 @@ export function createApp() {
       "Cache-Control",
       "no-store, no-cache, must-revalidate, proxy-revalidate",
     );
-    res.setHeader("X-Content-Type-Options", "nosniff");
     next();
   });
 

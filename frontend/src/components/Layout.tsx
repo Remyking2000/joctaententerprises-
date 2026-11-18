@@ -17,7 +17,6 @@ import {
   Menu,
   Package,
   Search,
-  ShieldAlert,
   ShieldCheck,
   ShoppingBag,
   X,

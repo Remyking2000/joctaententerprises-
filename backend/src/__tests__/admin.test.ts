@@ -3,7 +3,6 @@ import { Socket } from "node:net";
 import express from "express";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { createApp } from "../app.js";
-import { env } from "../config/env.js";
 import {
   setCatalogDatasetForTesting,
   type CatalogDataset,
